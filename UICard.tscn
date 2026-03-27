@@ -1,8 +1,18 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://7xccugxmtcsx"]
 
-[ext_resource type="Script" path="res://ui_card.gd" id="1_ctehi"]
+[ext_resource type="Shader" uid="uid://gw6c1blgesye" path="res://UICard.gdshader" id="1_81ftv"]
+[ext_resource type="Script" uid="uid://bedufqpa7xdkg" path="res://ui_card.gd" id="1_ctehi"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_m8rwd"]
+shader = ExtResource("1_81ftv")
+shader_parameter/is_solid_white = true
+shader_parameter/base_color = Color(1, 1, 1, 1)
+shader_parameter/bottom_center_color = Color(1, 0.8, 0.8, 1)
+shader_parameter/bottom_edge_color = Color(0.6, 0.2, 0.3, 1)
+shader_parameter/gradient_power = 1.0
 
 [node name="UICard" type="ColorRect" unique_id=151641443]
+material = SubResource("ShaderMaterial_m8rwd")
 custom_minimum_size = Vector2(100, 140)
 offset_right = 100.0
 offset_bottom = 160.0

@@ -6,7 +6,7 @@ const TAKE_UP_DURATION = 0.1
 const FLIP_DURATION    = 0.3
 
 var flip_tween : Tween
-var card_name  : String
+var card_ID    : int
 var card_sorter: CardSorter
 
 var is_dragged_from_pile := false
@@ -19,7 +19,6 @@ var target_rot_x := 0.0
 @onready var label  = $Label3D
 
 func _ready():
-	set_card_text("你居垦")
 	if not card_sorter:
 		var p = get_parent()
 		while p != null and not (p is CardSorter):
@@ -28,6 +27,12 @@ func _ready():
 			card_sorter = p
 			if not is_dragged_from_pile:
 				card_sorter.register_card(self)
+
+func set_card(id: int):
+	card_ID = id
+	label.text = CardDatabase.instance().get_card_name(id)
+	var is_front := CardDatabase.instance().is_front(id)
+	rotation_degrees.x = 0.0 if is_front else 180.0
 
 func update_target_y(new_y: float):
 	#if fixed_y == new_y:
@@ -59,7 +64,7 @@ func _input(event):
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			if is_dragging:
 				var hovered_pile := get_hovered_pile()
-				if hovered_pile: # 这个空指针判断要留下
+				if hovered_pile: # 这个空指针判断要留下，用于区分是否有正在拖的牌
 					# 通知牌堆接管这张牌
 					hovered_pile.insert_card_to_viewer(self)
 				else:
@@ -124,7 +129,7 @@ func check_for_pile_drop():
 			if is_dragging:
 				update_target_y(pile_obj.get_y_when_over_pile())
 			else:
-				pile_obj.receive_card(card_name, Pile.CardSource.TOP)
+				pile_obj.receive_card(card_ID, Pile.CardSource.TOP)
 				queue_free() # 销毁卡牌
 				card_sorter.unregister_card(self)
 			return
@@ -132,7 +137,7 @@ func check_for_pile_drop():
 			var hotspot_obj: Hotspot = hit_obj
 			var target_pile := hotspot_obj.parent_pile
 			if not is_dragging:
-				target_pile.receive_card(card_name, hotspot_obj.drop_mode)
+				target_pile.receive_card(card_ID, hotspot_obj.drop_mode)
 				queue_free() # 销毁卡牌
 				card_sorter.unregister_card(self)
 			# 不要return
@@ -150,6 +155,7 @@ func get_mouse_position_on_plane() -> Variant:
 	return plane.intersects_ray(ray_origin, ray_normal)
 
 func flip_box():
+	CardDatabase.instance().flip(card_ID)
 	var is_animating := flip_tween and flip_tween.is_valid()
 	if not is_animating:
 		target_rot_x = rotation_degrees.x
@@ -159,7 +165,3 @@ func flip_box():
 	flip_tween = create_tween()
 	flip_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	flip_tween.tween_property(self, "rotation_degrees:x", target_rot_x, FLIP_DURATION)
-
-func set_card_text(new_text: String):
-	card_name = new_text
-	label.text = new_text

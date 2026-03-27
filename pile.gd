@@ -11,7 +11,7 @@ extends StaticBody3D
 @export var card_scene       : PackedScene
 @export var deck_viewer_scene: PackedScene
 
-var card_stack: Array[String]
+var card_ID_stack: Array[int]
 
 var is_dragging_pile := false
 var drag_offset      := Vector3.ZERO
@@ -27,91 +27,62 @@ enum CardSource {
 	RANDOM = 2,
 }
 
-var njk_tmpl  := CardTemplate.new("你居垦", 5, "一个AI")
-var mcqx_tmpl := CardTemplate.new("梅川千夏", 3, "一个女孩")
-var deck_tmpl := DeckTemplate.new(
-	{
-		njk_tmpl.name: njk_tmpl,
-		mcqx_tmpl.name: mcqx_tmpl
-	},
-	[njk_tmpl.name, mcqx_tmpl.name]
-)
-var deck_inst := DeckInstance.new(
-	deck_tmpl,
-	{
-		1: njk_tmpl.name,
-		2: njk_tmpl.name,
-		3: njk_tmpl.name,
-		4: njk_tmpl.name,
-		5: njk_tmpl.name,
-		6: mcqx_tmpl.name,
-		7: mcqx_tmpl.name,
-		8: mcqx_tmpl.name
-	}
-)
-
-
-
 func _ready():
-	card_stack = ["你居垦","徐启星","梅川千夏","梅川备代","梅川库子"]
-	for i in range(5):
-		card_stack += card_stack
+	card_ID_stack = CardDatabase.instance().get_all_IDs().duplicate()
 	_update_visuals()
 
 func _update_visuals():
 	if not is_node_ready(): return
-	var h := card_stack.size() * CARD_THICKNESS
-	label.text = str(len(card_stack))
-	label.position.y = h + SMALL_LENGTH
-	if mesh:
-		mesh.size.y = max(h, SMALL_LENGTH)
-		mesh.position.y = h / 2.0
-	if collision and collision.shape:
-		collision.shape = collision.shape.duplicate() # 独立化资源
-		collision.shape.size.y = max(h, SMALL_LENGTH)
-		collision.position.y = h / 2.0
+	var h := card_ID_stack.size() * CARD_THICKNESS
+	label.text = str(len(card_ID_stack))
+	label.position.y = h + SMALL_LENGTH + BASE_THICKNESS
+	mesh.size.y = max(h, SMALL_LENGTH)
+	mesh.position.y = h / 2.0 + BASE_THICKNESS
+	collision.shape = collision.shape.duplicate() # 独立化资源
+	collision.shape.size.y = max(h, SMALL_LENGTH)
+	collision.position.y = h / 2.0 + BASE_THICKNESS
 
 func _input_event(_camera, event, _position, _normal, _shape_idx):
 	if event is InputEventMouseButton:
 		# 【抽牌】：左键按下且有牌
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if card_stack.size() > 0:
+			if card_ID_stack.size() > 0:
 				spawn_and_drag_card(CardSource.TOP)
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			open_deck_viewer("")
+			open_deck_viewer()
 			get_viewport().set_input_as_handled()
 
 func _on_hotspot_bottom_input_event(camera: Node, event: InputEvent, event_position: Vector3, normal: Vector3, shape_idx: int) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if card_stack.size() > 0:
+			if card_ID_stack.size() > 0:
 				spawn_and_drag_card(CardSource.BOTTOM)
 			get_viewport().set_input_as_handled()
 
 func _on_hotspot_random_input_event(camera: Node, event: InputEvent, event_position: Vector3, normal: Vector3, shape_idx: int) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if card_stack.size() > 0:
+			if card_ID_stack.size() > 0:
 				spawn_and_drag_card(CardSource.RANDOM)
 			get_viewport().set_input_as_handled()
 
 func spawn_and_drag_card(card_source: CardSource):
-	if card_stack.is_empty(): return
+	if card_ID_stack.is_empty(): return
 	
-	var drawn_card_name: String
+	var drawn_card_ID: int
 	match card_source:
 		CardSource.TOP:
-			drawn_card_name = card_stack.pop_back()
+			drawn_card_ID = card_ID_stack.pop_back()
 		CardSource.BOTTOM:
-			drawn_card_name = card_stack.pop_front()
+			drawn_card_ID = card_ID_stack.pop_front()
 		CardSource.RANDOM:
-			var random_index = randi() % card_stack.size()
-			drawn_card_name = card_stack.pop_at(random_index)
+			var random_index = randi() % card_ID_stack.size()
+			drawn_card_ID = card_ID_stack.pop_at(random_index)
 	
 	var new_card := card_scene.instantiate()
-	new_card.is_dragged_from_pile = true
 	
+	new_card.is_dragged_from_pile = true
 	card_sorter.add_child(new_card) 
 	
 	var spawn_y: float
@@ -126,26 +97,24 @@ func spawn_and_drag_card(card_source: CardSource):
 	new_card.fixed_y = Card.DRAGGING_Y
 	new_card.is_dragging = true
 	new_card.input_ray_pickable = false
-	
-	new_card.rotation_degrees.x = 180.0
-	new_card.set_card_text(drawn_card_name)
+	new_card.set_card(drawn_card_ID)
 		
 	_update_visuals()
 
 # 【回收】：供卡牌调用
-func receive_card(returned_card_name: String, card_source: CardSource):
+func receive_card(returned_card_ID: int, card_source: CardSource):
 	match card_source:
 		CardSource.TOP:
-			card_stack.push_back(returned_card_name)
+			card_ID_stack.push_back(returned_card_ID)
 		CardSource.BOTTOM:
-			card_stack.push_front(returned_card_name)
+			card_ID_stack.push_front(returned_card_ID)
 		CardSource.RANDOM:
-			var idx = randi() % (card_stack.size() + 1)
-			card_stack.insert(idx, returned_card_name)
+			var idx = randi() % (card_ID_stack.size() + 1)
+			card_ID_stack.insert(idx, returned_card_ID)
 	_update_visuals()
 	
 func get_y_when_over_pile() -> float:
-	return BASE_THICKNESS + card_stack.size() * CARD_THICKNESS + HEIGHT_ABOVE_PILE
+	return BASE_THICKNESS + card_ID_stack.size() * CARD_THICKNESS + HEIGHT_ABOVE_PILE
 
 
 func _on_base_area_input_event(camera: Node, event: InputEvent, event_position: Vector3, normal: Vector3, shape_idx: int) -> void:
@@ -193,22 +162,22 @@ func get_mouse_position_on_plane() -> Variant:
 	var plane := Plane(Vector3.UP, global_position.y)
 	return plane.intersects_ray(ray_origin, ray_normal)
 
-func open_deck_viewer(injected_card_name: String = ""):
+func open_deck_viewer(injected_card_ID: int = -1):
 	var viewer := deck_viewer_scene.instantiate()
 	get_tree().root.add_child(viewer)
-	viewer.load_deck(card_stack, injected_card_name) # 内有空字符串判断逻辑
+	viewer.load_deck(card_ID_stack, injected_card_ID) # 内有-1判断逻辑
 	viewer.draw_confirmed.connect(_on_draw_confirmed)
 
 # 【新增】供 Card 调用的方法：接管 3D 卡牌
 func insert_card_to_viewer(dragged_card: Card):
-	open_deck_viewer(dragged_card.card_name)
+	open_deck_viewer(dragged_card.card_ID)
 	
 	# 彻底销毁 3D 卡牌，完成交接
 	card_sorter.unregister_card(dragged_card)
 	dragged_card.queue_free()
 
-func _on_draw_confirmed(new_deck_cards: Array[String], drawn_cards: Array[String]):
-	card_stack = new_deck_cards
+func _on_draw_confirmed(new_deck_cards: Array[int], drawn_cards: Array[int]):
+	card_ID_stack = new_deck_cards
 	_update_visuals()
 	if drawn_cards.is_empty(): return
 	
@@ -220,7 +189,7 @@ func _on_draw_confirmed(new_deck_cards: Array[String], drawn_cards: Array[String
 	
 	# 依次生成选出的牌
 	for i in range(drawn_cards.size()):
-		var c_name   := drawn_cards[i]
+		var card_ID   := drawn_cards[i]
 		var new_card := card_scene.instantiate()
 		card_sorter.add_child(new_card)
 		
@@ -230,7 +199,7 @@ func _on_draw_confirmed(new_deck_cards: Array[String], drawn_cards: Array[String
 		
 		new_card.global_position = spawn_pos
 		new_card.fixed_y = Card.DRAGGING_Y
-		new_card.set_card_text(c_name)
+		new_card.set_card(card_ID)
 		
 		# 因为是取出到桌面，直接算作非拖拽状态并注册
 		new_card.is_dragging = false

@@ -1,7 +1,7 @@
 class_name DeckViewerUI
 extends CanvasLayer
 
-signal draw_confirmed(new_deck_list: Array[String], drawn_cards: Array[String])
+signal draw_confirmed(new_deck_list: Array[int], drawn_cards: Array[int])
 signal viewer_closed
 
 # 1. 节点引用：严格匹配最新的 Margin/VBox 层级结构
@@ -40,21 +40,21 @@ func _ready() -> void:
 	add_child(insert_cursor)
 
 # 初始化牌堆
-func load_deck(deck_list: Array[String], injected_card_name: String = "") -> void:
+func load_deck(deck_list: Array[int], injected_card_ID: int = -1) -> void:
 	# 1. 先正常加载已有的牌堆
-	for c_name in deck_list:
+	for card_ID in deck_list:
 		var card := ui_card_scene.instantiate() as UICard
 		list_top.add_child(card)
-		card.setup(c_name)
+		card.setup(card_ID)
 		card.drag_started.connect(_on_card_drag_started)
 		
 	# 2. 处理从 3D 强行塞入的牌
-	if injected_card_name != "":
+	if injected_card_ID != -1:
 		var injected_card := ui_card_scene.instantiate() as UICard
 		# 先隐身，防止在排版完成前在屏幕上闪烁一下
 		injected_card.modulate.a = 0.0 
 		list_top.add_child(injected_card)
-		injected_card.setup(injected_card_name)
+		injected_card.setup(injected_card_ID)
 		injected_card.drag_started.connect(_on_card_drag_started)
 		
 		# 【绝杀修复】：交出当前帧的控制权，等 Godot 的 UI 容器完成真实排版！
@@ -76,6 +76,7 @@ func _force_start_drag(card: UICard) -> void:
 	card.hide()
 	
 	var visual_copy := card.duplicate() as Control
+	visual_copy.setup(card.card_ID)
 	visual_copy.show()
 	visual_copy.modulate.a = 0.7
 	visual_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -95,6 +96,7 @@ func _on_card_drag_started(card: UICard) -> void:
 	card.hide()
 	
 	var visual_copy := card.duplicate() as Control
+	visual_copy.setup(card.card_ID)
 	visual_copy.show()
 	visual_copy.modulate.a = 0.7
 	visual_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE 
@@ -103,6 +105,7 @@ func _on_card_drag_started(card: UICard) -> void:
 		child.queue_free()
 	drag_preview.add_child(visual_copy)
 	drag_preview.show()	
+	
 # --- 核心 2：系统输入监控（松手与滚轮） ---
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -122,6 +125,19 @@ func _input(event: InputEvent) -> void:
 				scroll_top.scroll_horizontal += scroll_speed * dir
 			elif scroll_bottom.get_global_rect().has_point(mouse_pos):
 				scroll_bottom.scroll_horizontal += scroll_speed * dir
+				
+		# 拖拽时按下右键 -> 翻面
+		elif dragging_card and (mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed):
+			# 1. 翻转本体并修改数据库
+			dragging_card.flip()
+			
+			# 2. 找到鼠标底下正在拖拽的“替身”，让它的视觉也同步刷新
+			if drag_preview.get_child_count() > 0:
+				var visual_copy = drag_preview.get_child(0) as UICard
+				if visual_copy:
+					visual_copy.set_shader()
+					visual_copy.set_text()
+					get_viewport().set_input_as_handled()
 
 # --- 核心 3：每帧更新占位符（实时排版） ---
 func _process(_delta: float) -> void:
@@ -184,10 +200,19 @@ func _drop_card() -> void:
 		child.queue_free()
 	drag_preview.hide()
 	
-	# 2. 拔出原卡并插入到目标索引
-	if dragging_card.get_parent():
-		dragging_card.get_parent().remove_child(dragging_card)
+	# 【修复新增】：先记录卡牌原来的父节点和索引位置
+	var original_parent = dragging_card.get_parent()
+	var original_index = dragging_card.get_index()
+	
+	# 2. 拔出原卡
+	if original_parent:
+		original_parent.remove_child(dragging_card)
 		
+	# 【修复新增】：如果是同列表内从左往右拖，拔出原卡会导致后面的牌左移一位，目标索引必须减 1 修正
+	if original_parent == target_list and original_index < target_index:
+		target_index -= 1
+		
+	# 插入到目标索引
 	target_list.add_child(dragging_card)
 	target_list.move_child(dragging_card, target_index)
 	
@@ -196,17 +221,17 @@ func _drop_card() -> void:
 	dragging_card = null
 
 func confirm_draw() -> void:
-	var drawn_names: Array[String] = []
+	var drawn_card_IDs: Array[int] = []
 	for child in list_bottom.get_children():
 		if child is UICard:
-			drawn_names.append(child.card_name)
+			drawn_card_IDs.append(child.card_ID)
 			
-	var deck_names: Array[String] = []
+	var deck_card_IDs: Array[int] = []
 	for child in list_top.get_children():
 		if child is UICard:
-			deck_names.append(child.card_name)
+			deck_card_IDs.append(child.card_ID)
 			
 	# 发出信号：同时传回更新后的牌堆、以及抽出来的牌
-	draw_confirmed.emit(deck_names, drawn_names)
+	draw_confirmed.emit(deck_card_IDs, drawn_card_IDs)
 	
 	queue_free()

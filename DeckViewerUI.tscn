@@ -1,6 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cdwrvutvmh5qs"]
 
-[ext_resource type="Script" path="res://deck_viewer_ui.gd" id="1_wfta2"]
+[ext_resource type="Script" uid="uid://c0x7w666bfrk0" path="res://deck_viewer_ui.gd" id="1_wfta2"]
 
 [node name="DeckViewerUI" type="CanvasLayer" unique_id=903300809]
 script = ExtResource("1_wfta2")
