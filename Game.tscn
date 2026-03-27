@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://bsikrclgtc511"]
+
+[ext_resource type="PackedScene" uid="uid://ddcouooblmspm" path="res://Card.tscn" id="1_wbfu4"]
+[ext_resource type="Script" uid="uid://uq4u22nep4h0" path="res://card_sorter.gd" id="1_xkndl"]
+[ext_resource type="PackedScene" uid="uid://d2jwkcqllthu8" path="res://Pile.tscn" id="3_u44n3"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4xowi"]
+albedo_color = Color(0, 0.35576674, 0, 1)
+
+[node name="Node3D" type="Node3D" unique_id=804165182]
+
+[node name="Table" type="CSGBox3D" parent="." unique_id=663217799]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.006, -0.501, 0)
+size = Vector3(10, 1, 10)
+material = SubResource("StandardMaterial3D_4xowi")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1740407579]
+transform = Transform3D(2.32, 0, 0, 0, 0.16139796, 0.51929647, 0, -0.73426396, 0.11414613, 1.1062622e-06, 5.3118052, 1.9789071)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2107985037]
+transform = Transform3D(1, 0, 0, 0, -0.7188546, 0.69516045, 0, -0.69516045, -0.7188546, 0, 5.6882696, -7.927021)
+light_energy = 2.0
+
+[node name="CardSorter" type="Node3D" parent="." unique_id=798572210]
+script = ExtResource("1_xkndl")
+
+[node name="Card" parent="CardSorter" unique_id=1083912093 instance=ExtResource("1_wbfu4")]
+
+[node name="Card2" parent="CardSorter" unique_id=770227335 instance=ExtResource("1_wbfu4")]
+
+[node name="Card3" parent="CardSorter" unique_id=437677953 instance=ExtResource("1_wbfu4")]
+
+[node name="Card4" parent="CardSorter" unique_id=1520164052 instance=ExtResource("1_wbfu4")]
+
+[node name="Card5" parent="CardSorter" unique_id=1853541705 instance=ExtResource("1_wbfu4")]
+
+[node name="Pile" parent="." unique_id=1327163761 node_paths=PackedStringArray("card_sorter") instance=ExtResource("3_u44n3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4046633, -1.1920929e-07, 0.6693672)
+card_sorter = NodePath("../CardSorter")

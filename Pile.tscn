@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://d2jwkcqllthu8"]
+
+[ext_resource type="Script" uid="uid://dsw1f6balxrsy" path="res://pile.gd" id="1_n1ose"]
+[ext_resource type="Shader" uid="uid://c13aaqggv28xv" path="res://Card.gdshader" id="2_xbg2n"]
+[ext_resource type="PackedScene" uid="uid://ddcouooblmspm" path="res://Card.tscn" id="2_xwq12"]
+[ext_resource type="PackedScene" path="res://DeckViewerUI.tscn" id="3_7gun0"]
+[ext_resource type="PackedScene" path="res://Hotspot.tscn" id="4_yf45b"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xwq12"]
+render_priority = 0
+shader = ExtResource("2_xbg2n")
+shader_parameter/base_color = Color(1, 1, 1, 1)
+shader_parameter/side_color = Color(0.5, 0.5, 0.5, 1)
+shader_parameter/bottom_center_color = Color(1, 0.8, 0.8, 1)
+shader_parameter/bottom_edge_color = Color(0.6, 0.2, 0.3, 1)
+shader_parameter/gradient_power = 1.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7gun0"]
+size = Vector3(0.62268066, 1.6, 1.081543)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xw5bd"]
+size = Vector3(1, 0.05, 1.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yf45b"]
+transparency = 1
+albedo_color = Color(0.42883012, 0.30935466, 0.92979854, 0.45490196)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7gun0"]
+material = SubResource("StandardMaterial3D_yf45b")
+size = Vector3(1, 0.05, 1.8)
+
+[node name="Pile" type="StaticBody3D" unique_id=1327163761]
+script = ExtResource("1_n1ose")
+card_scene = ExtResource("2_xwq12")
+deck_viewer_scene = ExtResource("3_7gun0")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=1238412883]
+transform = Transform3D(1, 0, 0, 0, -1, 1.509958e-07, 0, -1.509958e-07, -1, 0, 0.8, 0)
+material_override = SubResource("ShaderMaterial_xwq12")
+size = Vector3(0.6, 1.6, 1.06)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=576753542]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00018310547, 0.8, 0.0037136078)
+shape = SubResource("BoxShape3D_7gun0")
+
+[node name="Label3D" type="Label3D" parent="." unique_id=1008790970]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 1.601, 0)
+text = "160"
+
+[node name="Hotspot_Bottom" parent="." unique_id=79941519 instance=ExtResource("4_yf45b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0.075, 0.8)
+
+[node name="Hotspot_Random" parent="." unique_id=1868812066 instance=ExtResource("4_yf45b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0.075, 0.8)
+label_name = "随"
+drop_mode = 2
+
+[node name="BaseArea" type="Area3D" parent="." unique_id=802270280]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BaseArea" unique_id=582823215]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.2)
+shape = SubResource("BoxShape3D_xw5bd")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BaseArea" unique_id=2016712003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.2)
+mesh = SubResource("BoxMesh_7gun0")
+
+[connection signal="input_event" from="Hotspot_Bottom" to="." method="_on_hotspot_bottom_input_event"]
+[connection signal="input_event" from="Hotspot_Random" to="." method="_on_hotspot_random_input_event"]
+[connection signal="input_event" from="BaseArea" to="." method="_on_base_area_input_event"]

@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://ddcouooblmspm"]
+
+[ext_resource type="Shader" uid="uid://c13aaqggv28xv" path="res://Card.gdshader" id="1_dd2wi"]
+[ext_resource type="Script" uid="uid://d31nihsonf0wp" path="res://card.gd" id="1_hael8"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hael8"]
+render_priority = 0
+shader = ExtResource("1_dd2wi")
+shader_parameter/base_color = Color(1, 1, 1, 1)
+shader_parameter/side_color = Color(0.3, 0.3, 0.3, 1)
+shader_parameter/bottom_center_color = Color(1, 0.8, 0.8, 1)
+shader_parameter/bottom_edge_color = Color(0.6, 0.2, 0.3, 1)
+shader_parameter/gradient_power = 1.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hael8"]
+size = Vector3(0.62, 0.001, 1.1)
+
+[node name="Card" type="StaticBody3D" unique_id=1919405561]
+script = ExtResource("1_hael8")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=924045489]
+size = Vector3(0.62, 0.001, 1.1)
+material = SubResource("ShaderMaterial_hael8")
+
+[node name="Label3D" type="Label3D" parent="." unique_id=335604718]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.002, 0)
+text = "你居垦"
+font_size = 25
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1581496274]
+shape = SubResource("BoxShape3D_hael8")

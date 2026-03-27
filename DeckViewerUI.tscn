@@ -1,0 +1,86 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://deck_viewer_ui.gd" id="1_wfta2"]
+
+[node name="DeckViewerUI" type="CanvasLayer" unique_id=903300809]
+script = ExtResource("1_wfta2")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1372290949]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.39215687)
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=655987697]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=1428150827]
+layout_mode = 2
+
+[node name="Label_Top" type="Label" parent="Margin/VBox" unique_id=246684071]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 30
+text = "牌堆"
+horizontal_alignment = 1
+
+[node name="Scroll_Top" type="ScrollContainer" parent="Margin/VBox" unique_id=1679606086]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 0
+
+[node name="List_Top" type="HBoxContainer" parent="Margin/VBox/Scroll_Top" unique_id=91412541]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HSeparator" type="HSeparator" parent="Margin/VBox" unique_id=208696014]
+layout_mode = 2
+size_flags_vertical = 6
+
+[node name="Label_Bottom" type="Label" parent="Margin/VBox" unique_id=1930255135]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "即将取出"
+horizontal_alignment = 1
+
+[node name="Scroll_Bottom" type="ScrollContainer" parent="Margin/VBox" unique_id=400435069]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 2
+
+[node name="List_Bottom" type="HBoxContainer" parent="Margin/VBox/Scroll_Bottom" unique_id=1286617935]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BottomBar" type="HBoxContainer" parent="Margin/VBox" unique_id=1577194228]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Btn_Draw" type="Button" parent="Margin/VBox/BottomBar" unique_id=477980862]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 30
+text = "确定"
+
+[node name="DragPreview" type="Control" parent="." unique_id=827640981]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
