@@ -11,6 +11,11 @@ signal viewer_closed
 @onready var list_bottom   := $Margin/VBox/Scroll_Bottom/List_Bottom
 @onready var drag_preview  := $DragPreview
 @onready var separator     := $Margin/VBox/HSeparator
+@onready var btn_shuffle   := $Margin/VBox/TopContainer/Top_Btns/Btn_Shuffle
+@onready var btn_all_front := $Margin/VBox/TopContainer/Top_Btns/Btn_AllFront
+@onready var btn_all_back  := $Margin/VBox/TopContainer/Top_Btns/Btn_AllBack
+@onready var btn_all_flip  := $Margin/VBox/TopContainer/Top_Btns/Btn_AllFlip
+@onready var btn_draw      := $Margin/VBox/BottomBar/Btn_Draw
 
 # 载入你的 UI 卡牌场景
 var ui_card_scene := preload("res://UICard.tscn")
@@ -25,7 +30,11 @@ var target_list  : Control   = null
 var target_index : int       = 0
 
 func _ready() -> void:
-	$Margin/VBox/BottomBar/Btn_Draw.pressed.connect(confirm_draw)
+	btn_shuffle.pressed.connect(_on_shuffle_pressed)
+	btn_all_front.pressed.connect(_on_all_front_pressed)
+	btn_all_back.pressed.connect(_on_all_back_pressed)
+	btn_all_flip.pressed.connect(_on_all_flip_pressed)
+	btn_draw.pressed.connect(confirm_draw)
 	
 	$Margin.mouse_filter = Control.MOUSE_FILTER_STOP
 	
@@ -66,6 +75,25 @@ func load_deck(deck_list: Array[int], injected_card_ID: int = -1) -> void:
 			injected_card.modulate.a = 1.0
 			_force_start_drag(injected_card)
 	
+func _on_shuffle_pressed():
+	var children = list_top.get_children()
+	children.shuffle() # 打乱这个临时数组
+	# 按照打乱后的数组顺序，重新排列场景树中的节点
+	for i in range(children.size()):
+		list_top.move_child(children[i], i)
+
+func _on_all_front_pressed():
+	for child in list_top.get_children():
+		child.flip_to(true)
+
+func _on_all_back_pressed():
+	for child in list_top.get_children():
+		child.flip_to(false)
+
+func _on_all_flip_pressed():
+	for child in list_top.get_children():
+		child.flip()
+
 # _force_start_drag 也是同理，只设 offset，隐藏本体，创建替身，不建占位符
 func _force_start_drag(card: UICard) -> void:
 	dragging_card = card

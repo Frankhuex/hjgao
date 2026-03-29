@@ -1,0 +1,34 @@
+{
+	"deck_template": {
+		"card_name_to_card_template": {
+			"你居垦": {
+				"name": "你居垦",
+				"count": 3,
+				"description": "徐启星开发的AI"
+			},
+			"梅州干度": {
+				"name": "梅州干度",
+				"count": 2,
+				"description": "梅川千夏开发的AI"
+			}
+		},
+		"ordered_card_names": [
+			"梅州干度",
+            "你居垦"
+		]
+	},
+	"card_ID_to_card_name": {
+		"1": "你居垦",
+		"2": "你居垦",
+		"3": "你居垦",
+		"4": "梅州干度",
+		"5": "梅州干度"
+	},
+	"card_ID_to_is_front": {
+		"1": true,
+		"2": false,
+		"3": true,
+		"4": false,
+		"5": true
+	}
+}

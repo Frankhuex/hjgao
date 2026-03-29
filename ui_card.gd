@@ -24,10 +24,15 @@ func set_shader():
 	material.set_shader_parameter(IS_SOLID_WHITE, CardDatabase.instance().is_front(card_ID))
 
 func flip():
-	var is_front := CardDatabase.instance().flip(card_ID)
+	CardDatabase.instance().flip(card_ID)
 	set_shader()
 	set_text()
-	
+
+func flip_to(is_front: bool):
+	CardDatabase.instance().flip_to(card_ID, is_front)
+	set_shader()
+	set_text()
+
 func setup(id: int):
 	card_ID = id
 	set_shader()

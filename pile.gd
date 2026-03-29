@@ -205,3 +205,6 @@ func _on_draw_confirmed(new_deck_cards: Array[int], drawn_cards: Array[int]):
 		new_card.is_dragging = false
 		new_card.is_dragged_from_pile = false
 		card_sorter.register_card(new_card)
+
+#func shuffle():
+	#card_ID_stack.shuffle()
