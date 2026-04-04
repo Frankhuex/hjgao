@@ -1,6 +1,8 @@
 class_name UICard
 extends ColorRect
 
+@onready var card_database: CardDatabase = get_node("/root/Game/CardDatabase")
+
 var card_ID: int
 const IS_SOLID_WHITE = "is_solid_white"
 
@@ -11,29 +13,34 @@ func _ready():
 	# 将材质独立化，防止修改 Shader 时影响到其他所有卡牌
 	if material:
 		material = material.duplicate()
+	card_database.is_front_updated.connect(func():
+		set_shader()
+		set_text()
+	)
 
 func set_text():
-	var is_front := CardDatabase.instance().is_front(card_ID)
-	var card_name := CardDatabase.instance().get_card_name(card_ID)
+	var is_front := card_database.is_front(card_ID)
+	var card_name := card_database.get_card_name(card_ID)
 	if is_front:
 		$Label.text = card_name
 	else:
 		$Label.text = ""
 
 func set_shader():
-	material.set_shader_parameter(IS_SOLID_WHITE, CardDatabase.instance().is_front(card_ID))
+	material.set_shader_parameter(IS_SOLID_WHITE, card_database.is_front(card_ID))
 
 func flip():
-	CardDatabase.instance().flip(card_ID)
+	card_database.flip(card_ID)
 	set_shader()
 	set_text()
 
 func flip_to(is_front: bool):
-	CardDatabase.instance().flip_to(card_ID, is_front)
+	card_database.flip_to(card_ID, is_front)
 	set_shader()
 	set_text()
 
 func setup(id: int):
+	name = str(id)
 	card_ID = id
 	set_shader()
 	set_text()

@@ -2,6 +2,7 @@ class_name DeckViewerUI
 extends CanvasLayer
 
 signal draw_confirmed(new_deck_list: Array[int], drawn_cards: Array[int])
+signal cancel_confirmed
 signal viewer_closed
 
 # 1. 节点引用：严格匹配最新的 Margin/VBox 层级结构
@@ -15,6 +16,7 @@ signal viewer_closed
 @onready var btn_all_front := $Margin/VBox/TopContainer/Top_Btns/Btn_AllFront
 @onready var btn_all_back  := $Margin/VBox/TopContainer/Top_Btns/Btn_AllBack
 @onready var btn_all_flip  := $Margin/VBox/TopContainer/Top_Btns/Btn_AllFlip
+@onready var btn_cancel    := $Margin/VBox/BottomBar/Btn_Cancel
 @onready var btn_draw      := $Margin/VBox/BottomBar/Btn_Draw
 
 # 载入你的 UI 卡牌场景
@@ -34,7 +36,8 @@ func _ready() -> void:
 	btn_all_front.pressed.connect(_on_all_front_pressed)
 	btn_all_back.pressed.connect(_on_all_back_pressed)
 	btn_all_flip.pressed.connect(_on_all_flip_pressed)
-	btn_draw.pressed.connect(confirm_draw)
+	btn_cancel.pressed.connect(_on_cancel_pressed)
+	btn_draw.pressed.connect(_on_confirm_pressed)
 	
 	$Margin.mouse_filter = Control.MOUSE_FILTER_STOP
 	
@@ -103,16 +106,16 @@ func _force_start_drag(card: UICard) -> void:
 	
 	card.hide()
 	
+	for child in drag_preview.get_children():
+		child.queue_free()
+		
 	var visual_copy := card.duplicate() as Control
-	visual_copy.setup(card.card_ID)
+	drag_preview.add_child(visual_copy)
+	visual_copy.setup(card.card_ID) #setup必须在add_child之后
 	visual_copy.show()
 	visual_copy.modulate.a = 0.7
 	visual_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visual_copy.size = c_size
-	
-	for child in drag_preview.get_children():
-		child.queue_free()
-	drag_preview.add_child(visual_copy)
 	drag_preview.show()
 			
 # --- 核心 1：开始拖拽 ---
@@ -122,16 +125,16 @@ func _on_card_drag_started(card: UICard) -> void:
 	
 	# 隐藏真实卡牌，不创建任何占位符！
 	card.hide()
+	for child in drag_preview.get_children():
+		child.queue_free()
 	
 	var visual_copy := card.duplicate() as Control
-	visual_copy.setup(card.card_ID)
+	drag_preview.add_child(visual_copy)
+	visual_copy.setup(card.card_ID) #setup必须在add_child之后
 	visual_copy.show()
 	visual_copy.modulate.a = 0.7
 	visual_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE 
 	
-	for child in drag_preview.get_children():
-		child.queue_free()
-	drag_preview.add_child(visual_copy)
 	drag_preview.show()	
 	
 # --- 核心 2：系统输入监控（松手与滚轮） ---
@@ -248,7 +251,11 @@ func _drop_card() -> void:
 	dragging_card.show()
 	dragging_card = null
 
-func confirm_draw() -> void:
+func _on_cancel_pressed():
+	cancel_confirmed.emit()
+	queue_free()
+
+func _on_confirm_pressed():
 	var drawn_card_IDs: Array[int] = []
 	for child in list_bottom.get_children():
 		if child is UICard:
@@ -261,5 +268,4 @@ func confirm_draw() -> void:
 			
 	# 发出信号：同时传回更新后的牌堆、以及抽出来的牌
 	draw_confirmed.emit(deck_card_IDs, drawn_card_IDs)
-	
 	queue_free()

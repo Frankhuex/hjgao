@@ -15,17 +15,30 @@ shader_parameter/gradient_power = 1.0
 [sub_resource type="BoxShape3D" id="BoxShape3D_hael8"]
 size = Vector3(0.62, 0.001, 1.1)
 
-[node name="Card" type="StaticBody3D" unique_id=1919405561]
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_hael8"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:card_ID")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
+[node name="Card" type="StaticBody3D" unique_id=778066825]
 script = ExtResource("1_hael8")
 
-[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=924045489]
+[node name="Pivot" type="Node3D" parent="." unique_id=1615187407]
+
+[node name="CSGBox3D" type="CSGBox3D" parent="Pivot" unique_id=924045489]
 size = Vector3(0.62, 0.001, 1.1)
 material = SubResource("ShaderMaterial_hael8")
 
-[node name="Label3D" type="Label3D" parent="." unique_id=335604718]
+[node name="Label3D" type="Label3D" parent="Pivot" unique_id=335604718]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.002, 0)
 text = "你居垦"
 font_size = 25
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1581496274]
 shape = SubResource("BoxShape3D_hael8")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1249310585]
+replication_config = SubResource("SceneReplicationConfig_hael8")

@@ -1,0 +1,36 @@
+[gd_scene format=3 uid="uid://d05535j5ttq4t"]
+
+[ext_resource type="Script" uid="uid://c5afbppyuphmc" path="res://player.gd" id="1_xhfnw"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xhfnw"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xhfnw"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_xhfnw"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_xhfnw")
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_kpjcp"]
+properties/0/path = NodePath(".:rotation")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:position")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("CameraPivot:rotation")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+
+[node name="Player" type="CharacterBody3D" unique_id=30484670]
+script = ExtResource("1_xhfnw")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=676354337]
+shape = SubResource("BoxShape3D_xhfnw")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2045795130]
+mesh = SubResource("BoxMesh_xhfnw")
+
+[node name="CameraPivot" type="Node3D" parent="." unique_id=1345078715]
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=362441008]
+replication_config = SubResource("SceneReplicationConfig_kpjcp")

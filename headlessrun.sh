@@ -1,0 +1,1 @@
+nohup ./HJGAOv1.0.x86_64 --headless --port=13000 > nohup13000.out &

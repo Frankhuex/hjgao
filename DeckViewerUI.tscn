@@ -104,6 +104,13 @@ size_flags_vertical = 10
 theme_override_constants/separation = 50
 alignment = 1
 
+[node name="Btn_Cancel" type="Button" parent="Margin/VBox/BottomBar" unique_id=718422273]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 30
+text = "取消"
+
 [node name="Btn_Draw" type="Button" parent="Margin/VBox/BottomBar" unique_id=477980862]
 layout_mode = 2
 size_flags_horizontal = 6

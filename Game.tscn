@@ -1,28 +1,134 @@
 [gd_scene format=3 uid="uid://bsikrclgtc511"]
 
+[ext_resource type="Script" uid="uid://chfax7q1qrmk8" path="res://game.gd" id="1_u44n3"]
 [ext_resource type="Script" uid="uid://uq4u22nep4h0" path="res://card_sorter.gd" id="1_xkndl"]
-[ext_resource type="PackedScene" uid="uid://d2jwkcqllthu8" path="res://Pile.tscn" id="3_u44n3"]
+[ext_resource type="Script" uid="uid://chvo27h7goylb" path="res://card_database.gd" id="3_u44n3"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4xowi"]
 albedo_color = Color(0, 0.35576674, 0, 1)
 
-[node name="Node3D" type="Node3D" unique_id=804165182]
+[node name="Game" type="Node3D" unique_id=804165182]
+script = ExtResource("1_u44n3")
 
 [node name="Table" type="CSGBox3D" parent="." unique_id=663217799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.006, -0.501, 0)
 size = Vector3(10, 1, 10)
 material = SubResource("StandardMaterial3D_4xowi")
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=1740407579]
+[node name="MainCamera3D" type="Camera3D" parent="." unique_id=1740407579]
 transform = Transform3D(2.32, 0, 0, 0, 0.16139796, 0.51929647, 0, -0.73426396, 0.11414613, 1.1062622e-06, 5.3118052, 1.9789071)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2107985037]
-transform = Transform3D(1, 0, 0, 0, -0.7188546, 0.69516045, 0, -0.69516045, -0.7188546, 0, 5.6882696, -7.927021)
-light_energy = 2.0
+[node name="DirectionalLight3D1" type="DirectionalLight3D" parent="." unique_id=2107985037]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 6.115, 0)
+light_energy = 3.0
+
+[node name="OmniLight3D1" type="OmniLight3D" parent="." unique_id=1659391117]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 3, 0)
+light_energy = 10.0
+
+[node name="OmniLight3D2" type="OmniLight3D" parent="." unique_id=705429776]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 5)
+light_energy = 10.0
+
+[node name="OmniLight3D3" type="OmniLight3D" parent="." unique_id=923408197]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, 0)
+light_energy = 10.0
+
+[node name="OmniLight3D4" type="OmniLight3D" parent="." unique_id=1732515952]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
+light_energy = 10.0
 
 [node name="CardSorter" type="Node3D" parent="." unique_id=798572210]
 script = ExtResource("1_xkndl")
 
-[node name="Pile" parent="." unique_id=1327163761 node_paths=PackedStringArray("card_sorter") instance=ExtResource("3_u44n3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4046633, -1.1920929e-07, 0.6693672)
-card_sorter = NodePath("../CardSorter")
+[node name="Piles" type="Node3D" parent="." unique_id=1750019929]
+
+[node name="Players" type="Node3D" parent="." unique_id=265579992]
+
+[node name="MultiplayerSpawner_Players" type="MultiplayerSpawner" parent="." unique_id=1597767709]
+_spawnable_scenes = PackedStringArray("uid://d05535j5ttq4t")
+spawn_path = NodePath("../Players")
+
+[node name="MultiplayerSpawner_CardSorter" type="MultiplayerSpawner" parent="." unique_id=559555302]
+_spawnable_scenes = PackedStringArray("uid://ddcouooblmspm")
+spawn_path = NodePath("../CardSorter")
+
+[node name="MultiplayerSpawner_Piles" type="MultiplayerSpawner" parent="." unique_id=588282875]
+_spawnable_scenes = PackedStringArray("uid://d2jwkcqllthu8")
+spawn_path = NodePath("../Piles")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1552652310]
+
+[node name="MainMenu" type="Control" parent="CanvasLayer" unique_id=440085742]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/MainMenu" unique_id=531369724]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer" unique_id=141638714]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=291802790]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 6
+
+[node name="InputHostPort" type="LineEdit" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1890760576]
+layout_mode = 2
+text = "7777"
+placeholder_text = "Port"
+expand_to_text_length = true
+
+[node name="HostButton" type="Button" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1403553250]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_font_sizes/font_size = 30
+text = "创建房间"
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=1277749552]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1670988239]
+layout_mode = 2
+size_flags_horizontal = 6
+text = "或"
+horizontal_alignment = 1
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=972983494]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="InputJoinIP" type="LineEdit" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=924659126]
+layout_mode = 2
+text = "127.0.0.1"
+placeholder_text = "IP"
+expand_to_text_length = true
+
+[node name="InputJoinPort" type="LineEdit" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=321656167]
+layout_mode = 2
+text = "7777"
+placeholder_text = "Port"
+expand_to_text_length = true
+
+[node name="JoinButton" type="Button" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=2087094812]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "加入房间"
+
+[node name="CardDatabase" type="Node" parent="." unique_id=1721052179]
+script = ExtResource("3_u44n3")
+
+[connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/HostButton" to="." method="_on_host_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/JoinButton" to="." method="_on_join_button_pressed"]
