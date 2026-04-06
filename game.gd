@@ -51,12 +51,12 @@ func start_server(port: int, headless: bool):
 	multiplayer.multiplayer_peer = peer
 	multiplayer.peer_connected.connect(_on_peer_connected)	
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
-	
-	if headless:
-		return
-	var self_player := add_player(multiplayer.get_unique_id())
-	create_pile_for_player([], self_player)
 	add_pile(card_database.get_all_IDs(), "公共牌堆")
+	
+	if not headless:
+		var self_player := add_player(multiplayer.get_unique_id())
+		create_pile_for_player([], self_player)
+	
 	
 	if main_menu:
 		main_menu.hide()

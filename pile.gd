@@ -26,8 +26,101 @@ enum CardSource {
 	RANDOM = 2,
 }
 
+### Broadcast card_ID_stack (done)
+var card_ID_stack: Array[int]
+signal stack_updated
+
+func server_broadcast_card_ID_stack():
+	if multiplayer.is_server(): return
+	broadcast_card_ID_stack.rpc(card_ID_stack)
+
+@rpc("any_peer", "call_remote", "reliable")
+func broadcast_card_ID_stack(data: Array):
+	card_ID_stack = Array(data, TYPE_INT, &"", null)
+	stack_updated.emit()
+	print("pile.broadcast_card_ID_stack: ", card_ID_stack.size())
+
+### Access status for card spawn, receive, and pile open (done)
+var access_authority_id := 1
+enum Usage {
+	OPEN_PILE = 0,
+	DRAW_CARD = 1,
+	RECEIVE_CARD = 2,
+}
+signal self_got_access(usage: Usage)
+signal self_lost_access
+func request_access(usage: Usage):
+	if access_authority_id != 1: return
+	server_give_accessibility.rpc(1, usage)
+
+func finish_access():
+	if access_authority_id != multiplayer.get_unique_id(): return
+	server_withdraw_accessibility.rpc(1)
+	
+@rpc("any_peer", "call_remote", "reliable")
+func server_give_accessibility(usage: Usage):
+	if not multiplayer.is_server() or access_authority_id != 1: return
+	broadcast_set_accessibility.rpc(multiplayer.get_remote_sender_id(), usage)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_withdraw_accessibility():
+	if not multiplayer.is_server() or access_authority_id == 1: return
+	broadcast_set_accessibility.rpc(1, null)
+
+@rpc("any_peer", "call_local", "reliable")
+func broadcast_set_accessibility(new_id: int, usage: Usage):
+	access_authority_id = new_id
+	if usage != null:
+		self_got_access.emit(usage)
+		print("User ", new_id, " got access to pile for usage: ", usage)
+	else:
+		self_lost_access.emit()
+		print("User ", new_id, "returned access")
+
+### Receive card (done)
+
+func request_receive_card_access() -> bool:
+	if access_authority_id != 1: return false
+	request_access(Usage.RECEIVE_CARD)
+	return true
+
+func let_server_receive_card(returned_card_ID: int, card_source: CardSource):
+	server_receive_card.rpc_id(1, returned_card_ID, card_source)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_receive_card(returned_card_ID: int, card_source: CardSource):
+	if not multiplayer.is_server(): return
+	match card_source:
+		CardSource.BOTTOM:
+			card_ID_stack.push_back(returned_card_ID)
+		CardSource.TOP:
+			card_ID_stack.push_front(returned_card_ID)
+		CardSource.RANDOM:
+			var idx = randi() % (card_ID_stack.size() + 1)
+			card_ID_stack.insert(idx, returned_card_ID)
+	server_broadcast_card_ID_stack()
+	card_sorter.server_unregister_card(returned_card_ID)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################################################################
+# Not Done
+
 func _ready():
-	#card_ID_stack = card_database.get_all_IDs()
 	stack_updated.connect(_update_visuals)
 	multiplayer.peer_connected.connect(func(id: int): 
 		if multiplayer.is_server():
@@ -35,45 +128,11 @@ func _ready():
 			broadcast_global_rotation_y.rpc(global_rotation.y)
 	)
 	_update_visuals(	)
-	
+
 @rpc("any_peer", "call_local", "reliable")
 func broadcast_global_rotation_y(rot_y: float):
 	global_rotation.y = rot_y
-	
-#################################################################
-var card_ID_stack: Array[int]
-signal stack_updated
-func call_server_to_broadcast_card_ID_stack():
-	server_broadcast_card_ID_stack.rpc_id(1, card_ID_stack)
 
-@rpc("any_peer", "call_local", "reliable")
-func server_broadcast_card_ID_stack(new_data: Array):
-	card_ID_stack = Array(new_data, TYPE_INT, &"", null)
-	broadcast_card_ID_stack.rpc(card_ID_stack)
-
-@rpc("authority", "call_local", "reliable")
-func broadcast_card_ID_stack(data: Array):
-	card_ID_stack = Array(data, TYPE_INT, &"", null)
-	stack_updated.emit()
-	print("pile.broadcast_card_ID_stack: ", card_ID_stack.size())
-
-#################################################################
-var is_being_accessed := false
-func sync_set_is_being_accessed(_is_being_accessed):
-	print("sync_set_is_being_accessed: ",_is_being_accessed)
-	server_broadcast_accessibility.rpc_id(1, _is_being_accessed)
-
-@rpc("any_peer", "call_local", "reliable")
-func server_broadcast_accessibility(_is_being_accessed: bool):
-	if multiplayer.is_server():
-		broadcast_accessibility.rpc(_is_being_accessed)
-
-@rpc("authority", "call_local", "reliable")
-func broadcast_accessibility(_is_being_accessed: bool):
-	is_being_accessed = _is_being_accessed
-	print("broadcast_accessibility: ",is_being_accessed)
-
-#################################################################
 func _update_visuals():
 	if not is_node_ready(): return
 	var h := card_ID_stack.size() * CARD_THICKNESS
@@ -99,7 +158,7 @@ func _input_event(_camera, event, _position, _normal, _shape_idx):
 
 func _on_hotspot_bottom_input_event(camera: Node, event: InputEvent, event_position: Vector3, normal: Vector3, shape_idx: int) -> void:
 	if event is InputEventMouseButton:
-		if is_being_accessed: return
+		if access_authority_id != 1: return
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if card_ID_stack.size() > 0:
 				spawn_and_drag_card(CardSource.BOTTOM)
@@ -107,7 +166,7 @@ func _on_hotspot_bottom_input_event(camera: Node, event: InputEvent, event_posit
 
 func _on_hotspot_random_input_event(camera: Node, event: InputEvent, event_position: Vector3, normal: Vector3, shape_idx: int) -> void:
 	if event is InputEventMouseButton:
-		if is_being_accessed: return
+		if access_authority_id != 1: return
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if card_ID_stack.size() > 0:
 				spawn_and_drag_card(CardSource.RANDOM)
@@ -115,7 +174,7 @@ func _on_hotspot_random_input_event(camera: Node, event: InputEvent, event_posit
 
 func spawn_and_drag_card(card_source: CardSource):
 	if card_ID_stack.is_empty(): return
-	if is_being_accessed: return
+	if access_authority_id != 1: return
 	
 	var drawn_card_ID: int
 	var spawn_y: float
@@ -163,26 +222,13 @@ func server_init_card(drawn_card_ID: int, spawn_global_position: Vector3, global
 	#new_card.input_ray_pickable = false
 	#new_card.set_card(id)
 
-# 【回收】：供卡牌调用
-func receive_card_and_call_server_to_broadcast(returned_card_ID: int, card_source: CardSource) -> bool:
-	if is_being_accessed: return false
-	sync_set_is_being_accessed(true)
-	match card_source:
-		CardSource.BOTTOM:
-			card_ID_stack.push_back(returned_card_ID)
-		CardSource.TOP:
-			card_ID_stack.push_front(returned_card_ID)
-		CardSource.RANDOM:
-			var idx = randi() % (card_ID_stack.size() + 1)
-			card_ID_stack.insert(idx, returned_card_ID)
-	call_server_to_broadcast_card_ID_stack()
-	#_update_visuals()
-	sync_set_is_being_accessed(false)
-	return true
-	
+
+
+
+###
+
 func get_y_when_over_pile() -> float:
 	return BASE_THICKNESS + card_ID_stack.size() * CARD_THICKNESS + HEIGHT_ABOVE_PILE
-
 
 func _on_base_area_input_event(camera: Node, event: InputEvent, _event_position: Vector3, _normal: Vector3, _shape_idx: int) -> void:
 	if event is InputEventMouseButton:
