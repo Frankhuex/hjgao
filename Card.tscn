@@ -26,7 +26,7 @@ properties/1/replication_mode = 1
 [node name="Card" type="StaticBody3D" unique_id=778066825]
 script = ExtResource("1_hael8")
 
-[node name="Pivot" type="Node3D" parent="." unique_id=1615187407]
+[node name="Pivot" type="Node3D" parent="." unique_id=316990854]
 
 [node name="CSGBox3D" type="CSGBox3D" parent="Pivot" unique_id=924045489]
 size = Vector3(0.62, 0.001, 1.1)
