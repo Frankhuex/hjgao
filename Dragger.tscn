@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dyr770lpagwk0"]
+
+[ext_resource type="Script" uid="uid://cuyg7mi35jdrt" path="res://dragger.gd" id="1_1rqba"]
+
+[node name="Dragger" type="Node" unique_id=1082115958]
+script = ExtResource("1_1rqba")

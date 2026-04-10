@@ -29,6 +29,14 @@ static func my_id(node: Node):
 static func sender_id(node: Node):
 	return node.multiplayer.get_remote_sender_id()
 
+static func get_mouse_intersect_horizontal_plane(node: Node, y: float) -> Vector3:
+	var camera     := node.get_viewport().get_camera_3d()
+	var mouse_pos  := node.get_viewport().get_mouse_position()
+	var ray_origin := camera.project_ray_origin(mouse_pos)
+	var ray_normal := camera.project_ray_normal(mouse_pos)
+	var plane      := Plane(Vector3.UP, y)
+	return plane.intersects_ray(ray_origin, ray_normal) as Vector3
+
 static func map_dict_values(dict: Dictionary, function: Callable) -> Dictionary:
 	var result = {}
 	for key in dict:

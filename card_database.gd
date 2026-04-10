@@ -1,7 +1,7 @@
 class_name CardDatabase
 extends Node
 
-var deck_instance := load_deck_instance_from_json("res://poker.json")
+@onready var deck_instance := load_deck_instance_from_json("res://poker.json")
 
 func load_deck_instance_from_json(file_path: String) -> DeckInstance:
 	return DeckInstance.load_from_json(load_json_file(file_path))
