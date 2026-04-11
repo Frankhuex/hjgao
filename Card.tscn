@@ -3,6 +3,7 @@
 [ext_resource type="Shader" uid="uid://c13aaqggv28xv" path="res://Card.gdshader" id="1_dd2wi"]
 [ext_resource type="Script" uid="uid://d31nihsonf0wp" path="res://card.gd" id="1_hael8"]
 [ext_resource type="PackedScene" uid="uid://dyr770lpagwk0" path="res://Dragger.tscn" id="3_21rx5"]
+[ext_resource type="PackedScene" uid="uid://bp6swckcvbg1s" path="res://OwnerMux.tscn" id="4_3ujke"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hael8"]
 render_priority = 0
@@ -45,3 +46,5 @@ shape = SubResource("BoxShape3D_hael8")
 replication_config = SubResource("SceneReplicationConfig_hael8")
 
 [node name="Dragger" parent="." unique_id=1082115958 instance=ExtResource("3_21rx5")]
+
+[node name="OwnerMux" parent="." unique_id=1247069880 instance=ExtResource("4_3ujke")]

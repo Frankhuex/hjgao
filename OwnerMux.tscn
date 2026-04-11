@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bp6swckcvbg1s"]
+
+[ext_resource type="Script" uid="uid://b5whcxckakgjn" path="res://owner_mux.gd" id="1_0bb1c"]
+
+[node name="Owner" type="Node" unique_id=1247069880]
+script = ExtResource("1_0bb1c")

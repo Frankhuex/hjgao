@@ -26,7 +26,7 @@ static func load_from_json(input: Variant) -> CardTemplate:
 		push_error("Failed to load CardTemplate from JSON. Field 'name' not found.")
 		return null
 	
-	var raw_count = dict.get("count", 1)
+	var raw_count: int = dict.get("count", 1)
 	if not (Util.is_number(raw_count)):
 		push_error("CardTemplate 加载失败：'count' 必须是数字")
 		return null

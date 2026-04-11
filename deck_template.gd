@@ -55,8 +55,7 @@ static func load_from_json(input: Variant) -> DeckTemplate:
 		ordered_card_names = card_name_to_card_template.keys()
 		ordered_card_names.sort()
 	elif dict["ordered_card_names"] is Array:
-		# 关键：必须用 assign，因为 JSON 读出来的是 Array (Variant)
-		ordered_card_names.assign(dict["ordered_card_names"])
+		ordered_card_names = dict["ordered_card_names"]
 	else:
 		push_error("Failed: ordered_card_names must be Array[String]")
 		return null

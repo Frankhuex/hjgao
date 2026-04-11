@@ -27,12 +27,13 @@ func server_reorder_cards():
 		card.global_position.y = i * CARD_THICKNESS
 
 # Drag/Drop Card
-func server_drag_card(id: int):
+func server_unregister_card(id: int):
 	if Util.not_server(self): return
+	if not card_ID_stack.has(id): return
 	card_ID_stack.erase(id)
 	server_reorder_cards()
 	
-func server_drop_card(id: int):
+func server_register_card(id: int):
 	if Util.not_server(self): return
 	if card_ID_stack.has(id): return
 	card_ID_stack.append(id)
@@ -42,11 +43,3 @@ func server_drop_card(id: int):
 func server_card_collect_into_pile(id: int): #被Pile内的rpc函数调用
 	if Util.not_server(self): return
 	get_card(id).queue_free() #此时牌在空中，ID不在栈内，因此直接删除即可
-
-const CARD = preload("res://Card.tscn")
-func server_card_spawn_from_pile(id: int) -> Card:
-	if Util.not_server(self): return
-	var card: Card = CARD.instantiate()
-	card.preready(str(id))
-	add_child(card)
-	return card

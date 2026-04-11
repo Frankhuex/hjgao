@@ -77,7 +77,7 @@ func add_player(id: int) -> Node:
 	return player
 
 func add_pile(card_IDs: Array[int], pile_name: String) -> Node:
-	var pile := PILE.instantiate()
+	var pile: Pile = PILE.instantiate()
 	pile.card_ID_stack = card_IDs
 	pile.name = pile_name
 	piles.add_child(pile)
