@@ -40,6 +40,6 @@ func server_register_card(id: int):
 	server_reorder_cards()
 	
 # Into/From Pile
-func server_card_collect_into_pile(id: int): #被Pile内的rpc函数调用
+func server_collect_card_into_pile(id: int): #被Pile内的rpc函数调用
 	if Util.not_server(self): return
 	get_card(id).queue_free() #此时牌在空中，ID不在栈内，因此直接删除即可

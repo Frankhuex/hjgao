@@ -57,15 +57,15 @@ static func load_from_json(input: Variant) -> DeckInstance:
 		push_error("Failed to load DeckInstance: card_ID_to_card_name must be Dictionary.")
 		return null
 	else:
-		var raw_id_dict: Dictionary[String, Variant] = raw_id_map
+		var raw_id_dict: Dictionary = raw_id_map
 		# 情况 B：从 JSON 恢复映射
 		for card_ID_str in raw_id_dict:
-			if not card_ID_str.is_valid_int():
+			if not str(card_ID_str).is_valid_int():
 				push_error("Failed to load DeckInstance: card_ID must be integer string.")
 				return null
 			
 			var card_name = str(raw_id_map[card_ID_str])
-			card_ID_to_card_name[int(card_ID_str)] = card_name
+			card_ID_to_card_name[int(str(card_ID_str))] = card_name
 			
 			card_name_to_count[card_name] = card_name_to_count.get(card_name, 0) + 1
 		

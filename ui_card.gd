@@ -15,7 +15,7 @@ func _ready():
 	if material:
 		material = material.duplicate()
 	update_ui()
-	_card_db.on_flip.connect(func(id: int, is_front: bool): update_ui())
+	_card_db.on_flip.connect(update_ui)
 
 func _gui_input(event: InputEvent):
 	if Util.is_left_mouse_down(event):
@@ -32,11 +32,14 @@ func update_ui():
 		_label.text = card_name
 	else:
 		_label.text = ""
-	(material as ShaderMaterial).set_shader_parameter(IS_SOLID_WHITE, _card_db.is_front(card_ID()))
+	(material as ShaderMaterial).set_shader_parameter(IS_SOLID_WHITE, is_front)
 
 # Flipping
 func request_flip():
 	_card_db.request_flip(card_ID())
+
+func request_flip_to(is_front: bool):
+	_card_db.request_flip_to(card_ID(), is_front)
 
 # Util
 func card_ID() -> int:

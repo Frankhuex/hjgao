@@ -3,10 +3,13 @@ extends Resource
 
 @export var card_name_to_card_template: Dictionary[String, CardTemplate]
 @export var ordered_card_names: Array[String]
+var card_name_to_priority: Dictionary[String, int] = {}
 
 func _init(card_name_to_card_template: Dictionary[String, CardTemplate], ordered_card_names: Array[String]):
 	self.card_name_to_card_template = card_name_to_card_template
 	self.ordered_card_names = ordered_card_names
+	for i in range(ordered_card_names.size()):
+		card_name_to_priority[ordered_card_names[i]] = i
 
 func to_dict() -> Dictionary[String,Variant]:
 	var output: Dictionary[String,Variant] = {}
@@ -55,7 +58,8 @@ static func load_from_json(input: Variant) -> DeckTemplate:
 		ordered_card_names = card_name_to_card_template.keys()
 		ordered_card_names.sort()
 	elif dict["ordered_card_names"] is Array:
-		ordered_card_names = dict["ordered_card_names"]
+		var array: Array = dict["ordered_card_names"]
+		ordered_card_names.assign(array)
 	else:
 		push_error("Failed: ordered_card_names must be Array[String]")
 		return null

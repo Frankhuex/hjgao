@@ -1,6 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://pyv2vqpmvoo0"]
 
-[ext_resource type="Script" path="res://hotspot.gd" id="1_r1in7"]
+[ext_resource type="Script" uid="uid://cfka4p6eb5rki" path="res://hotspot.gd" id="1_r1in7"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_u4r53"]
 height = 0.001

@@ -1,14 +1,14 @@
 class_name Hotspot
 extends Area3D
 
-@onready var mesh  := $MeshInstance3D
-@onready var label := $Label3D
+@onready var mesh: MeshInstance3D = $MeshInstance3D
+@onready var label: Label3D = $Label3D
 
 @export var label_name := "底"
-@export var drop_mode  := Pile.CardSource.BOTTOM
+@export var drop_mode  := Const.CardSource.BOTTOM
 
-var parent_pile : Pile
-var material    : StandardMaterial3D
+var parent_pile: Pile
+var material: StandardMaterial3D
 
 const normal_color   = Color(1, 1, 1, 1)
 const hover_color    = Color(1, 1, 0, 1)

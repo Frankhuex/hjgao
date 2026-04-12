@@ -6,21 +6,20 @@ const CARD = preload("res://Card.tscn")
 @onready var _card_database: CardDatabase = get_node("/root/Game/CardDatabase")
 @onready var _parent: Pile = get_parent()
 
-var _owner_mux: OwnerMux
-
-func config(owner_mux: OwnerMux):
-	_owner_mux = owner_mux
-	_owner_mux.on_owner_change.connect(server_spawn_card)
+func config():
+	_parent.owner_mux.on_owner_change.connect(server_spawn_card_from_source)
 	
 func request_spawn_card(source: Const.CardSource) -> bool:
-	return _owner_mux.request_own(Const.INPUT_SOURCE_TO_PURPOSE[source])
+	return _parent.owner_mux.request_own(Const.OUTPUT_SOURCE_TO_PURPOSE[source])
 
-func server_spawn_card():
+func server_spawn_card_from_source():
 	if Util.not_server(self): return
-	if not Util.is_pile_output_purpose(_owner_mux.purpose): return
+	if not Util.is_pile_output_purpose(_parent.owner_mux.purpose): return
+	if len(_parent.card_ID_stack) == 0: 
+		_parent.owner_mux.server_reset_owner()
+		return
 	var card_ID: int
-	var spawn_pos := _parent.calc_spawn_pos([card_ID])[card_ID]
-	var source := Const.PURPOSE_TO_SOURCE[_owner_mux.purpose]
+	var source := Const.PURPOSE_TO_SOURCE[_parent.owner_mux.purpose]
 	match source:
 		Const.CardSource.BOTTOM:
 			card_ID = _parent.card_ID_stack.pop_back()
@@ -29,8 +28,16 @@ func server_spawn_card():
 		Const.CardSource.RANDOM:
 			var random_index := randi() % _parent.card_ID_stack.size()
 			card_ID = _parent.card_ID_stack.pop_at(random_index)
-	var card: Card = CARD.instantiate()
-	var camera := get_viewport().get_camera_3d()
-	card.preready(card_ID, spawn_pos, camera.global_rotation.y)
-	_card_sorter.add_child(card)
-	_card_sorter.server_register_card(card.card_ID())
+	server_spawn_card_by_IDs([card_ID])
+	_parent.server_sync_card_ID_stack()
+	_parent.owner_mux.server_reset_owner()
+
+func server_spawn_card_by_IDs(card_IDs: Array[int]):
+	if Util.not_server(self): return
+	var card_ID_to_spawn_pos := _parent.calc_spawn_pos(card_IDs)
+	for card_ID in card_ID_to_spawn_pos:
+		var spawn_pos := card_ID_to_spawn_pos[card_ID]
+		var card: Card = CARD.instantiate()
+		card.preready(card_ID, spawn_pos)
+		_card_sorter.add_child(card)
+		_card_sorter.server_register_card(card.card_ID())
