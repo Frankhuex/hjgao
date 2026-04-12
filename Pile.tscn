@@ -2,7 +2,12 @@
 
 [ext_resource type="Script" uid="uid://dsw1f6balxrsy" path="res://pile.gd" id="1_n1ose"]
 [ext_resource type="Shader" uid="uid://c13aaqggv28xv" path="res://Card.gdshader" id="2_xbg2n"]
-[ext_resource type="PackedScene" path="res://Hotspot.tscn" id="4_yf45b"]
+[ext_resource type="PackedScene" uid="uid://dyr770lpagwk0" path="res://Dragger.tscn" id="4_xw5bd"]
+[ext_resource type="PackedScene" uid="uid://pyv2vqpmvoo0" path="res://Hotspot.tscn" id="4_yf45b"]
+[ext_resource type="Script" uid="uid://bkqni6q14cbqo" path="res://pile_accessor.gd" id="5_xw5bd"]
+[ext_resource type="PackedScene" uid="uid://bp6swckcvbg1s" path="res://OwnerMux.tscn" id="6_7gun0"]
+[ext_resource type="Script" uid="uid://dcxmosbkoixjo" path="res://pile_card_spawner.gd" id="7_gkw3i"]
+[ext_resource type="Script" uid="uid://q06pjih3t25r" path="res://pile_card_receiver.gd" id="8_85taq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xwq12"]
 render_priority = 0
@@ -69,6 +74,19 @@ mesh = SubResource("BoxMesh_7gun0")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1454636755]
 replication_config = SubResource("SceneReplicationConfig_gkw3i")
+
+[node name="Dragger" parent="." unique_id=1082115958 instance=ExtResource("4_xw5bd")]
+
+[node name="Accessor" type="Node" parent="." unique_id=1683179407]
+script = ExtResource("5_xw5bd")
+
+[node name="OwnerMux" parent="." unique_id=1247069880 instance=ExtResource("6_7gun0")]
+
+[node name="CardSpawner" type="Node" parent="." unique_id=1086951258]
+script = ExtResource("7_gkw3i")
+
+[node name="CardReceiver" type="Node" parent="." unique_id=1683815940]
+script = ExtResource("8_85taq")
 
 [connection signal="input_event" from="Hotspot_Bottom" to="." method="_on_hotspot_bottom_input_event"]
 [connection signal="input_event" from="Hotspot_Random" to="." method="_on_hotspot_random_input_event"]

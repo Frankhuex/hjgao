@@ -57,14 +57,15 @@ static func load_from_json(input: Variant) -> DeckInstance:
 		push_error("Failed to load DeckInstance: card_ID_to_card_name must be Dictionary.")
 		return null
 	else:
+		var raw_id_dict: Dictionary = raw_id_map
 		# 情况 B：从 JSON 恢复映射
-		for card_ID_str in raw_id_map:
-			if not card_ID_str.is_valid_int():
+		for card_ID_str in raw_id_dict:
+			if not str(card_ID_str).is_valid_int():
 				push_error("Failed to load DeckInstance: card_ID must be integer string.")
 				return null
 			
 			var card_name = str(raw_id_map[card_ID_str])
-			card_ID_to_card_name[int(card_ID_str)] = card_name
+			card_ID_to_card_name[int(str(card_ID_str))] = card_name
 			
 			card_name_to_count[card_name] = card_name_to_count.get(card_name, 0) + 1
 		
@@ -82,9 +83,10 @@ static func load_from_json(input: Variant) -> DeckInstance:
 	if not (raw_front_map is Dictionary):
 		push_error("Failed to load DeckInstance: card_ID_to_is_front must be Dictionary.")
 		return null
-		
+	
+	var raw_front_dict: Dictionary[String, bool]
 	for card_ID in card_ID_to_card_name:
-		var val = raw_front_map.get(str(card_ID), false) # JSON key 是字符串
+		var val = raw_front_dict.get(str(card_ID), false) # JSON key 是字符串
 		if not (val is bool): # 修正语法错误
 			push_error("Failed to load DeckInstance: is_front value must be bool.")
 			return null

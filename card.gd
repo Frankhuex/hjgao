@@ -1,183 +1,100 @@
 class_name Card
 extends StaticBody3D
 
+@onready var _card_db: CardDatabase   = get_node("/root/Game/CardDatabase")
+@onready var _card_sorter: CardSorter = get_node("/root/Game/CardSorter")
+@onready var _label: Label3D      = $Pivot/Label3D
+@onready var _pivot: Node3D       = $Pivot
+@onready var _dragger: Dragger    = $Dragger
+@onready var _owner_mux: OwnerMux = $OwnerMux
+
 const DRAGGING_Y       = 0.5
-const TAKE_UP_DURATION = 0.1
-const FLIP_DURATION    = 0.3
+const UP_DOWN_DURATION = 0.1
 
-@onready var card_database: CardDatabase = get_node("/root/Game/CardDatabase")
-@onready var camera := get_viewport().get_camera_3d()
-@onready var label  := $Pivot/Label3D
-@onready var pivot  := $Pivot
+# Preready Setup
+var _preready_global_position: Vector3
+var _preready_global_rot_y: float
 
-var flip_tween : Tween
-var card_sorter: CardSorter
-
-@export var card_ID    : int
-#@export var is_dragged_from_pile := false
-
-@export var is_dragging  := false
-@export var drag_offset  := Vector3.ZERO
-@export var fixed_y      := 0.0 
-@export var target_rot_x := 0.0
+func preready(id: int, _global_position: Vector3):
+	name = str(id)
+	_preready_global_position = _global_position
+	#_preready_global_rot_y    = _global_rot_y
 
 func _ready():
-	if not card_sorter:
-		var p = get_parent()
-		while p != null and not (p is CardSorter):
-			p = p.get_parent()
-		if p is CardSorter:
-			card_sorter = p
-			#if not is_dragged_from_pile:
-				#card_sorter.register_card(self)
-	multiplayer.peer_connected.connect(func(id: int): 
-		if multiplayer.is_server():
-			broadcast_global_rotation_y.rpc(global_rotation.y))
-
-@rpc("any_peer", "call_local", "reliable")
-func broadcast_global_rotation_y(rot_y: float):
-	global_rotation.y = rot_y
-
-@rpc("any_peer", "call_local", "reliable")
-func postprocess_from_pile(id: int, spawn_global_position: Vector3, global_rotation_y: float, reorder: bool):
-	global_position = spawn_global_position
-	global_rotation.y = global_rotation_y
-	fixed_y = Card.DRAGGING_Y
+	global_position   = _preready_global_position
+	#global_rotation.y = _preready_global_rot_y
 	
-	set_card(id)
-	card_sorter.register_card(self, reorder)
-
-@rpc("any_peer", "call_local", "reliable")
-func set_is_dragging(_is_dragging: bool):
-	is_dragging = _is_dragging
-	input_ray_pickable = not is_dragging
+	if Util.not_server(self):
+		_card_db.request_sync_front_status()
 	
-func set_card(id: int):
-	card_ID = id
-	label.text = card_database.get_card_name(id)
-	var is_front := card_database.is_front(id)
-	rotation_degrees.x = 0.0 if is_front else 180.0
-
-func update_target_y(new_y: float):
-	#if fixed_y == new_y:
-		#return 
-	#fixed_y = new_y
-	var t = create_tween()
-	# 可选：加上 ease_out 会让动画在快到位时更平滑
-	t.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-	t.tween_property(self, "global_position:y", new_y, TAKE_UP_DURATION)
+	_label.text = _card_db.get_card_name(card_ID())
+	var is_front := _card_db.is_front(card_ID())
+	_pivot.rotation_degrees.x = get_rot_x_by_is_front(is_front)
 	
-func _input_event(camera, event, _position, _normal, _shape_idx):
-	#print("is_draggable: ",is_draggable())
-	if event is InputEventMouseButton:
-		if event.pressed:
-			card_sorter.register_card(self, false)
-			sync_rotation_y.rpc(camera.global_rotation.y)
-
-		#左键按到牌
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed and is_draggable():
-			request_authority.rpc_id(1, multiplayer.get_unique_id())
-			input_ray_pickable = false
-			fixed_y = DRAGGING_Y
-			update_target_y(DRAGGING_Y)
-			is_dragging = true
-			var intersection = get_mouse_position_on_plane()
-			if intersection != null:
-				drag_offset = global_position - intersection
+	_dragger.config(_owner_mux, DRAGGING_Y, UP_DOWN_DURATION)
+	_owner_mux.on_owner_change.connect(_server_card_sorter_action)
+	_card_db.on_flip.connect(check_and_flip)
+	
+# Inputs
+func _input_event(_camera, event: InputEvent, _position, _normal, _shape_idx):
+	if Util.is_left_mouse_down(event):
+		if _dragger.request_drag():
 			get_viewport().set_input_as_handled() 
-		#右键按到牌
-		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			flip_box.rpc()
-			get_viewport().set_input_as_handled()
+	elif Util.is_right_mouse_down(event):
+		request_flip()
+		get_viewport().set_input_as_handled() 
 
-func _input(event):
-	if event is InputEventMouseButton:
-		#右键按下
-		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed: 
-			if is_dragging:
-				var hovered_pile := get_hovered_pile()
-				if hovered_pile: # 这个空指针判断要留下，用于区分是否有正在拖的牌
-					# 通知牌堆接管这张牌
-					var success := hovered_pile.insert_card_to_viewer(self)
-					if not success:
-						flip_box.rpc()
-				else:
-					flip_box.rpc()
-				get_viewport().set_input_as_handled()
-		#左键松开
-		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed: 
-			if is_dragging:
-				is_dragging = false
-				input_ray_pickable = true 
-				var pile := will_fall_on_pile()
-				if pile:
-					var success := pile.receive_card_and_call_server_to_broadcast(card_ID, Pile.CardSource.TOP)
-					if success:
-						server_destroy_card.rpc_id(1) # 销毁卡牌
-						return
-				server_bring_to_front.rpc_id(1)
-				release_authority.rpc_id(1)
-
-@rpc("any_peer", "call_local", "reliable")
-func sync_rotation_y(new_y_rot: float):
-	global_rotation.y = new_y_rot
-	print("sync_rotation_y: ", new_y_rot)
-
-@rpc("any_peer", "call_local", "reliable")
-func flip_box():
-	card_database.flip(card_ID)
-	var is_animating := flip_tween and flip_tween.is_valid()
-	if not is_animating:
-		target_rot_x = pivot.rotation_degrees.x
-	target_rot_x += 180.0
-	if is_animating:
-		flip_tween.kill()
-	flip_tween = create_tween()
-	flip_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	flip_tween.tween_property(pivot, "rotation_degrees:x", target_rot_x, FLIP_DURATION)
-
-@rpc("any_peer", "call_local", "reliable")
-func server_destroy_card():
-	card_sorter.unregister_card(card_ID)
-	queue_free()
-
-@rpc("any_peer", "call_local", "reliable")
-func server_bring_to_front():
-	card_sorter.bring_to_front(card_ID)
+func _input(event: InputEvent):
+	if Util.is_left_mouse_down(event):
+		if check_into_pile():
+			get_viewport().set_input_as_handled() 
+		elif _dragger.request_drop():
+			get_viewport().set_input_as_handled() 
+	elif Util.is_right_mouse_down(event) and _dragger.i_am_dragging():
+		print("flip by any input")
+		request_flip()
+		get_viewport().set_input_as_handled() 
 
 func _process(_delta):
-	#print(is_multiplayer_authority())
-	if is_dragging and is_multiplayer_authority():
-		var pile := will_fall_on_pile()
-		if pile:
-			update_target_y(pile.get_y_when_over_pile())
-		else:		
-			update_target_y(DRAGGING_Y)
-		var intersection = get_mouse_position_on_plane()
-		if intersection != null:
-			var target_pos = intersection + drag_offset
-			global_position.x = target_pos.x
-			global_position.z = target_pos.z
-
-func get_hovered_pile() -> Pile:
-	if not camera: return null
-	var space_state := get_world_3d().direct_space_state
-	var mouse_pos   := get_viewport().get_mouse_position()
-	var ray_origin  := camera.project_ray_origin(mouse_pos)
-	var ray_end     := ray_origin + camera.project_ray_normal(mouse_pos) * 100
-	var query := PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
-	query.exclude = [get_rid()]
-	query.collide_with_areas = true
+	_dragger.process_drag()
+	process_float_upon_pile()
 	
-	var result := space_state.intersect_ray(query)
-	if result and result.collider is Pile:
-		return result.collider as Pile
-	return null
-
-func will_fall_on_pile() -> Pile:
-	if not camera: return null
+# CardSorter
+func _server_card_sorter_action():
+	if Util.not_server(self): return
+	if _owner_mux.is_owned():
+		_card_sorter.server_unregister_card(card_ID())
+	else:
+		_card_sorter.server_register_card(card_ID())
 	
-	# 射线检测鼠标下方的物体
+# Flipping
+func request_flip():
+	_card_db.request_flip(card_ID())
+
+const FLIP_DURATION = 0.3
+func check_and_flip():
+	var is_front := _card_db.is_front(card_ID())
+	var target_rot_x := get_rot_x_by_is_front(is_front)
+	Util.tween_rot_x(_pivot, target_rot_x, FLIP_DURATION)
+
+# Util
+func card_ID() -> int:
+	return int(name)
+
+func get_rot_x_by_is_front(is_front: bool) -> float:
+	print("card: ",name ," is_front: ",is_front)
+	return 0 if is_front else 180
+
+# Pile detection
+class PileSource:
+	var pile: Pile
+	var source: Const.CardSource
+	func _init(_pile: Pile, _source: Const.CardSource):
+		pile = _pile
+		source = _source
+	
+func detect_pile_or_hotspot() -> PileSource:
+	var camera      := get_viewport().get_camera_3d()
 	var space_state := get_world_3d().direct_space_state
 	var mouse_pos   := get_viewport().get_mouse_position()
 	var ray_origin  := camera.project_ray_origin(mouse_pos)
@@ -191,33 +108,26 @@ func will_fall_on_pile() -> Pile:
 	if result:
 		var hit_obj = result.collider
 		if hit_obj is Pile:
-			return hit_obj
+			var pile: Pile = hit_obj
+			return PileSource.new(pile, Const.CardSource.TOP)
 		elif hit_obj is Hotspot:
-			return hit_obj.parent_pile
+			var hotspot: Hotspot = hit_obj
+			var pile: Pile = hotspot.parent_pile
+			return PileSource.new(pile, hotspot.drop_mode)
 	return null
 
-func get_mouse_position_on_plane() -> Variant:
-	if not camera: return null
-	var mouse_pos := get_viewport().get_mouse_position()
-	var ray_origin := camera.project_ray_origin(mouse_pos)
-	var ray_normal := camera.project_ray_normal(mouse_pos)
-	var plane := Plane(Vector3.UP, fixed_y)
-	return plane.intersects_ray(ray_origin, ray_normal)
+func process_float_upon_pile():
+	if not _dragger.i_am_dragging(): return
+	var pile_source := detect_pile_or_hotspot()
+	if pile_source:
+		if pile_source.source == Const.CardSource.TOP:
+			Util.tween_y(self, pile_source.pile.get_y_when_over_pile(), UP_DOWN_DURATION)
+			return
+	Util.tween_y(self, DRAGGING_Y, UP_DOWN_DURATION)
 
-func is_draggable() -> bool:
-	return (get_multiplayer_authority() == 1 or multiplayer.is_server()) and not is_dragging
-
-@rpc("any_peer", "call_local", "reliable")
-func request_authority(peer_id: int):
-	if multiplayer.is_server():
-		broadcast_set_authority_to.rpc(peer_id)
-
-@rpc("any_peer", "call_local", "reliable")
-func release_authority():
-	if multiplayer.is_server():
-		broadcast_set_authority_to.rpc(1)
-
-@rpc("any_peer", "call_local", "reliable")
-func broadcast_set_authority_to(peer_id: int):
-	set_multiplayer_authority(peer_id)
-	print("peer_id "+str(peer_id)+" gets authority for card_id "+str(card_ID))
+func check_into_pile() -> bool:
+	if not _dragger.i_am_dragging(): return false
+	var pile_source := detect_pile_or_hotspot()
+	if pile_source:
+		return pile_source.pile.receiver.request_receive_card(card_ID(), pile_source.source)
+	return false

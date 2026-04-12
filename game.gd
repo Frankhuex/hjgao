@@ -1,12 +1,12 @@
 extends Node3D
-@onready var main_menu   := $CanvasLayer/MainMenu
-@onready var players     := $Players
-@onready var piles       := $Piles
-@onready var main_camera := $MainCamera3D
-@onready var card_database: CardDatabase = $CardDatabase
-@onready var input_host_port := $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/InputHostPort
-@onready var input_join_IP := $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/InputJoinIP
-@onready var input_join_port := $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/InputJoinPort
+@onready var main_menu: Control    = $CanvasLayer/MainMenu
+@onready var players: Node3D       = $Players
+@onready var piles: Node3D         = $Piles
+@onready var main_camera: Camera3D = $MainCamera3D
+@onready var card_db: CardDatabase = $CardDatabase
+@onready var input_host_port: LineEdit   = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/InputHostPort
+@onready var input_join_IP: LineEdit     = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/InputJoinIP
+@onready var input_join_port: LineEdit   = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/InputJoinPort
 
 const PLAYER = preload("res://Player.tscn")
 const PILE   = preload("res://Pile.tscn")
@@ -21,11 +21,11 @@ func _ready():
 	multiplayer.connection_failed.connect(_on_connection_failed)
 	
 	# 2. 解析命令行参数
-	var args = OS.get_cmdline_args()
-	var custom_port = _get_arg_value(args, "--port=")
+	var args := OS.get_cmdline_args()
+	var custom_port := _get_arg_value(args, "--port=")
 	
 	# 确定最终使用的端口（如果命令行没传，就用默认常量 PORT）
-	var final_port = int(custom_port) if custom_port != "" else PORT
+	var final_port := int(custom_port) if custom_port != "" else PORT
 	
 	# 3. 如果是无头模式，自动根据解析到的端口开房
 	if DisplayServer.get_name() == "headless":
@@ -33,6 +33,15 @@ func _ready():
 		print("目标端口: ", final_port)
 		start_server(final_port, true)
 		return
+		
+	#var sim = multiplayer
+	#if sim:
+		## 使用 set 方法绕过编译期检查
+		#sim.set("test_config_network_latency", 200)
+		#sim.set("test_config_network_jitter", 30)
+		#sim.set("test_config_packet_loss", 0.05)
+		#
+		#print("网络模拟已开启：200ms 延迟 (通过 set 赋值)")
 
 func _get_arg_value(args: PackedStringArray, prefix: String) -> String:
 	for arg in args:
@@ -51,35 +60,33 @@ func start_server(port: int, headless: bool):
 	multiplayer.multiplayer_peer = peer
 	multiplayer.peer_connected.connect(_on_peer_connected)	
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	add_pile(card_db.get_all_IDs(), "公共牌堆")
 	
-	if headless:
-		return
-	var self_player := add_player(multiplayer.get_unique_id())
-	create_pile_for_player([], self_player)
-	add_pile(card_database.get_all_IDs(), "公共牌堆")
-	
+	if not headless:
+		var self_player := add_player(Util.my_id(self))
+		create_pile_for_player([], self_player)
+
 	if main_menu:
 		main_menu.hide()
 		
 ###################################################
 # Host
 func _on_host_button_pressed() -> void:
-	var host_port_str = input_host_port.text
+	var host_port_str := input_host_port.text
 	if not host_port_str.is_valid_int():
 		printerr("Port must be integer")
 		return
 	start_server(int(host_port_str), false)
 
-func add_player(id: int) -> Node:
+func add_player(id: int) -> Player:
 	var player := PLAYER.instantiate()
 	player.name = str(id)
 	players.add_child(player)
 	return player
 
-func add_pile(card_IDs: Array[int], pile_name: String) -> Node:
-	var pile := PILE.instantiate()
-	pile.card_ID_stack = card_IDs
-	pile.name = pile_name
+func add_pile(card_IDs: Array[int], pile_name: String) -> Pile:
+	var pile: Pile = PILE.instantiate()
+	pile.preready(pile_name, card_IDs)
 	piles.add_child(pile)
 	return pile
 
@@ -97,7 +104,7 @@ func _on_peer_disconnected(id: int):
 		player_node.queue_free()
 		print("已清理玩家节点：", id)
 
-func create_pile_for_player(card_IDs: Array[int], player: Node):
+func create_pile_for_player(card_IDs: Array[int], player: Player):
 	var pile := add_pile([], "pile"+player.name)
 	pile.global_position.x = player.global_position.x
 	pile.global_position.z = player.global_position.z
@@ -105,8 +112,8 @@ func create_pile_for_player(card_IDs: Array[int], player: Node):
 #################################################
 # Client
 func _on_join_button_pressed() -> void:
-	var join_IP = input_join_IP.text
-	var join_port_str = input_join_port.text
+	var join_IP := input_join_IP.text
+	var join_port_str := input_join_port.text
 	if not join_port_str.is_valid_int():
 		printerr("Port must be integer")
 		return
@@ -126,6 +133,7 @@ func _on_join_button_pressed() -> void:
 func _on_connected_to_server():
 	print("【成功】已进入房间！")
 	main_menu.hide()
+	card_db.request_sync_front_status()
 
 # 连接物理失败（比如握手包被防火墙拦截，由引擎触发）
 func _on_connection_failed():

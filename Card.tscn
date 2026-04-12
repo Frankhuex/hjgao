@@ -2,6 +2,8 @@
 
 [ext_resource type="Shader" uid="uid://c13aaqggv28xv" path="res://Card.gdshader" id="1_dd2wi"]
 [ext_resource type="Script" uid="uid://d31nihsonf0wp" path="res://card.gd" id="1_hael8"]
+[ext_resource type="PackedScene" uid="uid://dyr770lpagwk0" path="res://Dragger.tscn" id="3_21rx5"]
+[ext_resource type="PackedScene" uid="uid://bp6swckcvbg1s" path="res://OwnerMux.tscn" id="4_3ujke"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hael8"]
 render_priority = 0
@@ -26,7 +28,7 @@ properties/1/replication_mode = 1
 [node name="Card" type="StaticBody3D" unique_id=778066825]
 script = ExtResource("1_hael8")
 
-[node name="Pivot" type="Node3D" parent="." unique_id=1615187407]
+[node name="Pivot" type="Node3D" parent="." unique_id=316990854]
 
 [node name="CSGBox3D" type="CSGBox3D" parent="Pivot" unique_id=924045489]
 size = Vector3(0.62, 0.001, 1.1)
@@ -42,3 +44,7 @@ shape = SubResource("BoxShape3D_hael8")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1249310585]
 replication_config = SubResource("SceneReplicationConfig_hael8")
+
+[node name="Dragger" parent="." unique_id=1082115958 instance=ExtResource("3_21rx5")]
+
+[node name="OwnerMux" parent="." unique_id=1247069880 instance=ExtResource("4_3ujke")]

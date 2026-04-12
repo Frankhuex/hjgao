@@ -29,38 +29,51 @@ layout_mode = 2
 
 [node name="TopContainer" type="HBoxContainer" parent="Margin/VBox" unique_id=1213593273]
 layout_mode = 2
+size_flags_vertical = 8
 
 [node name="Label_Top" type="Label" parent="Margin/VBox/TopContainer" unique_id=246684071]
 layout_mode = 2
-size_flags_horizontal = 10
-size_flags_vertical = 0
+size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 30
 text = "牌堆"
 horizontal_alignment = 1
 
-[node name="Top_Btns" type="HBoxContainer" parent="Margin/VBox/TopContainer" unique_id=183764756]
+[node name="Top_Btns" type="HBoxContainer" parent="Margin/VBox" unique_id=183764756]
 layout_mode = 2
-size_flags_horizontal = 10
+size_flags_horizontal = 3
+size_flags_vertical = 0
 
-[node name="Btn_Shuffle" type="Button" parent="Margin/VBox/TopContainer/Top_Btns" unique_id=869661463]
+[node name="Btn_SortAscend" type="Button" parent="Margin/VBox/Top_Btns" unique_id=761112675]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 30
+text = "递增排序"
+
+[node name="Btn_SortDescend" type="Button" parent="Margin/VBox/Top_Btns" unique_id=131473067]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 30
+text = "递减排序"
+
+[node name="Btn_Shuffle" type="Button" parent="Margin/VBox/Top_Btns" unique_id=869661463]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 30
 text = "打乱"
 
-[node name="Btn_AllFront" type="Button" parent="Margin/VBox/TopContainer/Top_Btns" unique_id=2039207073]
+[node name="Btn_AllFront" type="Button" parent="Margin/VBox/Top_Btns" unique_id=2039207073]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 30
 text = "全部正面"
 
-[node name="Btn_AllBack" type="Button" parent="Margin/VBox/TopContainer/Top_Btns" unique_id=1462089687]
+[node name="Btn_AllBack" type="Button" parent="Margin/VBox/Top_Btns" unique_id=1462089687]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 30
 text = "全部背面"
 
-[node name="Btn_AllFlip" type="Button" parent="Margin/VBox/TopContainer/Top_Btns" unique_id=2005582934]
+[node name="Btn_AllFlip" type="Button" parent="Margin/VBox/Top_Btns" unique_id=2005582934]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 30

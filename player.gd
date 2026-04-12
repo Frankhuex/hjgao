@@ -1,7 +1,8 @@
+class_name Player
 extends CharacterBody3D
 
 #@onready var camera = $CameraPivot/Camera3D
-@onready var pivot := $CameraPivot
+@onready var pivot: Node3D = $CameraPivot
 @onready var mesh: MeshInstance3D = $MeshInstance3D
 
 enum PlayerStatus { MOVE = 0, CARD = 1 }
@@ -34,8 +35,8 @@ func set_random_pos():
 	global_position = center + Vector3(offset_x, 0, offset_z)
 	
 
-func set_random_color():
-	mesh.get_active_material(0).albedo_color = Color(randf(), randf(), randf())
+#func set_random_color():
+	#mesh.get_active_material(0).albedo_color = Color(randf(), randf(), randf())
 
 func toggle_status():
 	if player_status == PlayerStatus.CARD:
@@ -53,13 +54,14 @@ func _input(event):
 			toggle_status()
 			get_viewport().set_input_as_handled()
 
-func _unhandled_input(event):
+func _unhandled_input(event: InputEvent):
 	if not is_multiplayer_authority(): 
 		return
 	
 	if player_status == PlayerStatus.MOVE and event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * 0.002)
-		pivot.rotate_x(-event.relative.y * 0.002)
+		var event_mouse_motion: InputEventMouseMotion = event
+		rotate_y(-event_mouse_motion.relative.x * 0.002)
+		pivot.rotate_x(-event_mouse_motion.relative.y * 0.002)
 		pivot.rotation.x = clamp(pivot.rotation.x, -1.5, 1.5) #弧度制
 
 func _physics_process(_delta):
@@ -70,7 +72,7 @@ func _physics_process(_delta):
 		velocity = Vector3.ZERO
 		return
 	
-	var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	var input_dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	
 	if direction:
