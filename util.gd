@@ -55,6 +55,12 @@ static func my_id(node: Node) -> int:
 static func sender_id(node: Node) -> int:
 	return node.multiplayer.get_remote_sender_id()
 
+static func is_online(node: Node, peer_id: int) -> bool:
+	return peer_id == my_id(node) or node.multiplayer.get_peers().has(peer_id)
+
+static func is_offline(node: Node, peer_id: int) -> bool:
+	return not is_online(node, peer_id)
+
 static func get_mouse_intersect_horizontal_plane(node: Node, y: float) -> Vector3:
 	var camera     := node.get_viewport().get_camera_3d()
 	var mouse_pos  := node.get_viewport().get_mouse_position()

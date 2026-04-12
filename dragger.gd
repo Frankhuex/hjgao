@@ -20,10 +20,10 @@ func request_drop() -> bool:
 	if not i_am_dragging(): return false
 	return _owner_mux.request_release()
 	
-var _drag_offset := Vector3.ZERO
+#var _drag_offset := Vector3.ZERO
 func check_and_up_down(): #玩家接到拖牌权后调用
 	if i_am_dragging():
-		_drag_offset = _parent.global_position - Util.get_mouse_intersect_horizontal_plane(_parent, dragging_y)
+		#_drag_offset = _parent.global_position - Util.get_mouse_intersect_horizontal_plane(_parent, dragging_y)
 		Util.tween_y(_parent, dragging_y, up_down_duration)
 	elif Util.is_server(self) and not _owner_mux.is_owned():
 		Util.tween_y(_parent, 0, up_down_duration)
@@ -32,7 +32,8 @@ func process_drag():
 	if i_am_dragging():
 		var intersection = Util.get_mouse_intersect_horizontal_plane(self, dragging_y)
 		if intersection == null: return
-		var target_pos = intersection + _drag_offset
+		#var target_pos = intersection + _drag_offset
+		var target_pos = intersection
 		_parent.global_position.x = target_pos.x
 		_parent.global_position.z = target_pos.z
 		_sync_rot_y.rpc(get_viewport().get_camera_3d().global_rotation.y)

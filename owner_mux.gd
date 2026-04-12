@@ -7,6 +7,13 @@ signal on_owner_change
 var _owner := 0 #必须保留owner变量，因为authority没有0
 var purpose := Const.Purpose.NIL
 
+func _ready():
+	multiplayer.peer_disconnected.connect(server_recover_mux)
+
+func server_recover_mux(peer_id: int):
+	if Util.not_server(self): return
+	if is_owned() and Util.is_offline(self, _owner):
+		server_reset_owner()
 
 func is_owned() -> bool:
 	return _owner != 0

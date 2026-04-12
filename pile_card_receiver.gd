@@ -5,7 +5,6 @@ extends Node
 @onready var _card_database: CardDatabase = get_node("/root/Game/CardDatabase")
 @onready var _parent: Pile = get_parent()
 
-
 func config():
 	return
 

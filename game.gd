@@ -97,7 +97,6 @@ func _on_peer_connected(id: int):
 
 func _on_peer_disconnected(id: int):
 	print("伙伴离开了，玩家ID：", id)
-	
 	# 1. 找到并删除玩家节点
 	var player_node = players.get_node_or_null(str(id))
 	if player_node:

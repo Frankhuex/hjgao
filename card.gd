@@ -44,11 +44,15 @@ func _input_event(_camera, event: InputEvent, _position, _normal, _shape_idx):
 		request_flip()
 		get_viewport().set_input_as_handled() 
 
+var requested_check_into_pile := false
 func _input(event: InputEvent):
 	if Util.is_left_mouse_down(event):
-		if check_into_pile():
-			get_viewport().set_input_as_handled() 
-		elif _dragger.request_drop():
+		if not requested_check_into_pile:
+			requested_check_into_pile = check_into_pile()
+			if requested_check_into_pile:
+				get_viewport().set_input_as_handled() 
+				return
+		if _dragger.request_drop():
 			get_viewport().set_input_as_handled() 
 	elif Util.is_right_mouse_down(event) and _dragger.i_am_dragging():
 		print("flip by any input")
