@@ -25,7 +25,7 @@ func preready(_name:String, _card_ID_stack: Array[int]):
 	card_ID_stack = _card_ID_stack
 
 func _ready():
-	dragger.config(owner_mux, DRAGGING_Y, UP_DOWN_DURATION)
+	dragger.config(owner_mux, UP_DOWN_DURATION, DRAGGING_Y)
 	accessor.config()
 	spawner.config()
 	_update_visuals()

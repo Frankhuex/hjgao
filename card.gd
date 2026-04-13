@@ -31,7 +31,7 @@ func _ready():
 	var is_front := _card_db.is_front(card_ID())
 	_pivot.rotation_degrees.x = get_rot_x_by_is_front(is_front)
 	
-	_dragger.config(_owner_mux, DRAGGING_Y, UP_DOWN_DURATION)
+	_dragger.config(_owner_mux, UP_DOWN_DURATION, DRAGGING_Y, func(): return _card_sorter.get_drop_y())
 	_owner_mux.on_owner_change.connect(_server_card_sorter_action)
 	_card_db.on_flip.connect(check_and_flip)
 	
@@ -62,7 +62,7 @@ func _input(event: InputEvent):
 func _process(_delta):
 	_dragger.process_drag()
 	process_float_upon_pile()
-	
+
 # CardSorter
 func _server_card_sorter_action():
 	if Util.not_server(self): return

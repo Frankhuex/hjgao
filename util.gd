@@ -61,15 +61,13 @@ static func is_online(node: Node, peer_id: int) -> bool:
 static func is_offline(node: Node, peer_id: int) -> bool:
 	return not is_online(node, peer_id)
 
-static func get_mouse_intersect_horizontal_plane(node: Node, y: float) -> Vector3:
+static func get_mouse_intersect_horizontal_plane(node: Node, y: float) -> Variant:
 	var camera     := node.get_viewport().get_camera_3d()
 	var mouse_pos  := node.get_viewport().get_mouse_position()
 	var ray_origin := camera.project_ray_origin(mouse_pos)
 	var ray_normal := camera.project_ray_normal(mouse_pos)
 	var plane      := Plane(Vector3.UP, y)
 	var intersection: Variant = plane.intersects_ray(ray_origin, ray_normal)
-	if intersection == null:
-		return Vector3.ZERO
 	return intersection
 	
 static func is_pile_input_purpose(purpose: Const.Purpose) -> bool:
@@ -80,3 +78,14 @@ static func is_pile_output_purpose(purpose: Const.Purpose) -> bool:
 
 static func is_number(v: Variant) -> bool:
 	return typeof(v) == TYPE_INT or typeof(v) == TYPE_FLOAT
+
+static func safe_call_float(c: Callable) -> float:
+	var res = c.call()
+	var res_float := 0.0
+	if typeof(res) == TYPE_FLOAT:
+		res_float = res
+	elif typeof(res) == TYPE_INT:
+		var res_int: int = res
+		res_float = float(res_int)
+	print("safe_call_float: ", res_float)
+	return res_float

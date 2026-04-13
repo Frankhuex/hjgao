@@ -7,6 +7,7 @@
 class_name CardSorter
 extends Node3D
 
+const CARD_THICKNESS = 0.002 
 var card_ID_stack: Array[int] #从低到高
 
 # Setup
@@ -17,8 +18,10 @@ func preready(_card_ID_stack: Array[int]):
 func get_card(id: int) -> Card:
 	return get_node(str(id))
 
+func get_drop_y() -> float:
+	return card_ID_stack.size() * CARD_THICKNESS
+
 # Reorder Cards
-const CARD_THICKNESS = 0.002 
 func server_reorder_cards():
 	if Util.not_server(self): return
 	for i in range(card_ID_stack.size()):
