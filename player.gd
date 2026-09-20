@@ -1,12 +1,15 @@
 class_name Player
 extends CharacterBody3D
 
+signal status_changed
+
 #@onready var camera = $CameraPivot/Camera3D
 @onready var pivot: Node3D = $CameraPivot
 @onready var mesh: MeshInstance3D = $MeshInstance3D
 
 enum PlayerStatus { MOVE = 0, CARD = 1 }
 var player_status := PlayerStatus.CARD
+var input_enabled := true
 const DEFAULT_CAMERA_POSITION = Vector3(0.0, 5.312, 1.979)
 const DEFAULT_CAMERA_ROTATION_DEGREES = Vector3(-77.6, 0.0, 0.0)
 
@@ -39,23 +42,39 @@ func set_random_pos():
 	#mesh.get_active_material(0).albedo_color = Color(randf(), randf(), randf())
 
 func toggle_status():
+	if not input_enabled:
+		return
 	if player_status == PlayerStatus.CARD:
 		player_status = PlayerStatus.MOVE
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	else:
 		player_status = PlayerStatus.CARD
-		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	apply_mouse_mode()
+	status_changed.emit()
+
+func set_input_enabled(enabled: bool):
+	input_enabled = enabled
+	if not input_enabled:
+		velocity = Vector3.ZERO
+
+func apply_mouse_mode():
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if player_status == PlayerStatus.MOVE else Input.MOUSE_MODE_VISIBLE)
+
+func is_card_mode() -> bool:
+	return player_status == PlayerStatus.CARD
 
 func _input(event):
 	if not is_multiplayer_authority(): return
+	if not input_enabled: return
 	
-	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_ESCAPE or event.keycode == KEY_SPACE:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_SPACE:
 			toggle_status()
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent):
 	if not is_multiplayer_authority(): 
+		return
+	if not input_enabled:
 		return
 	
 	if player_status == PlayerStatus.MOVE and event is InputEventMouseMotion:
@@ -66,6 +85,9 @@ func _unhandled_input(event: InputEvent):
 
 func _physics_process(_delta):
 	if not is_multiplayer_authority(): 
+		return
+	if not input_enabled:
+		velocity = Vector3.ZERO
 		return
 	
 	if player_status == PlayerStatus.CARD:

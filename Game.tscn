@@ -127,8 +127,87 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "加入房间"
 
+[node name="PauseCanvasLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="PauseButton" type="Button" parent="PauseCanvasLayer"]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -76.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 76.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 28
+text = "⏸️"
+
+[node name="PauseOverlay" type="Control" parent="PauseCanvasLayer"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="DimBackground" type="ColorRect" parent="PauseCanvasLayer/PauseOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="PanelContainer" type="PanelContainer" parent="PauseCanvasLayer/PauseOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -120.0
+offset_right = 180.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PauseCanvasLayer/PauseOverlay/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "暂停"
+horizontal_alignment = 1
+
+[node name="ReturnGameButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "返回游戏"
+
+[node name="DisconnectButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "退出房间"
+
 [node name="CardDatabase" type="Node" parent="." unique_id=1721052179]
 script = ExtResource("3_u44n3")
 
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/HostButton" to="." method="_on_host_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/JoinButton" to="." method="_on_join_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseButton" to="." method="_on_pause_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ReturnGameButton" to="." method="_on_return_game_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/DisconnectButton" to="." method="_on_disconnect_button_pressed"]

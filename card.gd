@@ -72,6 +72,11 @@ func _server_card_sorter_action():
 func request_flip():
 	_card_db.request_flip(card_ID())
 
+func release_local_interaction():
+	if _owner_mux.i_am_owner():
+		_dragger.suspend_local_interaction()
+		_owner_mux.request_release()
+
 const FLIP_DURATION = 0.3
 func check_and_flip():
 	var is_front := _card_db.is_front(card_ID())

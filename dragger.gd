@@ -20,10 +20,15 @@ func config(owner_mux: OwnerMux, _up_down_duration: float, _dragging_y: float, g
 
 var _requested_drag := false
 var _requested_release := false
+var _interaction_suspended := false
 func _reset_request_status():
 	_requested_drag = false
 	_requested_release = false
+	_interaction_suspended = false
 	print("D=",_requested_drag,",R=",_requested_release,",A=",i_am_dragging(),",S=",should_animate_drag())
+
+func suspend_local_interaction():
+	_interaction_suspended = true
 
 func request_drag() -> bool:
 	_requested_drag = _owner_mux.request_own(Const.Purpose.DRAG)
@@ -55,6 +60,8 @@ func process_drag():
 		_sync_rot_y.rpc(get_viewport().get_camera_3d().global_rotation.y)
 
 func should_animate_drag():
+	if _interaction_suspended:
+		return false
 	var D := _requested_drag
 	var R := _requested_release
 	var A := i_am_dragging()
