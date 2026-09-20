@@ -7,8 +7,18 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4xowi"]
 albedo_color = Color(0, 0.35576674, 0, 1)
 
+[sub_resource type="Environment" id="Environment_player_lighting"]
+background_mode = 1
+background_color = Color(0.14, 0.17, 0.22, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.38, 0.48, 0.65, 1)
+ambient_light_energy = 0.6
+
 [node name="Game" type="Node3D" unique_id=804165182]
 script = ExtResource("1_u44n3")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_player_lighting")
 
 [node name="Table" type="CSGBox3D" parent="." unique_id=663217799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.006, -0.501, 0)
@@ -19,24 +29,37 @@ material = SubResource("StandardMaterial3D_4xowi")
 transform = Transform3D(2.32, 0, 0, 0, 0.16139796, 0.51929647, 0, -0.73426396, 0.11414613, 1.1062622e-06, 5.3118052, 1.9789071)
 
 [node name="DirectionalLight3D1" type="DirectionalLight3D" parent="." unique_id=2107985037]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 6.115, 0)
-light_energy = 3.0
+rotation = Vector3(-0.959931, -0.610865, 0)
+light_color = Color(1, 0.94, 0.84, 1)
+light_energy = 1.8
 
 [node name="OmniLight3D1" type="OmniLight3D" parent="." unique_id=1659391117]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 3, 0)
-light_energy = 10.0
+position = Vector3(4, 6.5, 0)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 1.5
+omni_range = 8.0
+omni_attenuation = 1.2
 
 [node name="OmniLight3D2" type="OmniLight3D" parent="." unique_id=705429776]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 5)
-light_energy = 10.0
+position = Vector3(0, 6.5, 4)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 1.5
+omni_range = 8.0
+omni_attenuation = 1.2
 
 [node name="OmniLight3D3" type="OmniLight3D" parent="." unique_id=923408197]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, 0)
-light_energy = 10.0
+position = Vector3(-4, 6.5, 0)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 1.5
+omni_range = 8.0
+omni_attenuation = 1.2
 
 [node name="OmniLight3D4" type="OmniLight3D" parent="." unique_id=1732515952]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
-light_energy = 10.0
+position = Vector3(0, 6.5, -4)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 1.5
+omni_range = 8.0
+omni_attenuation = 1.2
 
 [node name="CardSorter" type="Node3D" parent="." unique_id=798572210]
 script = ExtResource("1_xkndl")
