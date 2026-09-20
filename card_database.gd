@@ -1,7 +1,12 @@
 class_name CardDatabase
 extends Node
 
-@onready var deck_instance := load_deck_instance_from_json("res://poker.json")
+var deck_instance: DeckInstance
+var deck_instance_json_str: String
+# @onready var deck_instance := load_deck_instance_from_json("res://poker.json")
+
+func init_deck_instance():
+	load_deck_instance_from_json("res://poker.json")
 
 func _ready():
 	if Util.not_server(self):
@@ -17,8 +22,10 @@ func server_sync_card_ID_stack():
 	if Util.not_server(self): return
 	sync_flip_status.rpc_id(Util.sender_id(self), deck_instance.card_ID_to_is_front)
 
-func load_deck_instance_from_json(file_path: String) -> DeckInstance:
-	return DeckInstance.load_from_json(load_json_file(file_path))
+func load_deck_instance_from_json(file_path: String):
+	deck_instance = DeckInstance.load_from_json(load_json_file(file_path))
+	deck_instance_json_str = deck_instance.serialize_to_json()
+	print(deck_instance_json_str)
 	
 func load_json_file(file_path: String) -> Variant:
 	if not FileAccess.file_exists(file_path):

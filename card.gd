@@ -13,7 +13,7 @@ const UP_DOWN_DURATION = 0.1
 
 # Preready Setup
 var _preready_global_position: Vector3
-var _preready_global_rot_y: float
+# var _preready_global_rot_y: float
 
 func preready(id: int, _global_position: Vector3):
 	name = str(id)

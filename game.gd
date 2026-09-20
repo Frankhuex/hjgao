@@ -7,6 +7,7 @@ extends Node3D
 @onready var input_host_port: LineEdit   = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/InputHostPort
 @onready var input_join_IP: LineEdit     = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/InputJoinIP
 @onready var input_join_port: LineEdit   = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/InputJoinPort
+@onready var _card_database: CardDatabase = get_node("/root/Game/CardDatabase")
 
 const PLAYER = preload("res://Player.tscn")
 const PILE   = preload("res://Pile.tscn")
@@ -50,6 +51,7 @@ func _get_arg_value(args: PackedStringArray, prefix: String) -> String:
 	return ""
 
 func start_server(port: int, headless: bool):
+	_card_database.init_deck_instance()
 	peer = ENetMultiplayerPeer.new()
 	var err := peer.create_server(port)
 	if err != OK:
@@ -104,7 +106,7 @@ func _on_peer_disconnected(id: int):
 		print("已清理玩家节点：", id)
 
 func create_pile_for_player(card_IDs: Array[int], player: Player):
-	var pile := add_pile([], "pile"+player.name)
+	var pile := add_pile(card_IDs, "pile"+player.name)
 	pile.global_position.x = player.global_position.x
 	pile.global_position.z = player.global_position.z
 

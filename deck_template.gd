@@ -13,9 +13,9 @@ func _init(_card_name_to_card_template: Dictionary[String, CardTemplate], _order
 
 func to_dict() -> Dictionary[String,Variant]:
 	var output: Dictionary[String,Variant] = {}
-	var ordered_card_templates: Array[CardTemplate] = []
+	var ordered_card_templates: Array[Dictionary] = []
 	for name in ordered_card_names:
-		ordered_card_templates.append(card_name_to_card_template[name])
+		ordered_card_templates.append(card_name_to_card_template[name].to_dict())
 	output["ordered_card_templates"] = ordered_card_templates
 	return output
 
