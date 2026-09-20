@@ -24,9 +24,6 @@ func _ready():
 	global_position   = _preready_global_position
 	#global_rotation.y = _preready_global_rot_y
 	
-	if Util.not_server(self):
-		_card_db.request_sync_front_status()
-	
 	_label.text = _card_db.get_card_name(card_ID())
 	var is_front := _card_db.is_front(card_ID())
 	_pivot.rotation_degrees.x = get_rot_x_by_is_front(is_front)

@@ -7,12 +7,13 @@ extends Node3D
 @onready var input_host_port: LineEdit   = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/InputHostPort
 @onready var input_join_IP: LineEdit     = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/InputJoinIP
 @onready var input_join_port: LineEdit   = $CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/InputJoinPort
-@onready var _card_database: CardDatabase = get_node("/root/Game/CardDatabase")
+@onready var scene_multiplayer: SceneMultiplayer = multiplayer as SceneMultiplayer
 
 const PLAYER = preload("res://Player.tscn")
 const PILE   = preload("res://Pile.tscn")
 const PORT   = 7788
 const CONNECTION_TIMEOUT = 10.0
+const AUTH_READY_ACK = "deck_instance_ready"
 
 var peer: ENetMultiplayerPeer
 
@@ -20,6 +21,10 @@ func _ready():
 	# 1. 基础信号绑定
 	multiplayer.connected_to_server.connect(_on_connected_to_server)
 	multiplayer.connection_failed.connect(_on_connection_failed)
+	scene_multiplayer.auth_callback = _on_auth_data_received
+	scene_multiplayer.auth_timeout = CONNECTION_TIMEOUT
+	scene_multiplayer.peer_authenticating.connect(_on_peer_authenticating)
+	scene_multiplayer.peer_authentication_failed.connect(_on_peer_authentication_failed)
 	
 	# 2. 解析命令行参数
 	var args := OS.get_cmdline_args()
@@ -51,7 +56,9 @@ func _get_arg_value(args: PackedStringArray, prefix: String) -> String:
 	return ""
 
 func start_server(port: int, headless: bool):
-	_card_database.init_deck_instance()
+	if not card_db.init_deck_instance():
+		printerr("创建房间失败：牌库初始化失败")
+		return
 	peer = ENetMultiplayerPeer.new()
 	var err := peer.create_server(port)
 	if err != OK:
@@ -105,6 +112,48 @@ func _on_peer_disconnected(id: int):
 		player_node.queue_free()
 		print("已清理玩家节点：", id)
 
+func _on_peer_authenticating(id: int):
+	if not multiplayer.is_server():
+		return
+	if card_db.deck_instance == null:
+		printerr("拒绝玩家认证：服务器牌库未初始化")
+		scene_multiplayer.disconnect_peer(id)
+		return
+	var error: Error = scene_multiplayer.send_auth(id, card_db.export_deck_instance().to_utf8_buffer())
+	if error != OK:
+		printerr("发送 DeckInstance 快照失败，玩家ID：", id, " 错误码：", error)
+		scene_multiplayer.disconnect_peer(id)
+
+func _on_auth_data_received(id: int, data: PackedByteArray):
+	if multiplayer.is_server():
+		if data.get_string_from_utf8() != AUTH_READY_ACK:
+			printerr("拒绝玩家认证：DeckInstance 确认消息无效，玩家ID：", id)
+			scene_multiplayer.disconnect_peer(id)
+			return
+		var error: Error = scene_multiplayer.complete_auth(id)
+		if error != OK:
+			printerr("服务器完成认证失败，玩家ID：", id, " 错误码：", error)
+		return
+
+	if id != 1 or not card_db.init_deck_instance_from_json_str(data.get_string_from_utf8()):
+		printerr("加入失败：服务器 DeckInstance 快照无效")
+		scene_multiplayer.disconnect_peer(id)
+		return
+	var send_error: Error = scene_multiplayer.send_auth(id, AUTH_READY_ACK.to_utf8_buffer())
+	if send_error != OK:
+		printerr("发送 DeckInstance 就绪确认失败，错误码：", send_error)
+		scene_multiplayer.disconnect_peer(id)
+		return
+	var complete_error: Error = scene_multiplayer.complete_auth(id)
+	if complete_error != OK:
+		printerr("客户端完成认证失败，错误码：", complete_error)
+
+func _on_peer_authentication_failed(id: int):
+	if multiplayer.is_server():
+		printerr("玩家 DeckInstance 同步认证失败，玩家ID：", id)
+	else:
+		_stop_and_fail("DeckInstance 同步认证失败")
+
 func create_pile_for_player(card_IDs: Array[int], player: Player):
 	var pile := add_pile(card_IDs, "pile"+player.name)
 	pile.global_position.x = player.global_position.x
@@ -134,7 +183,6 @@ func _on_join_button_pressed() -> void:
 func _on_connected_to_server():
 	print("【成功】已进入房间！")
 	main_menu.hide()
-	card_db.request_sync_front_status()
 
 # 连接物理失败（比如握手包被防火墙拦截，由引擎触发）
 func _on_connection_failed():

@@ -78,13 +78,25 @@ static func load_from_json(input: Variant) -> DeckInstance:
 
 	# 3. 解析正反面状态
 	var _card_ID_to_is_front: Dictionary[int, bool] = {}
-	
-	var raw_front_dict: Dictionary[String, bool]
-	for card_ID in _card_ID_to_card_name:
-		var val = raw_front_dict.get(str(card_ID), false) # JSON key 是字符串
-		if not (val is bool): # 修正语法错误
+	var raw_front_map = dict.get("card_ID_to_is_front", {})
+	if not (raw_front_map is Dictionary):
+		push_error("Failed to load DeckInstance: card_ID_to_is_front must be Dictionary.")
+		return null
+	var raw_front_dict: Dictionary = raw_front_map
+
+	for card_ID_raw in raw_front_dict:
+		if not str(card_ID_raw).is_valid_int():
+			push_error("Failed to load DeckInstance: card_ID_to_is_front key must be integer string.")
+			return null
+		var card_ID := int(str(card_ID_raw))
+		if not _card_ID_to_card_name.has(card_ID):
+			push_error("Failed to load DeckInstance: card_ID_to_is_front contains unknown card_ID.")
+			return null
+		if not (raw_front_dict[card_ID_raw] is bool):
 			push_error("Failed to load DeckInstance: is_front value must be bool.")
 			return null
-		_card_ID_to_is_front[card_ID] = val
+
+	for card_ID in _card_ID_to_card_name:
+		_card_ID_to_is_front[card_ID] = raw_front_dict.get(str(card_ID), raw_front_dict.get(card_ID, false))
 
 	return DeckInstance.new(_deck_template, _card_ID_to_card_name, _card_ID_to_is_front)		
