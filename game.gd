@@ -11,6 +11,8 @@ extends Node3D
 @onready var scene_multiplayer: SceneMultiplayer = multiplayer as SceneMultiplayer
 @onready var pause_button: Button = $PauseCanvasLayer/PauseButton
 @onready var pause_overlay: Control = $PauseCanvasLayer/PauseOverlay
+@onready var clear_table_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton
+@onready var clear_table_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearTableConfirmation
 
 const PLAYER = preload("res://Player.tscn")
 const PILE   = preload("res://Pile.tscn")
@@ -23,6 +25,7 @@ var local_player: Player
 var session_active := false
 var connection_attempt := 0
 var main_camera_initial_transform: Transform3D
+var clear_table_in_progress := false
 
 func _ready():
 	# 1. 基础信号绑定
@@ -111,7 +114,7 @@ func add_player(id: int) -> Player:
 func add_pile(card_IDs: Array[int], pile_name: String) -> Pile:
 	var pile: Pile = PILE.instantiate()
 	pile.preready(pile_name, card_IDs)
-	piles.add_child(pile)
+	piles.add_child(pile, true)
 	return pile
 
 func _on_peer_connected(id: int):
@@ -202,7 +205,7 @@ func _input(event: InputEvent):
 	if pause_overlay.visible:
 		_close_pause_menu()
 		get_viewport().set_input_as_handled()
-	elif session_active and is_instance_valid(local_player) and not local_player.is_card_mode():
+	elif session_active and is_instance_valid(local_player):
 		_open_pause_menu()
 		get_viewport().set_input_as_handled()
 
@@ -225,7 +228,7 @@ func _close_pause_menu():
 	_update_pause_button()
 
 func _update_pause_button():
-	pause_button.visible = session_active and not pause_overlay.visible and is_instance_valid(local_player) and local_player.is_card_mode()
+	pause_button.visible = session_active and not pause_overlay.visible and is_instance_valid(local_player)
 
 func _release_local_interactions():
 	for child in card_sorter.get_children():
@@ -249,14 +252,98 @@ func _on_pause_button_pressed():
 func _on_return_game_button_pressed():
 	_close_pause_menu()
 
+func _on_clear_table_button_pressed() -> void:
+	if not session_active or clear_table_in_progress:
+		return
+	clear_table_confirmation.popup_centered(Vector2i(640, 260))
+
+func _on_clear_table_confirmed() -> void:
+	if not session_active:
+		return
+	if Util.is_server(self):
+		server_clear_table()
+	else:
+		server_clear_table.rpc_id(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_clear_table() -> void:
+	if Util.not_server(self) or not session_active or clear_table_in_progress:
+		return
+	if card_db.deck_instance == null:
+		printerr("一键清场失败：牌库尚未初始化")
+		return
+
+	clear_table_in_progress = true
+	set_clear_table_busy.rpc(true)
+	prepare_for_table_clear.rpc()
+
+	_clear_board_nodes()
+
+	# queue_free() 会在帧末执行；确认旧节点真正离树后再创建同名牌堆。
+	while _board_objects_are_pending_deletion():
+		await get_tree().process_frame
+	if not session_active or card_db.deck_instance == null:
+		clear_table_in_progress = false
+		set_clear_table_busy.rpc(false)
+		return
+
+	var all_card_ids: Array[int] = card_db.get_all_IDs()
+	all_card_ids.sort_custom(_card_id_less)
+	var public_pile := add_pile(all_card_ids, "公共牌堆")
+	public_pile.global_position = Vector3.ZERO
+	var rebuilt_pile_count := 1
+	for child: Node in players.get_children():
+		if child is Player:
+			var empty_card_ids: Array[int] = []
+			create_pile_for_player(empty_card_ids, child as Player)
+			rebuilt_pile_count += 1
+
+	clear_table_in_progress = false
+	set_clear_table_busy.rpc(false)
+	print("一键清场完成：已重建 ", rebuilt_pile_count, " 个牌堆")
+
+@rpc("authority", "call_local", "reliable")
+func prepare_for_table_clear() -> void:
+	clear_table_confirmation.hide()
+	_close_local_deck_viewers()
+
+@rpc("authority", "call_local", "reliable")
+func set_clear_table_busy(busy: bool) -> void:
+	clear_table_button.disabled = busy
+
+func _card_id_less(card_id_a: int, card_id_b: int) -> bool:
+	var priority_a := card_db.get_priority(card_id_a)
+	var priority_b := card_db.get_priority(card_id_b)
+	if priority_a == priority_b:
+		return card_id_a < card_id_b
+	return priority_a < priority_b
+
+func _board_objects_are_pending_deletion() -> bool:
+	for child: Node in card_sorter.get_children():
+		if child is Card:
+			return true
+	for child: Node in piles.get_children():
+		if child is Pile:
+			return true
+	return false
+
+func _clear_board_nodes() -> void:
+	card_sorter.card_ID_stack.clear()
+	for child: Node in card_sorter.get_children():
+		if child is Card:
+			child.queue_free()
+	for child: Node in piles.get_children():
+		if child is Pile:
+			child.queue_free()
+
 func _on_disconnect_button_pressed():
 	_release_local_interactions()
 	_return_to_main_menu("已退出房间")
 
-func create_pile_for_player(card_IDs: Array[int], player: Player):
-	var pile := add_pile(card_IDs, "pile"+player.name)
-	pile.global_position.x = player.global_position.x
-	pile.global_position.z = player.global_position.z
+func create_pile_for_player(card_IDs: Array[int], player: Player) -> Pile:
+	var pile := add_pile(card_IDs, "pile" + player.name)
+	pile.global_position = Vector3(player.global_position.x, 0.0, player.global_position.z)
+	return pile
 
 #################################################
 # Client
@@ -312,6 +399,9 @@ func _stop_and_fail(reason: String):
 func _return_to_main_menu(reason: String):
 	connection_attempt += 1
 	session_active = false
+	clear_table_in_progress = false
+	clear_table_confirmation.hide()
+	clear_table_button.disabled = false
 	pause_overlay.hide()
 	pause_button.hide()
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -335,8 +425,6 @@ func _restore_main_camera():
 	main_camera.transform = main_camera_initial_transform
 
 func _clear_session_nodes():
-	card_sorter.card_ID_stack.clear()
-	var containers: Array[Node] = [card_sorter, piles, players]
-	for container: Node in containers:
-		for child: Node in container.get_children():
-			child.queue_free()
+	_clear_board_nodes()
+	for child: Node in players.get_children():
+		child.queue_free()
