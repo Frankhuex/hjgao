@@ -4,3 +4,11 @@
 **/.DS_Store
 Builds/
 .DS_Store
+
+# Local editor settings
+.vscode/
+
+# Locally installed Godot AI MCP plugin
+/addons/godot_ai/
+/addons/.godot_ai_update/
+/godot-ai-LICENSE.txt
