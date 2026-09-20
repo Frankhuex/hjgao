@@ -1,39 +1,28 @@
 class_name CardDatabase
 extends Node
 
-@onready var deck_instance := load_deck_instance_from_json("res://poker.json")
+const DEFAULT_DECK_PATH = "res://poker.json"
 
-func _ready():
-	if Util.not_server(self):
-		request_sync_front_status()
+var deck_instance: DeckInstance
 
-#新玩家请求同步is_front
-func request_sync_front_status():
-	print("user: ", Util.my_id(self), " request_sync_front_status")
-	server_sync_card_ID_stack.rpc_id(1)
+func init_deck_instance() -> bool:
+	if not FileAccess.file_exists(DEFAULT_DECK_PATH):
+		printerr("牌库文件不存在：", DEFAULT_DECK_PATH)
+		return false
+	return init_deck_instance_from_json_str(FileAccess.get_file_as_string(DEFAULT_DECK_PATH))
 
-@rpc("any_peer", "call_remote", "reliable")
-func server_sync_card_ID_stack():
-	if Util.not_server(self): return
-	sync_flip_status.rpc_id(Util.sender_id(self), deck_instance.card_ID_to_is_front)
-
-func load_deck_instance_from_json(file_path: String) -> DeckInstance:
-	return DeckInstance.load_from_json(load_json_file(file_path))
-	
-func load_json_file(file_path: String) -> Variant:
-	if not FileAccess.file_exists(file_path):
-		print("文件不存在！")
-		return null
-	var file    := FileAccess.open(file_path, FileAccess.READ)
-	var content := file.get_as_text()
-	file.close()
-	var json  := JSON.new()
-	var error := json.parse(content)
-	if error == OK:
-		return json.data #通常是 Dictionary 或 Array
-	else:
-		printerr("JSON 解析失败: ", json.get_error_message(), " 行数: ", json.get_error_line())
-		return null
+func init_deck_instance_from_json_str(json_str: String) -> bool:
+	var json := JSON.new()
+	var error := json.parse(json_str)
+	if error != OK:
+		printerr("DeckInstance JSON 解析失败: ", json.get_error_message(), " 行数: ", json.get_error_line())
+		return false
+	var loaded_deck_instance := DeckInstance.load_from_json(json.data)
+	if loaded_deck_instance == null:
+		printerr("DeckInstance JSON 格式校验失败")
+		return false
+	deck_instance = loaded_deck_instance
+	return true
 
 func export_deck_instance() -> String:
 	return deck_instance.serialize_to_json()

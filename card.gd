@@ -13,7 +13,7 @@ const UP_DOWN_DURATION = 0.1
 
 # Preready Setup
 var _preready_global_position: Vector3
-var _preready_global_rot_y: float
+# var _preready_global_rot_y: float
 
 func preready(id: int, _global_position: Vector3):
 	name = str(id)
@@ -23,9 +23,6 @@ func preready(id: int, _global_position: Vector3):
 func _ready():
 	global_position   = _preready_global_position
 	#global_rotation.y = _preready_global_rot_y
-	
-	if Util.not_server(self):
-		_card_db.request_sync_front_status()
 	
 	_label.text = _card_db.get_card_name(card_ID())
 	var is_front := _card_db.is_front(card_ID())
@@ -59,7 +56,7 @@ func _input(event: InputEvent):
 		request_flip()
 		get_viewport().set_input_as_handled() 
 
-func _process(_delta):
+func _process(_delta: float):
 	_dragger.process_drag()
 	process_float_upon_pile()
 
@@ -74,6 +71,11 @@ func _server_card_sorter_action():
 # Flipping
 func request_flip():
 	_card_db.request_flip(card_ID())
+
+func release_local_interaction():
+	if _owner_mux.i_am_owner():
+		_dragger.suspend_local_interaction()
+		_owner_mux.request_release()
 
 const FLIP_DURATION = 0.3
 func check_and_flip():

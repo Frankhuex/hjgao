@@ -7,8 +7,18 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4xowi"]
 albedo_color = Color(0, 0.35576674, 0, 1)
 
+[sub_resource type="Environment" id="Environment_player_lighting"]
+background_mode = 1
+background_color = Color(0.14, 0.17, 0.22, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.38, 0.48, 0.65, 1)
+ambient_light_energy = 0.6
+
 [node name="Game" type="Node3D" unique_id=804165182]
 script = ExtResource("1_u44n3")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_player_lighting")
 
 [node name="Table" type="CSGBox3D" parent="." unique_id=663217799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.006, -0.501, 0)
@@ -19,24 +29,37 @@ material = SubResource("StandardMaterial3D_4xowi")
 transform = Transform3D(2.32, 0, 0, 0, 0.16139796, 0.51929647, 0, -0.73426396, 0.11414613, 1.1062622e-06, 5.3118052, 1.9789071)
 
 [node name="DirectionalLight3D1" type="DirectionalLight3D" parent="." unique_id=2107985037]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 6.115, 0)
-light_energy = 3.0
+rotation = Vector3(-0.959931, -0.610865, 0)
+light_color = Color(1, 0.94, 0.84, 1)
+light_energy = 1.8
 
 [node name="OmniLight3D1" type="OmniLight3D" parent="." unique_id=1659391117]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 3, 0)
-light_energy = 10.0
+position = Vector3(4, 6.5, 0)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 1.5
+omni_range = 8.0
+omni_attenuation = 1.2
 
 [node name="OmniLight3D2" type="OmniLight3D" parent="." unique_id=705429776]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 5)
-light_energy = 10.0
+position = Vector3(0, 6.5, 4)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 1.5
+omni_range = 8.0
+omni_attenuation = 1.2
 
 [node name="OmniLight3D3" type="OmniLight3D" parent="." unique_id=923408197]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, 0)
-light_energy = 10.0
+position = Vector3(-4, 6.5, 0)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 1.5
+omni_range = 8.0
+omni_attenuation = 1.2
 
 [node name="OmniLight3D4" type="OmniLight3D" parent="." unique_id=1732515952]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
-light_energy = 10.0
+position = Vector3(0, 6.5, -4)
+light_color = Color(0.88, 0.93, 1, 1)
+light_energy = 1.5
+omni_range = 8.0
+omni_attenuation = 1.2
 
 [node name="CardSorter" type="Node3D" parent="." unique_id=798572210]
 script = ExtResource("1_xkndl")
@@ -127,8 +150,100 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "加入房间"
 
+[node name="PauseCanvasLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="PauseButton" type="Button" parent="PauseCanvasLayer"]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -76.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 76.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 28
+text = "⏸️"
+
+[node name="PauseOverlay" type="Control" parent="PauseCanvasLayer"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="DimBackground" type="ColorRect" parent="PauseCanvasLayer/PauseOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="PanelContainer" type="PanelContainer" parent="PauseCanvasLayer/PauseOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -120.0
+offset_right = 180.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PauseCanvasLayer/PauseOverlay/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "暂停"
+horizontal_alignment = 1
+
+[node name="ReturnGameButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "返回游戏"
+
+[node name="ClearTableButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "一键清场"
+
+[node name="DisconnectButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "退出房间"
+
+[node name="ClearTableConfirmation" type="ConfirmationDialog" parent="PauseCanvasLayer"]
+title = "确认一键清场"
+dialog_text = "这会删除桌面上的全部散牌和现有牌堆，\n并取消所有玩家正在进行的牌堆操作。\n\n随后将在桌面中央重新生成一副完整牌，\n以及每位玩家对应的空牌堆。\n卡牌正反面状态会保留。"
+ok_button_text = "确认清场"
+cancel_button_text = "取消"
+
 [node name="CardDatabase" type="Node" parent="." unique_id=1721052179]
 script = ExtResource("3_u44n3")
 
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/HostButton" to="." method="_on_host_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/JoinButton" to="." method="_on_join_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseButton" to="." method="_on_pause_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ReturnGameButton" to="." method="_on_return_game_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton" to="." method="_on_clear_table_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/DisconnectButton" to="." method="_on_disconnect_button_pressed"]
+[connection signal="confirmed" from="PauseCanvasLayer/ClearTableConfirmation" to="." method="_on_clear_table_confirmed"]

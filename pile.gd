@@ -79,6 +79,11 @@ func _on_hotspot_random_input_event(camera: Node, event: InputEvent, event_posit
 func _process(_delta):
 	dragger.process_drag()
 
+func release_local_interaction():
+	if owner_mux.i_am_owner():
+		dragger.suspend_local_interaction()
+		owner_mux.request_release()
+
 # Util
 func get_y_when_over_pile() -> float:
 	return BASE_THICKNESS + card_ID_stack.size() * CARD_THICKNESS + HEIGHT_ABOVE_PILE
