@@ -7,12 +7,14 @@ extends StaticBody3D
 @onready var _pivot: Node3D       = $Pivot
 @onready var _dragger: Dragger    = $Dragger
 @onready var _owner_mux: OwnerMux = $OwnerMux
+@onready var _description_tooltip: CardDescriptionTooltip = get_node("/root/Game/CardDescriptionTooltip")
 
 const DRAGGING_Y       = 0.5
 const UP_DOWN_DURATION = 0.1
 
 # Preready Setup
 var _preready_global_position: Vector3
+var _is_mouse_hovering := false
 # var _preready_global_rot_y: float
 
 func preready(id: int, _global_position: Vector3):
@@ -31,6 +33,28 @@ func _ready():
 	_dragger.config(_owner_mux, UP_DOWN_DURATION, DRAGGING_Y, func(): return _card_sorter.get_drop_y())
 	_owner_mux.on_owner_change.connect(_server_card_sorter_action)
 	_card_db.on_flip.connect(check_and_flip)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+
+func _exit_tree() -> void:
+	if is_instance_valid(_description_tooltip):
+		_description_tooltip.hide_for(self)
+
+func _on_mouse_entered() -> void:
+	_is_mouse_hovering = true
+	_refresh_description_tooltip()
+
+func _on_mouse_exited() -> void:
+	_is_mouse_hovering = false
+	_description_tooltip.hide_for(self)
+
+func _refresh_description_tooltip() -> void:
+	if not _is_mouse_hovering:
+		return
+	if Input.mouse_mode != Input.MOUSE_MODE_VISIBLE or not _card_db.is_front(card_ID()):
+		_description_tooltip.hide_for(self)
+		return
+	_description_tooltip.show_for(self, card_ID())
 	
 # Inputs
 func _input_event(_camera, event: InputEvent, _position, _normal, _shape_idx):
@@ -82,6 +106,7 @@ func check_and_flip():
 	var is_front := _card_db.is_front(card_ID())
 	var target_rot_x := get_rot_x_by_is_front(is_front)
 	Util.tween_rot_x(_pivot, target_rot_x, FLIP_DURATION)
+	_refresh_description_tooltip()
 
 # Util
 func card_ID() -> int:

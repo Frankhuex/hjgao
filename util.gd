@@ -1,5 +1,9 @@
 class_name Util
 
+static func board_locked(node: Node) -> bool:
+	var game: GameSession = node.get_node_or_null("/root/Game") as GameSession
+	return game != null and game.clear_table_in_progress
+
 static func is_left_mouse_down(event: InputEvent) -> bool:
 	if event is InputEventMouseButton:
 		var mouse_event: InputEventMouseButton = event

@@ -12,16 +12,11 @@ func init_deck_instance() -> bool:
 	return init_deck_instance_from_json_str(FileAccess.get_file_as_string(DEFAULT_DECK_PATH))
 
 func init_deck_instance_from_json_str(json_str: String) -> bool:
-	var json := JSON.new()
-	var error := json.parse(json_str)
-	if error != OK:
-		printerr("DeckInstance JSON 解析失败: ", json.get_error_message(), " 行数: ", json.get_error_line())
+	var result := DeckJson.parse(json_str)
+	if result.deck == null:
+		printerr(result.error)
 		return false
-	var loaded_deck_instance := DeckInstance.load_from_json(json.data)
-	if loaded_deck_instance == null:
-		printerr("DeckInstance JSON 格式校验失败")
-		return false
-	deck_instance = loaded_deck_instance
+	deck_instance = result.deck
 	return true
 
 func export_deck_instance() -> String:
@@ -37,6 +32,15 @@ func get_card_template(id: int) -> CardTemplate:
 	var card_name := get_card_name(id)
 	return deck_instance.deck_template.card_name_to_card_template[card_name]
 
+func get_card_tooltip_text(id: int) -> String:
+	var card_name := get_card_name(id).strip_edges()
+	var description := get_card_template(id).description.strip_edges()
+	if card_name.is_empty():
+		return description
+	if description.is_empty():
+		return card_name
+	return card_name + ": " + description
+
 func is_front(id: int) -> bool:
 	return deck_instance.card_ID_to_is_front[id]
 
@@ -50,12 +54,14 @@ func local_flip(id: int):
 	deck_instance.card_ID_to_is_front[id] = not front
 
 func request_flip(id: int):
+	if Util.board_locked(self): return
 	if Util.is_server(self):
 		server_flip(id)
 	else:
 		server_flip.rpc_id(1, id)
 
 func request_flip_to(id: int, front: bool):
+	if Util.board_locked(self): return
 	if Util.is_server(self):
 		server_flip_to(id, front)
 	else:
@@ -64,17 +70,19 @@ func request_flip_to(id: int, front: bool):
 @rpc("any_peer", "call_remote", "reliable")
 func server_flip(id: int):
 	if Util.not_server(self): return
+	if Util.board_locked(self) or not deck_instance.card_ID_to_card_name.has(id): return
 	local_flip(id)
 	sync_flip_status.rpc(deck_instance.card_ID_to_is_front)
 
 @rpc("any_peer", "call_remote", "reliable")
 func server_flip_to(id: int, front: bool):
 	if Util.not_server(self): return
+	if Util.board_locked(self) or not deck_instance.card_ID_to_card_name.has(id): return
 	if is_front(id) == front: return
 	local_flip(id)
 	sync_flip_status.rpc(deck_instance.card_ID_to_is_front)
 
-@rpc("any_peer", "call_local", "reliable")
+@rpc("authority", "call_local", "reliable")
 func sync_flip_status(card_ID_to_is_front: Dictionary):
 	deck_instance.card_ID_to_is_front = card_ID_to_is_front
 	on_flip.emit()

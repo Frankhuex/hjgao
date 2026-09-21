@@ -45,6 +45,7 @@ func request_viewer_operation(updated_card_ID_stack: Array[int], drawn_card_IDs:
 @rpc("any_peer", "call_remote", "reliable")
 func server_viewer_operation(updated_card_ID_stack: Array[int], drawn_card_IDs: Array[int]):
 	if Util.not_server(self): return
+	if Util.board_locked(self): return
 	if not is_being_viewed(): return
 	_parent.spawner.server_spawn_card_by_IDs(drawn_card_IDs)
 	_parent.card_ID_stack = updated_card_ID_stack

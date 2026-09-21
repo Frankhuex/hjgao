@@ -9,6 +9,7 @@ func config():
 	return
 
 func request_receive_card(card_ID: int, source: Const.CardSource) -> bool:
+	if Util.board_locked(self): return false
 	if _parent.owner_mux.is_owned(): return false
 	if Util.is_server(self):
 		server_receive_card(card_ID, source)
@@ -19,6 +20,7 @@ func request_receive_card(card_ID: int, source: Const.CardSource) -> bool:
 @rpc("any_peer", "call_remote", "reliable")
 func server_receive_card(card_ID: int, source: Const.CardSource):
 	if Util.not_server(self): return
+	if Util.board_locked(self): return
 	_parent.owner_mux.server_set_owner(Const.INPUT_SOURCE_TO_PURPOSE[source], Util.sender_id(self))
 	match source:
 		Const.CardSource.BOTTOM:

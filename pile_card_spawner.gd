@@ -14,6 +14,7 @@ func request_spawn_card(source: Const.CardSource) -> bool:
 
 func server_spawn_card_from_source():
 	if Util.not_server(self): return
+	if Util.board_locked(self): return
 	if not Util.is_pile_output_purpose(_parent.owner_mux.purpose): return
 	if len(_parent.card_ID_stack) == 0: 
 		_parent.owner_mux.server_reset_owner()
@@ -34,6 +35,7 @@ func server_spawn_card_from_source():
 
 func server_spawn_card_by_IDs(card_IDs: Array[int]):
 	if Util.not_server(self): return
+	if Util.board_locked(self): return
 	var card_ID_to_spawn_pos := _parent.calc_spawn_pos(card_IDs)
 	for card_ID in card_ID_to_spawn_pos:
 		var spawn_pos := card_ID_to_spawn_pos[card_ID]

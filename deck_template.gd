@@ -25,6 +25,7 @@ func serialize_to_json() -> String:
 static func load_from_json(input: Variant) -> DeckTemplate:
 	if not (input is Dictionary):
 		push_error("Failed to load DeckTemplate: input must be Dictionary")
+		return null
 	
 	var dict: Dictionary = input
 
