@@ -4,47 +4,18 @@ extends Node
 const SYNC_TIMEOUT_MS: int = 15000
 @onready var game: GameSession = get_parent() as GameSession
 @onready var database: CardDatabase = game.get_node("CardDatabase")
-var button: Button
-var file_dialog: FileDialog
-var confirmation: ConfirmationDialog
-var message: AcceptDialog
-var status: Label
+@onready var button: Button = $"../PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChangeDeckButton"
+@onready var file_dialog: FileDialog = $"../PauseCanvasLayer/DeckFileDialog"
+@onready var confirmation: ConfirmationDialog = $"../PauseCanvasLayer/DeckChangeConfirmation"
+@onready var message: AcceptDialog = $"../PauseCanvasLayer/DeckChangeMessage"
+@onready var status: Label = $"../PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/DeckChangeStatus"
+@onready var confirmation_template: String = confirmation.dialog_text
 var candidate_json: String = ""
 var transaction: int = 0
 var phase: String = ""
 var waiting: Dictionary[int, bool] = {}
 var active: bool = false
 var request_pending: bool = false
-
-func _ready() -> void:
-	var menu: VBoxContainer = game.get_node("PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer")
-	button = Button.new()
-	button.text = "更换卡组…"
-	button.add_theme_font_size_override("font_size", 22)
-	menu.add_child(button)
-	menu.move_child(button, menu.get_node("DisconnectButton").get_index())
-	button.pressed.connect(_choose_file)
-	status = Label.new()
-	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status.hide()
-	menu.add_child(status)
-	var canvas: CanvasLayer = game.get_node("PauseCanvasLayer")
-	file_dialog = FileDialog.new()
-	file_dialog.title = "选择卡组 JSON"
-	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	file_dialog.filters = PackedStringArray(["*.json ; 卡组 JSON"])
-	file_dialog.use_native_dialog = true
-	canvas.add_child(file_dialog)
-	file_dialog.file_selected.connect(_file_selected)
-	confirmation = ConfirmationDialog.new()
-	confirmation.title = "确认更换卡组"
-	confirmation.ok_button_text = "更换并清场"
-	canvas.add_child(confirmation)
-	confirmation.confirmed.connect(_submit)
-	message = AcceptDialog.new()
-	message.title = "更换卡组"
-	canvas.add_child(message)
 
 func _choose_file() -> void:
 	if not game.session_active or Util.board_locked(self) or request_pending:
@@ -68,7 +39,11 @@ func _file_selected(path: String) -> void:
 		show_result(result.error)
 		return
 	candidate_json = text
-	confirmation.dialog_text = "%s\n共 %d 种牌，%d 张牌。\n\n这会取消所有玩家的卡牌操作，并删除全部散牌和牌堆。\n随后生成完整的新公共牌堆和每位玩家的空牌堆。\n正反面使用文件中的状态，本次更换仅在当前房间生效。" % [path.get_file(), result.deck.deck_template.ordered_card_names.size(), result.deck.card_ID_to_card_name.size()]
+	confirmation.dialog_text = confirmation_template.format({
+		"file_name": path.get_file(),
+		"card_types": result.deck.deck_template.ordered_card_names.size(),
+		"card_count": result.deck.card_ID_to_card_name.size(),
+	})
 	confirmation.popup_centered(Vector2i(680, 300))
 
 func _submit() -> void:
