@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://chfax7q1qrmk8" path="res://game.gd" id="1_u44n3"]
 [ext_resource type="Script" uid="uid://uq4u22nep4h0" path="res://card_sorter.gd" id="1_xkndl"]
 [ext_resource type="Script" uid="uid://chvo27h7goylb" path="res://card_database.gd" id="3_u44n3"]
+[ext_resource type="PackedScene" path="res://CardDescriptionTooltip.tscn" id="4_tooltip"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4xowi"]
 albedo_color = Color(0, 0.35576674, 0, 1)
@@ -16,6 +17,8 @@ ambient_light_energy = 0.6
 
 [node name="Game" type="Node3D" unique_id=804165182]
 script = ExtResource("1_u44n3")
+
+[node name="CardDescriptionTooltip" parent="." instance=ExtResource("4_tooltip")]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_player_lighting")
@@ -193,9 +196,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -180.0
-offset_top = -120.0
+offset_top = -145.0
 offset_right = 180.0
-offset_bottom = 120.0
+offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -215,6 +218,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "暂停"
 horizontal_alignment = 1
+
+[node name="TooltipCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+button_pressed = true
+text = "显示卡牌说明（Q）"
 
 [node name="ReturnGameButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -243,6 +252,7 @@ script = ExtResource("3_u44n3")
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/HostButton" to="." method="_on_host_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/JoinButton" to="." method="_on_join_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseButton" to="." method="_on_pause_button_pressed"]
+[connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox" to="." method="_on_tooltip_check_box_toggled"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ReturnGameButton" to="." method="_on_return_game_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton" to="." method="_on_clear_table_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/DisconnectButton" to="." method="_on_disconnect_button_pressed"]

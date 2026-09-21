@@ -13,6 +13,8 @@ extends Node3D
 @onready var pause_overlay: Control = $PauseCanvasLayer/PauseOverlay
 @onready var clear_table_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton
 @onready var clear_table_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearTableConfirmation
+@onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox
+@onready var card_description_tooltip: CardDescriptionTooltip = $CardDescriptionTooltip
 
 const PLAYER = preload("res://Player.tscn")
 const PILE   = preload("res://Pile.tscn")
@@ -43,6 +45,7 @@ func _ready():
 	main_camera_initial_transform = main_camera.transform
 	pause_overlay.hide()
 	pause_button.hide()
+	_sync_tooltip_check_box()
 	
 	# 2. 解析命令行参数
 	var args := OS.get_cmdline_args()
@@ -200,7 +203,15 @@ func _input(event: InputEvent):
 	if not event is InputEventKey:
 		return
 	var key_event: InputEventKey = event
-	if not key_event.pressed or key_event.echo or key_event.keycode != KEY_ESCAPE:
+	if not key_event.pressed or key_event.echo:
+		return
+	if key_event.keycode == KEY_Q:
+		if session_active:
+			card_description_tooltip.toggle_tooltip_enabled()
+			_sync_tooltip_check_box()
+			get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode != KEY_ESCAPE:
 		return
 	if pause_overlay.visible:
 		_close_pause_menu()
@@ -216,6 +227,7 @@ func _open_pause_menu():
 	local_player.set_input_enabled(false)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	pause_button.hide()
+	_sync_tooltip_check_box()
 	pause_overlay.show()
 
 func _close_pause_menu():
@@ -230,7 +242,14 @@ func _close_pause_menu():
 func _update_pause_button():
 	pause_button.visible = session_active and not pause_overlay.visible and is_instance_valid(local_player)
 
+func _on_tooltip_check_box_toggled(enabled: bool) -> void:
+	card_description_tooltip.set_tooltip_enabled(enabled)
+
+func _sync_tooltip_check_box() -> void:
+	tooltip_check_box.set_pressed_no_signal(card_description_tooltip.is_tooltip_enabled())
+
 func _release_local_interactions():
+	card_description_tooltip.hide_all()
 	for child in card_sorter.get_children():
 		if child is Card:
 			var card: Card = child
@@ -305,6 +324,7 @@ func server_clear_table() -> void:
 @rpc("authority", "call_local", "reliable")
 func prepare_for_table_clear() -> void:
 	clear_table_confirmation.hide()
+	card_description_tooltip.hide_all()
 	_close_local_deck_viewers()
 
 @rpc("authority", "call_local", "reliable")
@@ -405,6 +425,7 @@ func _return_to_main_menu(reason: String):
 	pause_overlay.hide()
 	pause_button.hide()
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	card_description_tooltip.hide_all()
 	_close_local_deck_viewers()
 	_restore_main_camera()
 	if peer != null:

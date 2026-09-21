@@ -37,6 +37,15 @@ func get_card_template(id: int) -> CardTemplate:
 	var card_name := get_card_name(id)
 	return deck_instance.deck_template.card_name_to_card_template[card_name]
 
+func get_card_tooltip_text(id: int) -> String:
+	var card_name := get_card_name(id).strip_edges()
+	var description := get_card_template(id).description.strip_edges()
+	if card_name.is_empty():
+		return description
+	if description.is_empty():
+		return card_name
+	return card_name + ": " + description
+
 func is_front(id: int) -> bool:
 	return deck_instance.card_ID_to_is_front[id]
 
