@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://uq4u22nep4h0" path="res://card_sorter.gd" id="1_xkndl"]
 [ext_resource type="Script" uid="uid://chvo27h7goylb" path="res://card_database.gd" id="3_u44n3"]
 [ext_resource type="PackedScene" path="res://CardDescriptionTooltip.tscn" id="4_tooltip"]
+[ext_resource type="Script" path="res://deck_change.gd" id="5_deck_change"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4xowi"]
 albedo_color = Color(0, 0.35576674, 0, 1)
@@ -248,6 +249,9 @@ cancel_button_text = "取消"
 
 [node name="CardDatabase" type="Node" parent="." unique_id=1721052179]
 script = ExtResource("3_u44n3")
+
+[node name="DeckChange" type="Node" parent="."]
+script = ExtResource("5_deck_change")
 
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/HostButton" to="." method="_on_host_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/JoinButton" to="." method="_on_join_button_pressed"]

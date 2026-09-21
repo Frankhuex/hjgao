@@ -22,6 +22,7 @@ func i_am_owner() -> bool:
 	return _owner == Util.my_id(self) and is_multiplayer_authority()
 	
 func request_own(purpose: Const.Purpose) -> bool:
+	if Util.board_locked(self): return false
 	if is_owned(): return false
 	if Util.is_server(self): 
 		server_set_owner(purpose, 1)
@@ -40,6 +41,7 @@ func request_release() -> bool:
 @rpc("any_peer", "call_remote", "reliable")
 func server_set_owner(purpose: Const.Purpose, new_owner: int):
 	if Util.not_server(self): return
+	if Util.board_locked(self): return
 	if is_owned():          return
 	_set_owner.rpc(new_owner, purpose)
 

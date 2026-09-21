@@ -1,3 +1,4 @@
+class_name GameSession
 extends Node3D
 @onready var main_menu: Control    = $CanvasLayer/MainMenu
 @onready var players: Node3D       = $Players
@@ -15,6 +16,7 @@ extends Node3D
 @onready var clear_table_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearTableConfirmation
 @onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox
 @onready var card_description_tooltip: CardDescriptionTooltip = $CardDescriptionTooltip
+@onready var deck_change: DeckChange = $DeckChange
 
 const PLAYER = preload("res://Player.tscn")
 const PILE   = preload("res://Pile.tscn")
@@ -160,6 +162,9 @@ func _on_player_exiting_tree(node: Node):
 func _on_peer_authenticating(id: int):
 	if not multiplayer.is_server():
 		return
+	if deck_change.active:
+		scene_multiplayer.disconnect_peer(id)
+		return
 	if card_db.deck_instance == null:
 		printerr("拒绝玩家认证：服务器牌库未初始化")
 		scene_multiplayer.disconnect_peer(id)
@@ -171,6 +176,9 @@ func _on_peer_authenticating(id: int):
 
 func _on_auth_data_received(id: int, data: PackedByteArray):
 	if multiplayer.is_server():
+		if deck_change.active:
+			scene_multiplayer.disconnect_peer(id)
+			return
 		if data.get_string_from_utf8() != AUTH_READY_ACK:
 			printerr("拒绝玩家认证：DeckInstance 确认消息无效，玩家ID：", id)
 			scene_multiplayer.disconnect_peer(id)
@@ -200,6 +208,8 @@ func _on_peer_authentication_failed(id: int):
 		_stop_and_fail("DeckInstance 同步认证失败")
 
 func _input(event: InputEvent):
+	if deck_change.has_dialog() or clear_table_confirmation.visible:
+		return
 	if not event is InputEventKey:
 		return
 	var key_event: InputEventKey = event
@@ -231,6 +241,8 @@ func _open_pause_menu():
 	pause_overlay.show()
 
 func _close_pause_menu():
+	if clear_table_in_progress:
+		return
 	if not pause_overlay.visible:
 		return
 	pause_overlay.hide()
@@ -306,20 +318,20 @@ func server_clear_table() -> void:
 		set_clear_table_busy.rpc(false)
 		return
 
+	_rebuild_board()
+	clear_table_in_progress = false
+	set_clear_table_busy.rpc(false)
+	print("一键清场完成")
+
+func _rebuild_board() -> void:
 	var all_card_ids: Array[int] = card_db.get_all_IDs()
 	all_card_ids.sort_custom(_card_id_less)
 	var public_pile := add_pile(all_card_ids, "公共牌堆")
 	public_pile.global_position = Vector3.ZERO
-	var rebuilt_pile_count := 1
 	for child: Node in players.get_children():
-		if child is Player:
+		if child is Player and not child.is_queued_for_deletion():
 			var empty_card_ids: Array[int] = []
 			create_pile_for_player(empty_card_ids, child as Player)
-			rebuilt_pile_count += 1
-
-	clear_table_in_progress = false
-	set_clear_table_busy.rpc(false)
-	print("一键清场完成：已重建 ", rebuilt_pile_count, " 个牌堆")
 
 @rpc("authority", "call_local", "reliable")
 func prepare_for_table_clear() -> void:
@@ -329,7 +341,9 @@ func prepare_for_table_clear() -> void:
 
 @rpc("authority", "call_local", "reliable")
 func set_clear_table_busy(busy: bool) -> void:
+	clear_table_in_progress = busy
 	clear_table_button.disabled = busy
+	deck_change.set_busy(busy)
 
 func _card_id_less(card_id_a: int, card_id_b: int) -> bool:
 	var priority_a := card_db.get_priority(card_id_a)
@@ -417,6 +431,7 @@ func _stop_and_fail(reason: String):
 	_return_to_main_menu(reason)
 
 func _return_to_main_menu(reason: String):
+	deck_change.reset()
 	connection_attempt += 1
 	session_active = false
 	clear_table_in_progress = false
