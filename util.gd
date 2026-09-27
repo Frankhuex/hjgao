@@ -1,5 +1,36 @@
 class_name Util
 
+const DEFAULT_PLAYER_NAME_PREFIX = "玩家"
+
+static func sanitize_chat_message(raw: String, max_length: int = 500, max_lines: int = 8) -> String:
+	var normalized := raw.replace("\r\n", "\n").replace("\r", "\n").replace("\t", " ")
+	if normalized.length() > max_length * 4:
+		return ""
+	var cleaned := ""
+	for index in range(normalized.length()):
+		var code := normalized.unicode_at(index)
+		if code == 10:
+			cleaned += "\n"
+		elif code >= 32 and code != 127:
+			cleaned += normalized.substr(index, 1)
+	cleaned = cleaned.strip_edges()
+	if cleaned.is_empty() or cleaned.length() > max_length:
+		return ""
+	if cleaned.split("\n").size() > max_lines:
+		return ""
+	return cleaned
+
+static func sanitize_player_name(raw: String, peer_id: int, max_length: int = 24) -> String:
+	var display_name := raw.replace("\r", " ").replace("\n", " ").replace("\t", " ")
+	display_name = display_name.strip_edges()
+	while display_name.contains("  "):
+		display_name = display_name.replace("  ", " ")
+	if display_name.length() > max_length:
+		display_name = display_name.left(max_length).strip_edges()
+	if display_name.is_empty():
+		display_name = DEFAULT_PLAYER_NAME_PREFIX + str(peer_id)
+	return display_name
+
 static func board_locked(node: Node) -> bool:
 	var game: GameSession = node.get_node_or_null("/root/Game") as GameSession
 	return game != null and game.clear_table_in_progress
