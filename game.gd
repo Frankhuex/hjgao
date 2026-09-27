@@ -19,6 +19,7 @@ extends Node3D
 @onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox
 @onready var card_description_tooltip: CardDescriptionTooltip = $CardDescriptionTooltip
 @onready var deck_change: DeckChange = $DeckChange
+@onready var chat_ui: ChatPanel = $ChatUI
 
 const PLAYER = preload("res://Player.tscn")
 const PILE   = preload("res://Pile.tscn")
@@ -27,6 +28,11 @@ const CONNECTION_TIMEOUT = 10.0
 const PLAYER_NAME_MAX_LENGTH = 24
 const CLIENT_AUTH_MAX_BYTES = 1024
 const AUTH_PROTOCOL_VERSION = 1
+const CHAT_HISTORY_LIMIT = 200
+const CHAT_MESSAGE_MAX_LENGTH = 500
+const CHAT_MESSAGE_MAX_LINES = 8
+const CHAT_BURST_TOKENS = 5
+const CHAT_TOKEN_REFILL_PER_SECOND = 1
 
 var peer: ENetMultiplayerPeer
 var local_player: Player
@@ -38,6 +44,10 @@ var requested_player_name := ""
 var pending_player_names: Dictionary = {}
 var player_names: Dictionary = {}
 var player_roster_cache: Array = []
+var chat_history: Array = []
+var chat_rate_tokens: Dictionary = {}
+var chat_rate_second: Dictionary = {}
+var chat_history_served: Dictionary = {}
 
 func _ready():
 	# 1. 基础信号绑定
@@ -52,6 +62,9 @@ func _ready():
 	scene_multiplayer.peer_authentication_failed.connect(_on_peer_authentication_failed)
 	players.child_entered_tree.connect(_on_player_entered_tree)
 	players.child_exiting_tree.connect(_on_player_exiting_tree)
+	chat_ui.send_requested.connect(_on_chat_send_requested)
+	chat_ui.input_focus_entered.connect(_on_chat_input_focus_entered)
+	chat_ui.input_focus_exited.connect(_on_chat_input_focus_exited)
 	main_camera_initial_transform = main_camera.transform
 	pause_overlay.hide()
 	pause_button.hide()
@@ -99,6 +112,11 @@ func start_server(port: int, headless: bool):
 	print("成功创建房间于端口：", port)
 	multiplayer.multiplayer_peer = peer
 	session_active = true
+	chat_history.clear()
+	chat_rate_tokens.clear()
+	chat_rate_second.clear()
+	chat_history_served.clear()
+	chat_ui.reset()
 	add_pile(card_db.get_all_IDs(), "公共牌堆")
 	
 	if not headless:
@@ -151,6 +169,9 @@ func _on_peer_disconnected(id: int):
 	print("伙伴离开了，玩家ID：", id)
 	pending_player_names.erase(id)
 	player_names.erase(id)
+	chat_rate_tokens.erase(id)
+	chat_rate_second.erase(id)
+	chat_history_served.erase(id)
 	# 1. 找到并删除玩家节点
 	var player_node = players.get_node_or_null(str(id))
 	if player_node:
@@ -259,11 +280,40 @@ func _on_peer_authentication_failed(id: int):
 
 func _input(event: InputEvent):
 	if deck_change.has_dialog() or clear_table_confirmation.visible:
+		chat_ui.release_input_focus()
+		return
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.pressed and chat_ui.is_input_focused() and not chat_ui.is_point_in_input(mouse_event.position):
+			chat_ui.release_input_focus()
 		return
 	if not event is InputEventKey:
 		return
 	var key_event: InputEventKey = event
 	if not key_event.pressed or key_event.echo:
+		return
+	if chat_ui.is_input_focused():
+		if key_event.keycode == KEY_ESCAPE:
+			chat_ui.release_input_focus()
+			if not pause_overlay.visible:
+				_open_pause_menu()
+			get_viewport().set_input_as_handled()
+			return
+		if key_event.keycode == KEY_ENTER or key_event.keycode == KEY_KP_ENTER:
+			if not key_event.shift_pressed:
+				chat_ui.submit_current_input()
+				get_viewport().set_input_as_handled()
+			return
+		return
+	if pause_overlay.visible:
+		if key_event.keycode == KEY_ESCAPE:
+			_close_pause_menu()
+			get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == KEY_T:
+		if session_active and is_instance_valid(local_player):
+			chat_ui.toggle()
+			get_viewport().set_input_as_handled()
 		return
 	if key_event.keycode == KEY_Q:
 		if session_active:
@@ -273,16 +323,14 @@ func _input(event: InputEvent):
 		return
 	if key_event.keycode != KEY_ESCAPE:
 		return
-	if pause_overlay.visible:
-		_close_pause_menu()
-		get_viewport().set_input_as_handled()
-	elif session_active and is_instance_valid(local_player):
+	if session_active and is_instance_valid(local_player):
 		_open_pause_menu()
 		get_viewport().set_input_as_handled()
 
 func _open_pause_menu():
 	if not session_active or not is_instance_valid(local_player) or pause_overlay.visible:
 		return
+	chat_ui.release_input_focus()
 	_release_local_interactions()
 	local_player.set_input_enabled(false)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -395,6 +443,114 @@ func _refresh_player_list() -> void:
 			text += "  [我]"
 		player_list.add_item(text)
 
+func _on_chat_send_requested(content: String) -> void:
+	if not session_active:
+		return
+	var message := Util.sanitize_chat_message(content, CHAT_MESSAGE_MAX_LENGTH, CHAT_MESSAGE_MAX_LINES)
+	if message.is_empty():
+		return
+	if Util.is_server(self):
+		_server_accept_chat_message(Util.my_id(self), message)
+	else:
+		_send_chat_message_to_server.call_deferred(message)
+
+func _send_chat_message_to_server(content: String) -> void:
+	if not session_active or Util.is_server(self):
+		return
+	var error := multiplayer.rpc(1, self, &"submit_chat_message", [content])
+	if error != OK:
+		printerr("发送聊天消息失败，错误码：", error)
+
+func _on_chat_input_focus_entered() -> void:
+	if not session_active or not is_instance_valid(local_player) or not local_player.is_card_mode():
+		chat_ui.release_input_focus()
+		return
+	if pause_overlay.visible or _has_blocking_modal():
+		chat_ui.release_input_focus()
+		return
+	local_player.set_input_enabled(false)
+
+func _on_chat_input_focus_exited() -> void:
+	if not session_active or not is_instance_valid(local_player):
+		return
+	if pause_overlay.visible or _has_blocking_modal():
+		return
+	local_player.set_input_enabled(true)
+
+func _has_blocking_modal() -> bool:
+	return deck_change.has_dialog() or clear_table_confirmation.visible
+
+@rpc("any_peer", "call_remote", "reliable")
+func submit_chat_message(content: String) -> void:
+	if Util.not_server(self) or not session_active:
+		return
+	var sender_id := Util.sender_id(self)
+	if sender_id <= 0 or not player_names.has(sender_id):
+		return
+	_server_accept_chat_message(sender_id, content)
+
+func _server_accept_chat_message(sender_id: int, content: String) -> void:
+	if Util.not_server(self) or not session_active:
+		return
+	if not _allow_chat_message(sender_id):
+		return
+	var message := Util.sanitize_chat_message(content, CHAT_MESSAGE_MAX_LENGTH, CHAT_MESSAGE_MAX_LINES)
+	if message.is_empty():
+		return
+	var sender_name := str(player_names.get(sender_id, "玩家%d" % sender_id))
+	chat_history.append({
+		"sender_id": sender_id,
+		"sender_name": sender_name,
+		"content": message,
+	})
+	while chat_history.size() > CHAT_HISTORY_LIMIT:
+		chat_history.pop_front()
+	receive_chat_message.rpc(sender_id, sender_name, message)
+
+func _allow_chat_message(peer_id: int) -> bool:
+	var now_second := int(Time.get_ticks_msec() / 1000)
+	var tokens := int(str(chat_rate_tokens.get(peer_id, CHAT_BURST_TOKENS)).to_int())
+	var last_second := int(str(chat_rate_second.get(peer_id, now_second)).to_int())
+	var elapsed := maxi(0, now_second - last_second)
+	tokens = mini(CHAT_BURST_TOKENS, tokens + elapsed * CHAT_TOKEN_REFILL_PER_SECOND)
+	if tokens <= 0:
+		chat_rate_tokens[peer_id] = tokens
+		chat_rate_second[peer_id] = now_second
+		return false
+	chat_rate_tokens[peer_id] = tokens - 1
+	chat_rate_second[peer_id] = now_second
+	return true
+
+@rpc("authority", "call_local", "reliable")
+func receive_chat_message(sender_id: int, sender_name: String, content: String) -> void:
+	var message := Util.sanitize_chat_message(content, CHAT_MESSAGE_MAX_LENGTH, CHAT_MESSAGE_MAX_LINES)
+	if message.is_empty():
+		return
+	chat_ui.append_message(sender_name, message)
+	if sender_id != Util.my_id(self):
+		chat_ui.show_notification(sender_name, message)
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_chat_history() -> void:
+	if Util.not_server(self) or not session_active:
+		return
+	var sender_id := Util.sender_id(self)
+	if sender_id <= 0:
+		return
+	if chat_history_served.has(sender_id):
+		return
+	chat_history_served[sender_id] = true
+	receive_chat_history.rpc_id(sender_id, chat_history)
+
+@rpc("authority", "call_remote", "reliable")
+func receive_chat_history(history: Array) -> void:
+	chat_ui.replace_history(history)
+
+func _request_chat_history() -> void:
+	if not session_active or Util.is_server(self):
+		return
+	request_chat_history.rpc_id(1)
+
 func _release_local_interactions():
 	card_description_tooltip.hide_all()
 	for child in card_sorter.get_children():
@@ -421,6 +577,7 @@ func _on_return_game_button_pressed():
 func _on_clear_table_button_pressed() -> void:
 	if not session_active or clear_table_in_progress:
 		return
+	chat_ui.release_input_focus()
 	clear_table_confirmation.popup_centered(Vector2i(640, 260))
 
 func _on_clear_table_confirmed() -> void:
@@ -545,6 +702,7 @@ func _on_connected_to_server():
 	main_menu.hide()
 	_update_pause_button()
 	_request_player_roster.call_deferred()
+	_request_chat_history.call_deferred()
 
 # 连接物理失败（比如握手包被防火墙拦截，由引擎触发）
 func _on_connection_failed():
@@ -577,6 +735,7 @@ func _return_to_main_menu(reason: String):
 	pause_overlay.hide()
 	pause_button.hide()
 	player_list.clear()
+	chat_ui.reset()
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	card_description_tooltip.hide_all()
 	_close_local_deck_viewers()
@@ -592,6 +751,10 @@ func _return_to_main_menu(reason: String):
 	pending_player_names.clear()
 	player_names.clear()
 	player_roster_cache.clear()
+	chat_history.clear()
+	chat_rate_tokens.clear()
+	chat_rate_second.clear()
+	chat_history_served.clear()
 	main_menu.show()
 	print(reason)
 

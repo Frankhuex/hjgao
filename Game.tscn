@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://chvo27h7goylb" path="res://card_database.gd" id="3_u44n3"]
 [ext_resource type="PackedScene" path="res://CardDescriptionTooltip.tscn" id="4_tooltip"]
 [ext_resource type="Script" uid="uid://c5ahff02ello" path="res://deck_change.gd" id="5_deck_change"]
+[ext_resource type="PackedScene" path="res://ChatPanel.tscn" id="6_chat"]
 
 [sub_resource type="Environment" id="Environment_player_lighting"]
 background_mode = 1
@@ -20,6 +21,8 @@ albedo_color = Color(0, 0.35576674, 0, 1)
 script = ExtResource("1_u44n3")
 
 [node name="CardDescriptionTooltip" parent="." unique_id=833730654 instance=ExtResource("4_tooltip")]
+
+[node name="ChatUI" parent="." unique_id=546479402 instance=ExtResource("6_chat")]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=349376409]
 environment = SubResource("Environment_player_lighting")
