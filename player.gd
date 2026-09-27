@@ -10,6 +10,7 @@ signal status_changed
 enum PlayerStatus { MOVE = 0, CARD = 1 }
 var player_status := PlayerStatus.CARD
 var input_enabled := true
+var display_name := ""
 const DEFAULT_CAMERA_POSITION = Vector3(0.0, 5.312, 1.979)
 const DEFAULT_CAMERA_ROTATION_DEGREES = Vector3(-77.6, 0.0, 0.0)
 

@@ -107,6 +107,21 @@ layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
+[node name="PlayerNameRow" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=1439607702]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PlayerNameLabel" type="Label" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/PlayerNameRow" unique_id=1117598997]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "玩家名称"
+
+[node name="InputPlayerName" type="LineEdit" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/PlayerNameRow" unique_id=2009831832]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+placeholder_text = "玩家名称"
+max_length = 24
+
 [node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=291802790]
 layout_mode = 2
 size_flags_horizontal = 8
@@ -135,6 +150,7 @@ horizontal_alignment = 1
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=972983494]
 layout_mode = 2
+size_flags_horizontal = 8
 size_flags_vertical = 4
 
 [node name="InputJoinIP" type="LineEdit" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=924659126]
@@ -195,10 +211,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -180.0
-offset_top = -145.0
-offset_right = 180.0
-offset_bottom = 145.0
+offset_left = -220.0
+offset_top = -250.0
+offset_right = 220.0
+offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -218,6 +234,15 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "暂停"
 horizontal_alignment = 1
+
+[node name="PlayerListLabel" type="Label" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=383159830]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "玩家列表"
+
+[node name="PlayerList" type="ItemList" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=433264656]
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
 
 [node name="TooltipCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1393367753]
 layout_mode = 2
