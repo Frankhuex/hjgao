@@ -253,6 +253,11 @@ theme_override_font_sizes/font_size = 22
 button_pressed = true
 text = "显示卡牌说明（Q）"
 
+[node name="ChatPanelCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1623485077]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "显示聊天窗（T）"
+
 [node name="ReturnGameButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=2040344990]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
@@ -320,6 +325,7 @@ script = ExtResource("5_deck_change")
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/JoinButton" to="." method="_on_join_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseButton" to="." method="_on_pause_button_pressed"]
 [connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox" to="." method="_on_tooltip_check_box_toggled"]
+[connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChatPanelCheckBox" to="." method="_on_chat_panel_check_box_toggled"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ReturnGameButton" to="." method="_on_return_game_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton" to="." method="_on_clear_table_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChangeDeckButton" to="DeckChange" method="_choose_file"]

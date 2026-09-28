@@ -143,6 +143,40 @@ Godot AI MCP 需要 GUI 编辑器保持打开。headless 模式下插件会显�
 
 当前 Codex 环境已经配置好该 MCP，可以直接调用 `godot_ai` 工具。
 
+### 在 Trae CN 中配置
+
+Trae CN 的 MCP 服务器通过 MCP 面板手动添加 JSON 配置，内容等价于 Codex `~/.codex/config.toml` 中的 `[mcp_servers.godot-ai]`：
+
+```json
+{
+  "mcpServers": {
+    "godot-ai": {
+      "command": "/opt/homebrew/bin/uvx",
+      "args": [
+        "--link-mode",
+        "copy",
+        "--from",
+        "godot-ai==3.2.5",
+        "godot-ai",
+        "attach",
+        "--port",
+        "8000",
+        "--ws-port",
+        "9500"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+注意事项：
+
+- `uvx` 来自 Homebrew（`/opt/homebrew/bin/uvx`），首次运行会自动拉取 `godot-ai==3.2.5`。
+- stdio MCP 没有 Codex 版本的 `startup_timeout_sec` 和 `tool_timeout_sec` 字段，Trae 使用自身默认超时。
+- 添加后需保持 Godot 编辑器（GUI 模式）打开本项目，工具才能连接成功。
+- 配置或重启 MCP 后，当前会话可能需要重新加载才能看到 `godot_ai` 系列工具。
+
 ### 常用操作
 
 | 目的 | MCP 工具 | 操作 |

@@ -17,6 +17,7 @@ extends Node3D
 @onready var clear_table_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton
 @onready var clear_table_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearTableConfirmation
 @onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox
+@onready var chat_panel_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChatPanelCheckBox
 @onready var card_description_tooltip: CardDescriptionTooltip = $CardDescriptionTooltip
 @onready var deck_change: DeckChange = $DeckChange
 @onready var chat_ui: ChatPanel = $ChatUI
@@ -69,6 +70,7 @@ func _ready():
 	pause_overlay.hide()
 	pause_button.hide()
 	_sync_tooltip_check_box()
+	_sync_chat_panel_check_box()
 	
 	# 2. 解析命令行参数
 	var args := OS.get_cmdline_args()
@@ -313,6 +315,7 @@ func _input(event: InputEvent):
 	if key_event.keycode == KEY_T:
 		if session_active and is_instance_valid(local_player):
 			chat_ui.toggle()
+			_sync_chat_panel_check_box()
 			get_viewport().set_input_as_handled()
 		return
 	if key_event.keycode == KEY_Q:
@@ -336,6 +339,7 @@ func _open_pause_menu():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	pause_button.hide()
 	_sync_tooltip_check_box()
+	_sync_chat_panel_check_box()
 	pause_overlay.show()
 	_sync_player_roster()
 
@@ -358,6 +362,15 @@ func _on_tooltip_check_box_toggled(enabled: bool) -> void:
 
 func _sync_tooltip_check_box() -> void:
 	tooltip_check_box.set_pressed_no_signal(card_description_tooltip.is_tooltip_enabled())
+
+func _on_chat_panel_check_box_toggled(open: bool) -> void:
+	if open:
+		chat_ui.open()
+	else:
+		chat_ui.close()
+
+func _sync_chat_panel_check_box() -> void:
+	chat_panel_check_box.set_pressed_no_signal(chat_ui.is_open())
 
 func _request_player_roster() -> void:
 	if not session_active or Util.is_server(self):
