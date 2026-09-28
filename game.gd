@@ -3,6 +3,7 @@ extends Node3D
 @onready var main_menu: Control    = $CanvasLayer/MainMenu
 @onready var players: Node3D       = $Players
 @onready var piles: Node3D         = $Piles
+@onready var counters: Node3D      = $Counters
 @onready var main_camera: Camera3D = $MainCamera3D
 @onready var card_db: CardDatabase = $CardDatabase
 @onready var card_sorter: CardSorter = $CardSorter
@@ -16,6 +17,9 @@ extends Node3D
 @onready var player_list: ItemList = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/PlayerList
 @onready var clear_table_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton
 @onready var clear_table_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearTableConfirmation
+@onready var add_counter_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/AddCounterButton
+@onready var clear_counters_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearCountersButton
+@onready var clear_counters_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearCountersConfirmation
 @onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox
 @onready var chat_panel_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChatPanelCheckBox
 @onready var card_description_tooltip: CardDescriptionTooltip = $CardDescriptionTooltip
@@ -24,6 +28,7 @@ extends Node3D
 
 const PLAYER = preload("res://Player.tscn")
 const PILE   = preload("res://Pile.tscn")
+const COUNTER = preload("res://Counter.tscn")
 const PORT   = 7788
 const CONNECTION_TIMEOUT = 10.0
 const PLAYER_NAME_MAX_LENGTH = 24
@@ -155,6 +160,40 @@ func add_pile(card_IDs: Array[int], pile_name: String) -> Pile:
 	piles.add_child(pile, true)
 	return pile
 
+###################################################
+# Counter
+func _on_add_counter_button_pressed() -> void:
+	if not session_active or clear_table_in_progress:
+		return
+	if not multiplayer.is_server():
+		return
+	chat_ui.release_input_focus()
+	add_counter(_find_free_counter_position())
+
+func add_counter(pos: Vector3) -> Counter:
+	var counter: Counter = COUNTER.instantiate()
+	counters.add_child(counter, true)
+	counter.global_position = pos
+	return counter
+
+func _find_free_counter_position() -> Vector3:
+	# 在桌面两侧扫描空位，避开现有计数器与牌堆
+	for row_z: float in [2.6, -2.6]:
+		for i in range(4):
+			var pos := Vector3(3.3 - i * 2.2, 0, row_z)
+			if _counter_position_free(pos):
+				return pos
+	return Vector3(0, 0, 2.6) # 都满了就放默认位置
+
+func _counter_position_free(pos: Vector3) -> bool:
+	for child: Node in counters.get_children():
+		if child is Counter and (child as Counter).global_position.distance_to(pos) < 2.0:
+			return false
+	for child: Node in piles.get_children():
+		if child is Pile and (child as Pile).global_position.distance_to(pos) < 2.0:
+			return false
+	return true
+
 func _on_peer_connected(id: int):
 	if not multiplayer.is_server():
 		return
@@ -281,7 +320,7 @@ func _on_peer_authentication_failed(id: int):
 		_stop_and_fail("DeckInstance 同步认证失败")
 
 func _input(event: InputEvent):
-	if deck_change.has_dialog() or clear_table_confirmation.visible:
+	if deck_change.has_dialog() or clear_table_confirmation.visible or clear_counters_confirmation.visible or _counter_viewer_editing():
 		chat_ui.release_input_focus()
 		return
 	if event is InputEventMouseButton:
@@ -338,6 +377,7 @@ func _open_pause_menu():
 	local_player.set_input_enabled(false)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	pause_button.hide()
+	add_counter_button.visible = session_active and multiplayer.is_server() # 添加计数器仅房主可用
 	_sync_tooltip_check_box()
 	_sync_chat_panel_check_box()
 	pause_overlay.show()
@@ -574,12 +614,23 @@ func _release_local_interactions():
 		if child is Pile:
 			var pile: Pile = child
 			pile.release_local_interaction()
+	for child in counters.get_children():
+		if child is Counter:
+			var counter: Counter = child
+			counter.release_local_interaction()
 	_close_local_deck_viewers()
 
 func _close_local_deck_viewers():
 	for node in get_tree().root.get_children():
-		if node is DeckViewerUI:
+		if node is DeckViewerUI or node is CounterViewerUI:
 			node.queue_free()
+
+func _counter_viewer_editing() -> bool:
+	for node in get_tree().root.get_children():
+		var viewer := node as CounterViewerUI
+		if viewer != null and viewer.is_editing_text():
+			return true
+	return false
 
 func _on_pause_button_pressed():
 	_open_pause_menu()
@@ -674,6 +725,48 @@ func _clear_board_nodes() -> void:
 	for child: Node in piles.get_children():
 		if child is Pile:
 			child.queue_free()
+
+###################################################
+# 一键清计数器（与一键清场相互独立，见设计文档 Q2）
+func _on_clear_counters_button_pressed() -> void:
+	if not session_active or clear_table_in_progress:
+		return
+	chat_ui.release_input_focus()
+	clear_counters_confirmation.popup_centered(Vector2i(640, 260))
+
+func _on_clear_counters_confirmed() -> void:
+	if not session_active:
+		return
+	if Util.is_server(self):
+		server_clear_counters()
+	else:
+		server_clear_counters.rpc_id(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_clear_counters() -> void:
+	if Util.not_server(self) or not session_active or clear_table_in_progress:
+		return
+	clear_table_in_progress = true # 复用全局清场锁：清计数器期间 Util.board_locked() 拒绝一切申请
+	set_clear_table_busy.rpc(true)
+	prepare_for_counters_clear.rpc()
+	for child: Node in counters.get_children():
+		if child is Counter:
+			child.queue_free()
+	while _counters_are_pending_deletion():
+		await get_tree().process_frame
+	clear_table_in_progress = false
+	set_clear_table_busy.rpc(false)
+	print("一键清计数器完成")
+
+@rpc("authority", "call_local", "reliable")
+func prepare_for_counters_clear() -> void:
+	clear_counters_confirmation.hide()
+
+func _counters_are_pending_deletion() -> bool:
+	for child: Node in counters.get_children():
+		if child is Counter:
+			return true
+	return false
 
 func _on_disconnect_button_pressed():
 	_release_local_interactions()
@@ -780,5 +873,7 @@ func _restore_main_camera():
 
 func _clear_session_nodes():
 	_clear_board_nodes()
+	for child: Node in counters.get_children():
+		child.queue_free()
 	for child: Node in players.get_children():
 		child.queue_free()

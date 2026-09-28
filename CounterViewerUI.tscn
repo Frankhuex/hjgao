@@ -1,0 +1,148 @@
+[gd_scene format=3 uid="uid://cetnupi1oyoqu"]
+
+[ext_resource type="Script" uid="uid://blweupfopi22m" path="res://counter_viewer_ui.gd" id="1_cviewer"]
+
+[node name="CounterViewerUI" type="CanvasLayer" unique_id=498447280]
+script = ExtResource("1_cviewer")
+
+[node name="Background" type="ColorRect" parent="." unique_id=804922977]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.39215687)
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=2083779328]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="Center" type="CenterContainer" parent="Margin" unique_id=233384892]
+layout_mode = 2
+
+[node name="Panel" type="PanelContainer" parent="Margin/Center" unique_id=880081806]
+layout_mode = 2
+
+[node name="InnerMargin" type="MarginContainer" parent="Margin/Center/Panel" unique_id=1976632025]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Margin/Center/Panel/InnerMargin" unique_id=1244810663]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=13994225]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "计数器"
+horizontal_alignment = 1
+
+[node name="ValueRow" type="HBoxContainer" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=1716543387]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ValueLabel" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox/ValueRow" unique_id=980569888]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "数值"
+
+[node name="Btn_Minus" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/ValueRow" unique_id=1309763747]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "+1"
+
+[node name="ValueEdit" type="LineEdit" parent="Margin/Center/Panel/InnerMargin/VBox/ValueRow" unique_id=1119393146]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+placeholder_text = "数值"
+alignment = 1
+
+[node name="Btn_Plus" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/ValueRow" unique_id=768035760]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "+1"
+
+[node name="StepRow" type="HBoxContainer" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=1599635022]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StepLabel" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox/StepRow" unique_id=498184800]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "步长"
+
+[node name="StepEdit" type="LineEdit" parent="Margin/Center/Panel/InnerMargin/VBox/StepRow" unique_id=742483014]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+placeholder_text = "步长"
+alignment = 1
+
+[node name="ReturnLabel" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox/StepRow" unique_id=1334446908]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "（回车确认）"
+
+[node name="DecimalsRow" type="HBoxContainer" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=925216956]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DecimalLabel" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow" unique_id=1725956652]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "小数"
+
+[node name="Btn_DecMinus" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow" unique_id=664441515]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "-"
+
+[node name="DecimalsEdit" type="LineEdit" parent="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow" unique_id=1351082293]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+placeholder_text = "小数位"
+alignment = 1
+
+[node name="Btn_DecPlus" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow" unique_id=2117416030]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "+"
+
+[node name="BottomBar" type="HBoxContainer" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=1344362063]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="Btn_Close" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/BottomBar" unique_id=1937994257]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "关闭"
+
+[node name="Btn_Delete" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/BottomBar" unique_id=514704861]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "删除计数器"
+
+[node name="DeleteConfirmation" type="ConfirmationDialog" parent="." unique_id=37042198]
+title = "确认删除计数器"
+size = Vector2i(500, 180)
+ok_button_text = "删除"
+dialog_text = "确定要删除这个计数器吗？
+该操作对全部玩家生效，无法撤销。"
+cancel_button_text = "取消"

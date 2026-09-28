@@ -1,0 +1,89 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://counter.gd" id="1_counter"]
+[ext_resource type="PackedScene" path="res://Dragger.tscn" id="2_dragger"]
+[ext_resource type="Script" path="res://counter_accessor.gd" id="3_accessor"]
+[ext_resource type="PackedScene" path="res://OwnerMux.tscn" id="4_ownermux"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_counter_base"]
+transparency = 1
+albedo_color = Color(0.42883012, 0.30935466, 0.92979854, 0.45490196)
+
+[sub_resource type="BoxMesh" id="BoxMesh_counter_base"]
+material = SubResource("StandardMaterial3D_counter_base")
+size = Vector3(1.8, 0.05, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_counter_btn"]
+albedo_color = Color(1, 1, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_counter_btn"]
+material = SubResource("StandardMaterial3D_counter_btn")
+size = Vector3(0.3, 0.01, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_counter_base"]
+size = Vector3(1.8, 0.05, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_counter_btn"]
+size = Vector3(0.3, 0.06, 0.3)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_counter"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+
+[node name="Counter" type="StaticBody3D"]
+script = ExtResource("1_counter")
+
+[node name="BaseMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, 0)
+mesh = SubResource("BoxMesh_counter_base")
+
+[node name="ValueLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.052, 0)
+text = "0"
+font_size = 40
+pixel_size = 0.005
+
+[node name="MinusPlate" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0.055, 0)
+mesh = SubResource("BoxMesh_counter_btn")
+
+[node name="MinusLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -0.6, 0.063, 0)
+modulate = Color(0, 0, 0, 1)
+text = "-"
+font_size = 32
+pixel_size = 0.005
+
+[node name="PlusPlate" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0.055, 0)
+mesh = SubResource("BoxMesh_counter_btn")
+
+[node name="PlusLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0.6, 0.063, 0)
+modulate = Color(0, 0, 0, 1)
+text = "+"
+font_size = 32
+pixel_size = 0.005
+
+[node name="CollisionShape3D_Base" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, 0)
+shape = SubResource("BoxShape3D_counter_base")
+
+[node name="CollisionShape3D_Minus" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0.06, 0)
+shape = SubResource("BoxShape3D_counter_btn")
+
+[node name="CollisionShape3D_Plus" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0.06, 0)
+shape = SubResource("BoxShape3D_counter_btn")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_counter")
+
+[node name="Dragger" parent="." instance=ExtResource("2_dragger")]
+
+[node name="OwnerMux" parent="." instance=ExtResource("4_ownermux")]
+
+[node name="Accessor" type="Node" parent="."]
+script = ExtResource("3_accessor")

@@ -17,6 +17,9 @@ func server_recover_mux(peer_id: int):
 
 func is_owned() -> bool:
 	return _owner != 0
+
+func get_owner_id() -> int:
+	return _owner
 	
 func i_am_owner() -> bool:
 	return _owner == Util.my_id(self) and is_multiplayer_authority()
