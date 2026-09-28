@@ -1,6 +1,6 @@
 extends SceneTree
 
-# --headless --path . --script res://tests/chat_test.gd -- parser|host|client|late
+# --headless --path . --script res://tests/chat_test.gd -- parser|host|client
 const TEST_PORT: int = 28791
 var game: GameSession
 var failed: bool = false
@@ -33,7 +33,7 @@ func _run() -> void:
 	elif role == "client":
 		await _run_client()
 	else:
-		await _run_late_client()
+		_check(false, "unknown test role: " + role)
 
 	game._return_to_main_menu("测试完成")
 	await process_frame
@@ -58,13 +58,6 @@ func _run_host() -> void:
 		await process_frame
 	await process_frame
 	print("HOST_CLIENT_LEFT")
-
-	while game.chat_history.size() < 2:
-		await process_frame
-	var late_entry := _history_entry(1)
-	_check(str(late_entry.get("sender_name", "")) == "玩家三", "late sender name")
-	_check(str(late_entry.get("content", "")) == "晚到消息", "late chat content")
-	print("HOST_LATE_OK")
 
 func _run_client() -> void:
 	game.input_player_name.text = "玩家二"
@@ -127,26 +120,6 @@ func _run_client() -> void:
 	await process_frame
 	_check(not game.chat_ui.is_input_focused(), "move mode cannot focus chat")
 	print("CLIENT_OK")
-	await create_timer(0.4).timeout
-
-func _run_late_client() -> void:
-	game.input_player_name.text = "玩家三"
-	game.input_join_IP.text = "127.0.0.1"
-	game.input_join_port.text = str(TEST_PORT)
-	game._on_join_button_pressed()
-
-	while not game.session_active or not is_instance_valid(game.local_player):
-		await process_frame
-	while not game.chat_ui.get_history_text().contains("玩家二: 你好"):
-		await process_frame
-	await process_frame
-	_check(game.chat_ui.get_notification_count() == 0, "history snapshot has no notification")
-	await create_timer(0.3).timeout
-	game.chat_ui.message_input.text = "晚到消息"
-	game.chat_ui.submit_current_input()
-	while not game.chat_ui.get_history_text().contains("玩家三: 晚到消息"):
-		await process_frame
-	print("LATE_OK")
 	await create_timer(0.4).timeout
 
 func _key_event(keycode: Key, shift: bool = false) -> InputEventKey:

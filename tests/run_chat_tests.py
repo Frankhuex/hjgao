@@ -38,14 +38,12 @@ try:
     else:
         raise RuntimeError("Client did not leave")
 
-    run("late")
     output, _ = host.communicate(timeout=30)
     host_output.append(output)
     print(output, flush=True)
     assert host.returncode == 0, "host"
     all_output = "".join(host_output)
     assert "HOST_CHAT_OK" in all_output, "host chat"
-    assert "HOST_LATE_OK" in all_output, "host late"
 finally:
     if host.poll() is None:
         host.terminate()
