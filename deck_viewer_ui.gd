@@ -30,6 +30,7 @@ var ui_card_scene := preload("res://UICard.tscn")
 # 拖拽状态数据
 var dragging_card: UICard
 var drag_offset: Vector2
+var _shuffle_sound_armed_at := -1   # R2：等待翻面类按钮操作的落地广播（2 秒过期）
 
 # 【新增】光标与目标索引
 var insert_cursor: ColorRect
@@ -45,7 +46,15 @@ func _ready() -> void:
 	btn_all_flip.pressed.connect(_on_all_flip_pressed)
 	btn_cancel.pressed.connect(_on_cancel_pressed)
 	btn_draw.pressed.connect(_on_confirm_pressed)
-	
+
+	# R6 排除：六大理牌按钮有自己的成功音，按下不响确认音（悬停音保留）；
+	# node_added 连接确认音回调早于本 _ready 执行，因此回调内点击时检查组而非连接时检查
+	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle,
+			btn_all_front, btn_all_back, btn_all_flip]:
+		btn.add_to_group(SfxManager.GROUP_NO_CONFIRM)
+
+	_card_db.on_flip.connect(_check_flip_sound)
+
 	margin.mouse_filter = Control.MOUSE_FILTER_STOP
 	
 	insert_cursor = ColorRect.new()
@@ -77,38 +86,55 @@ func load_deck(deck_list: Array[int]) -> void:
 
 func _on_sort_ascend_pressed():
 	var children := list_top.get_children()
+	if children.is_empty(): return   # 空列表无可"成功"的操作，不响
 	children.sort_custom(func(a: Node, b: Node) -> bool:
 		return _card_db.get_priority(int(a.name)) < _card_db.get_priority(int(b.name)))
 	for i in range(children.size()):
 		list_top.move_child(children[i], i)
+	SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)   # R2：纯本地重排，回调结束即成功
 
 func _on_sort_descend_pressed():
 	var children := list_top.get_children()
+	if children.is_empty(): return
 	children.sort_custom(func(a: Node, b: Node) -> bool:
 		return _card_db.get_priority(int(a.name)) > _card_db.get_priority(int(b.name)))
 	for i in range(children.size()):
 		list_top.move_child(children[i], i)
+	SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)
 
 func _on_shuffle_pressed():
 	var children := list_top.get_children()
+	if children.is_empty(): return
 	children.shuffle()
 	for i in range(children.size()):
 		list_top.move_child(children[i], i)
+	SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)
 
 func _on_all_front_pressed():
+	_arm_shuffle_sound()
 	for child in list_top.get_children():
 		var card := child as UICard
 		card.request_flip_to(true)
 
 func _on_all_back_pressed():
+	_arm_shuffle_sound()
 	for child in list_top.get_children():
 		var card := child as UICard
 		card.request_flip_to(false)
 
 func _on_all_flip_pressed():
+	_arm_shuffle_sound()
 	for child in list_top.get_children():
 		var card := child as UICard
 		card.request_flip()
+
+func _arm_shuffle_sound():
+	_shuffle_sound_armed_at = Time.get_ticks_msec()
+
+func _check_flip_sound():
+	if _shuffle_sound_armed_at > 0 and Time.get_ticks_msec() - _shuffle_sound_armed_at <= 2000:
+		_shuffle_sound_armed_at = -1
+		SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)   # R2：翻面类操作的落地广播到达，仅本端响一次
 
 func _on_card_drag_started(card: UICard) -> void:
 	dragging_card = card
@@ -158,6 +184,7 @@ func _input(event: InputEvent) -> void:
 				
 	elif Util.is_right_mouse_down(event): # 拖拽时按下右键 -> 翻面
 		if not dragging_card: return
+		dragging_card._flip_sound_armed_at = Time.get_ticks_msec()   # R5-2D：拖拽翻面也是本端右键申请，武装音效
 		dragging_card.request_flip()
 		# 找到鼠标底下正在拖拽的“替身”，让它的视觉也同步刷新
 		if drag_preview.get_child_count() > 0:

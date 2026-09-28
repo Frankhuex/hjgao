@@ -10,6 +10,7 @@
 - **牌堆系统**：从顶/底/随机位置抽牌、放牌；2D 查看器内排序、洗牌、统一翻面、批量抽牌
 - **计数器**：桌面上的可计数物件，支持步长与小数位设置，适合记录生命值/分数
 - **房间聊天**：聊天面板 + 关闭时浮动通知横幅，服务器限流与历史记录
+- **音效系统**：全局 `Sfx` 管理器统一调度（悬停去抖、同帧合并、±半音随机音高），覆盖牌堆/卡牌/计数器/查看器全部操作；按钮悬停与确认音自动挂载；背景音乐进入房间 10 秒后开始循环播放
 - **一键清场 / 一键清计数器**：并发安全的桌面重置
 - **自动化测试**：headless 多进程联机测试脚本
 
@@ -197,6 +198,8 @@ Godot --headless --path <项目目录> -- --port=7788   # 实际上无头模式�
 ├── chat_panel.gd / chat_banner.gd   # 聊天 UI
 ├── card_description_tooltip.gd      # 3D/UI 卡牌共用的悬停提示
 ├── hotspot.gd               # 牌堆侧面的"底"/"随"抽牌热点
+├── sfx_manager.gd           # 全局音效/背景音乐管理（autoload `Sfx`）
+├── sounds/                  # 音效与背景音乐（wav）
 ├── tests/                   # 自动化测试（GDScript + Python 运行器）
 └── docs/                    # 各功能的设计文档
 ```
@@ -240,6 +243,7 @@ Godot --headless --path <项目目录> -- --port=7788   # 实际上无头模式�
 | `card_description_tooltip.gd` | 悬停提示：3D 卡牌与 UI 卡牌共用，挂在 `/root` 的浮层 |
 | `deck_json.gd` | 卡组 JSON 静态校验（尺寸/类型/数量/ID 规范），本地预检、服务器校验、认证加载三处共用 |
 | `util.gd` | 消息/昵称清洗、鼠标事件判定、tween 封装、`board_locked`（清场全局锁）等 |
+| `sfx_manager.gd` | 音效系统：`SfxManager.I.play()` 对象池轮转、悬停 50ms 去抖、批量抽牌同帧合并、±1 半音随机音高，headless 下只记录 `_history` 不出声；`node_added` 自动为按钮挂悬停/确认音（`sfx_no_confirm` 组可排除）；背景音乐进房 10 秒后循环、离房停止 |
 
 ## 牌堆子系统（Pile 组合）
 
@@ -307,6 +311,7 @@ Godot --headless --path <项目目录> -- --port=7788   # 实际上无头模式�
 | `run_deck_change_tests.py` | 卡组校验、换库事务 |
 | `run_chat_tests.py` | 消息清洗、通知横幅、焦点互斥、快捷键不误触、联机收发 |
 | `run_counter_tests.py` | 计数器解析/格式化、3D 按钮路由、占用互斥、查看器编辑、晚加入同步、一键清计数器 |
+| `run_sfx_tests.py` | 音效：解析与本地行为、拖动/抽牌/入堆/翻面广播音、查看器理牌音、2D 翻面仅本端、批量抽牌同帧合并 |
 
 运行方式（以计数器为例）：
 
@@ -319,6 +324,7 @@ python3 tests/run_counter_tests.py
 ## 相关设计文档
 
 - [docs/counter-design.md](docs/counter-design.md) — 计数器完整设计（含已确认决策记录）
+- [docs/sound-effects-design.md](docs/sound-effects-design.md) — 音效系统设计（触发点对照、测试用例表）
 - [docs/in-room-chat-design.md](docs/in-room-chat-design.md) — 房间聊天设计
 - [docs/player-name-customization.md](docs/player-name-customization.md) — 玩家昵称与花名册
 - [docs/card-text-wrapping-and-centering.md](docs/card-text-wrapping-and-centering.md) — 卡牌文本排版

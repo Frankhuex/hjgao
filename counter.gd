@@ -24,11 +24,13 @@ const BUTTON_HALF_SIZE = 0.15
 var value: float  = 0.0   # 当前数值，允许负数
 var step: float   = 1.0   # 步长 > 0
 var decimals: int = 0     # 小数位数 [0, MAX_DECIMALS]
+var _hovered_button_shape := -1   # R1c：按 shape 跟踪 +/- 按钮悬停边沿
 
 func _ready():
 	dragger.config(owner_mux, UP_DOWN_DURATION, DRAGGING_Y)
 	accessor.config()
 	_update_visuals()
+	mouse_exited.connect(func(): _hovered_button_shape = -1)
 	if Util.not_server(self):
 		request_sync_counter_state()
 
@@ -91,6 +93,9 @@ func _local_can_interact() -> bool:
 	return true
 
 func _input_event(_camera, event: InputEvent, event_position: Vector3, _normal, shape_idx: int):
+	if event is InputEventMouseMotion:   # 物理拾取把悬停移动也投递进来，用于跟踪 +/- 按钮
+		_update_button_hover(shape_idx)
+		return
 	if not _local_can_interact(): return
 	if Util.is_left_mouse_down(event):
 		if dragger.i_am_dragging(): return # 拖动中点击任意处都由 _input 统一处理放下
@@ -108,6 +113,15 @@ func _input_event(_camera, event: InputEvent, event_position: Vector3, _normal, 
 		if shape_idx != SHAPE_BASE: return
 		if accessor.request_open_viewer():
 			get_viewport().set_input_as_handled()
+
+func _update_button_hover(shape_idx: int) -> void:
+	if not _local_can_interact(): return
+	if shape_idx == SHAPE_MINUS or shape_idx == SHAPE_PLUS:
+		if _hovered_button_shape != shape_idx:   # 从底座/外部进入按钮：边沿触发一次
+			_hovered_button_shape = shape_idx
+			SfxManager.I.play(SfxManager.Snd.HOVER)
+	else:
+		_hovered_button_shape = -1               # 移到底座：复位，便于再次进入按钮时重响
 
 func _input(event: InputEvent):
 	if Util.is_left_mouse_down(event):
