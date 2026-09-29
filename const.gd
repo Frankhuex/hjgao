@@ -10,6 +10,9 @@ enum Purpose {
 	PILE_OUTPUT_TOP    = 6,
 	PILE_OUTPUT_BOTTOM = 7,
 	PILE_OUTPUT_RANDOM = 8,
+	COUNTER_VIEW       = 9,
+	COUNTER_ADD        = 10,
+	COUNTER_SUBTRACT   = 11,
 }
 
 const PURPOSE_STR: Dictionary[Purpose, String] = {
@@ -22,6 +25,9 @@ const PURPOSE_STR: Dictionary[Purpose, String] = {
 	Purpose.PILE_OUTPUT_TOP:    "PILE_OUTPUT_TOP",
 	Purpose.PILE_OUTPUT_BOTTOM: "PILE_OUTPUT_BOTTOM",
 	Purpose.PILE_OUTPUT_RANDOM: "PILE_OUTPUT_RANDOM",
+	Purpose.COUNTER_VIEW:       "COUNTER_VIEW",
+	Purpose.COUNTER_ADD:        "COUNTER_ADD",
+	Purpose.COUNTER_SUBTRACT:   "COUNTER_SUBTRACT",
 }
 
 enum CardSource {

@@ -87,6 +87,12 @@ spawn_path = NodePath("../CardSorter")
 _spawnable_scenes = PackedStringArray("uid://d2jwkcqllthu8")
 spawn_path = NodePath("../Piles")
 
+[node name="Counters" type="Node3D" parent="." unique_id=103358285]
+
+[node name="MultiplayerSpawner_Counters" type="MultiplayerSpawner" parent="." unique_id=721590424]
+_spawnable_scenes = PackedStringArray("res://Counter.tscn")
+spawn_path = NodePath("../Counters")
+
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1552652310]
 
 [node name="MainMenu" type="Control" parent="CanvasLayer" unique_id=440085742]
@@ -110,6 +116,18 @@ layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
+[node name="TitleRow" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=1840087450]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/TitleRow" unique_id=1567952622]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 24
+text = "HJGAO
+"
+
 [node name="PlayerNameRow" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=1439607702]
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -124,6 +142,12 @@ custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 placeholder_text = "玩家名称"
 max_length = 24
+
+[node name="EmptyRow" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=825617655]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/EmptyRow" unique_id=1965606642]
+layout_mode = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/MainMenu/MarginContainer/VBoxContainer" unique_id=291802790]
 layout_mode = 2
@@ -253,6 +277,11 @@ theme_override_font_sizes/font_size = 22
 button_pressed = true
 text = "显示卡牌说明（Q）"
 
+[node name="ChatPanelCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1623485077]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "显示聊天窗（T）"
+
 [node name="ReturnGameButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=2040344990]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
@@ -262,6 +291,17 @@ text = "返回游戏"
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "一键清场"
+
+[node name="AddCounterButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=298222688]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "添加计数器"
+
+[node name="ClearCountersButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1655621198]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "一键清计数器"
 
 [node name="ChangeDeckButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1603623372]
 layout_mode = 2
@@ -300,7 +340,10 @@ dialog_text = "{file_name}
 title = "更换卡组"
 
 [node name="ClearTableConfirmation" type="ConfirmationDialog" parent="PauseCanvasLayer" unique_id=299321470]
+oversampling_override = 1.0
 title = "确认一键清场"
+position = Vector2i(0, 36)
+size = Vector2i(304, 215)
 ok_button_text = "确认清场"
 dialog_text = "这会删除桌面上的全部散牌和现有牌堆，
 并取消所有玩家正在进行的牌堆操作。
@@ -308,6 +351,15 @@ dialog_text = "这会删除桌面上的全部散牌和现有牌堆，
 随后将在桌面中央重新生成一副完整牌，
 以及每位玩家对应的空牌堆。
 卡牌正反面状态会保留。"
+cancel_button_text = "取消"
+
+[node name="ClearCountersConfirmation" type="ConfirmationDialog" parent="PauseCanvasLayer" unique_id=592142970]
+title = "确认一键清计数器"
+ok_button_text = "确认清除"
+dialog_text = "这会删除桌面上的全部计数器，
+并取消所有玩家正在进行的计数器操作。
+
+牌堆和散牌不受影响。"
 cancel_button_text = "取消"
 
 [node name="CardDatabase" type="Node" parent="." unique_id=1721052179]
@@ -320,10 +372,14 @@ script = ExtResource("5_deck_change")
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/JoinButton" to="." method="_on_join_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseButton" to="." method="_on_pause_button_pressed"]
 [connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox" to="." method="_on_tooltip_check_box_toggled"]
+[connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChatPanelCheckBox" to="." method="_on_chat_panel_check_box_toggled"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ReturnGameButton" to="." method="_on_return_game_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton" to="." method="_on_clear_table_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/AddCounterButton" to="." method="_on_add_counter_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearCountersButton" to="." method="_on_clear_counters_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChangeDeckButton" to="DeckChange" method="_choose_file"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/DisconnectButton" to="." method="_on_disconnect_button_pressed"]
 [connection signal="file_selected" from="PauseCanvasLayer/DeckFileDialog" to="DeckChange" method="_file_selected"]
 [connection signal="confirmed" from="PauseCanvasLayer/DeckChangeConfirmation" to="DeckChange" method="_submit"]
 [connection signal="confirmed" from="PauseCanvasLayer/ClearTableConfirmation" to="." method="_on_clear_table_confirmed"]
+[connection signal="confirmed" from="PauseCanvasLayer/ClearCountersConfirmation" to="." method="_on_clear_counters_confirmed"]

@@ -8,6 +8,8 @@ extends ColorRect
 const IS_SOLID_WHITE = "is_solid_white"
 signal drag_started(card: UICard)
 var _is_mouse_hovering := false
+var _last_is_front := false
+var _flip_sound_armed_at := -1  # msec，>0 表示等待自己的翻面广播（2 秒过期）
 
 func preready(id: int):
 	name = str(id)
@@ -18,6 +20,7 @@ func _ready():
 		material = material.duplicate()
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
+	_last_is_front = _card_db.is_front(card_ID())
 	update_ui()
 	_card_db.on_flip.connect(update_ui)
 
@@ -27,6 +30,7 @@ func _exit_tree() -> void:
 
 func _on_mouse_entered() -> void:
 	_is_mouse_hovering = true
+	SfxManager.I.play(SfxManager.Snd.HOVER)   # R1b：2D 牌悬停，仅本端
 	_refresh_description_tooltip()
 
 func _on_mouse_exited() -> void:
@@ -47,11 +51,17 @@ func _gui_input(event: InputEvent):
 		drag_started.emit(self)
 		get_viewport().set_input_as_handled()
 	elif Util.is_right_mouse_down(event):
+		_flip_sound_armed_at = Time.get_ticks_msec()   # 武装：等自己右键申请的翻面落地
 		request_flip()
-		get_viewport().set_input_as_handled() 
+		get_viewport().set_input_as_handled()
 
 func update_ui():
 	var is_front := _card_db.is_front(card_ID())
+	if is_front != _last_is_front:
+		if _flip_sound_armed_at > 0 and Time.get_ticks_msec() - _flip_sound_armed_at <= 2000:
+			_flip_sound_armed_at = -1
+			SfxManager.I.play(SfxManager.Snd.FLIP)   # R5-2D：自己右键申请的那次翻面真正落地，仅本端
+		_last_is_front = is_front
 	var card_name := _card_db.get_card_name(card_ID())
 	if is_front:
 		_label.text = card_name

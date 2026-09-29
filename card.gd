@@ -30,15 +30,20 @@ func _ready():
 	var is_front := _card_db.is_front(card_ID())
 	_pivot.rotation_degrees.x = get_rot_x_by_is_front(is_front)
 	
-	_dragger.config(_owner_mux, UP_DOWN_DURATION, DRAGGING_Y, func(): return _card_sorter.get_drop_y())
+	_dragger.config(_owner_mux, UP_DOWN_DURATION, DRAGGING_Y, func(): return _card_sorter.get_drop_y(), "card")
 	_owner_mux.on_owner_change.connect(_server_card_sorter_action)
 	_card_db.on_flip.connect(check_and_flip)
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
+	SfxManager.I.play(SfxManager.Snd.SPAWN)   # R8：Card.tscn 全项目仅 spawner 实例化，_ready 即"从牌堆取出"，全端播放
 
 func _exit_tree() -> void:
 	if is_instance_valid(_description_tooltip):
 		_description_tooltip.hide_for(self)
+	var game: GameSession = get_node_or_null("/root/Game")
+	if _dragger.is_being_dragged() and game != null and game.session_active \
+			and not Util.board_locked(self):
+		SfxManager.I.play(SfxManager.Snd.PILE_IN)   # R7：带着 DRAG 占用被回收 = 塞回牌堆，全端播放
 
 func _on_mouse_entered() -> void:
 	_is_mouse_hovering = true
@@ -105,6 +110,8 @@ const FLIP_DURATION = 0.3
 func check_and_flip():
 	var is_front := _card_db.is_front(card_ID())
 	var target_rot_x := get_rot_x_by_is_front(is_front)
+	if absf(_pivot.rotation_degrees.x - target_rot_x) > 1.0:  # 本牌状态真的变了（阈值容纳浮点/动画中间态）
+		SfxManager.I.play(SfxManager.Snd.FLIP)   # R5-3D：与翻牌动画一致，全端播放
 	Util.tween_rot_x(_pivot, target_rot_x, FLIP_DURATION)
 	_refresh_description_tooltip()
 
