@@ -340,7 +340,10 @@ dialog_text = "{file_name}
 title = "更换卡组"
 
 [node name="ClearTableConfirmation" type="ConfirmationDialog" parent="PauseCanvasLayer" unique_id=299321470]
+oversampling_override = 1.0
 title = "确认一键清场"
+position = Vector2i(0, 36)
+size = Vector2i(304, 215)
 ok_button_text = "确认清场"
 dialog_text = "这会删除桌面上的全部散牌和现有牌堆，
 并取消所有玩家正在进行的牌堆操作。

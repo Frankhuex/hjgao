@@ -149,8 +149,9 @@ func _on_card_drag_started(card: UICard) -> void:
 	drag_preview.add_child(visual_copy)
 	visual_copy.show()
 	visual_copy.modulate.a = 0.7
-	visual_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE 
-	drag_preview.show()	
+	visual_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	drag_preview.show()
+	SfxManager.I.play(SfxManager.Snd.PICKUP_CARD)   # 2D 理牌拖起，仅本端
 
 func _on_cancel_pressed():
 	cancel_confirmed.emit()
@@ -270,6 +271,7 @@ func _drop_card() -> void:
 	# 3. 恢复显示
 	dragging_card.show()
 	dragging_card = null
+	SfxManager.I.play(SfxManager.Snd.DROP_CARD)   # 2D 理牌放下，仅本端
 
 #func _force_start_drag(card: UICard) -> void:
 	#dragging_card = card
