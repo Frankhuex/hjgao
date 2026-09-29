@@ -165,9 +165,16 @@ func add_pile(card_IDs: Array[int], pile_name: String) -> Pile:
 func _on_add_counter_button_pressed() -> void:
 	if not session_active or clear_table_in_progress:
 		return
-	if not multiplayer.is_server():
-		return
 	chat_ui.release_input_focus()
+	if multiplayer.is_server():
+		add_counter(_find_free_counter_position())
+	else:
+		server_add_counter.rpc_id(1)   # 计数器由房主端 Spawner 生成，非房主请求房主代加
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_add_counter() -> void:
+	if Util.not_server(self) or not session_active or clear_table_in_progress:
+		return
 	add_counter(_find_free_counter_position())
 
 func add_counter(pos: Vector3) -> Counter:
@@ -377,7 +384,7 @@ func _open_pause_menu():
 	local_player.set_input_enabled(false)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	pause_button.hide()
-	add_counter_button.visible = session_active and multiplayer.is_server() # 添加计数器仅房主可用
+	add_counter_button.visible = session_active # 所有玩家都可添加计数器
 	_sync_tooltip_check_box()
 	_sync_chat_panel_check_box()
 	pause_overlay.show()
