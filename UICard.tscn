@@ -11,14 +11,25 @@ shader_parameter/bottom_center_color = Color(1, 0.8, 0.8, 1)
 shader_parameter/bottom_edge_color = Color(0.6, 0.2, 0.3, 1)
 shader_parameter/gradient_power = 1.0
 
-[node name="UICard" type="ColorRect" unique_id=151641443]
-material = SubResource("ShaderMaterial_m8rwd")
+	[node name="UICard" type="Control" unique_id=151641443]
 custom_minimum_size = Vector2(100, 140)
 offset_right = 100.0
 offset_bottom = 160.0
 script = ExtResource("1_ctehi")
 
-[node name="Label" type="Label" parent="." unique_id=833598380]
+	[node name="Visual" type="ColorRect" parent="." unique_id=833598380]
+	material = SubResource("ShaderMaterial_m8rwd")
+	layout_mode = 1
+	anchors_preset = 15
+	anchor_left = 0.0
+	anchor_top = 0.0
+	anchor_right = 1.0
+	anchor_bottom = 1.0
+	grow_horizontal = 2
+	grow_vertical = 2
+	mouse_filter = 2
+
+	[node name="Label" type="Label" parent="Visual" unique_id=833598380]
 layout_mode = 1
 anchors_preset = 15
 anchor_left = 0.0

@@ -34,8 +34,19 @@ size_flags_vertical = 8
 [node name="Label_Top" type="Label" parent="Margin/VBox/TopContainer" unique_id=246684071]
 layout_mode = 2
 size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 25
 text = "牌堆"
+horizontal_alignment = 1
+
+[node name="SubTitle" type="HBoxContainer" parent="Margin/VBox" unique_id=1003953899]
+layout_mode = 2
+size_flags_vertical = 8
+
+[node name="Label_SubTitle" type="Label" parent="Margin/VBox/SubTitle" unique_id=1691795675]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 15
+text = "【左键】拖动【右键】翻面【Shift+右键】颠倒"
 horizontal_alignment = 1
 
 [node name="Top_Btns" type="HBoxContainer" parent="Margin/VBox" unique_id=183764756]
@@ -46,38 +57,68 @@ size_flags_vertical = 0
 [node name="Btn_SortAscend" type="Button" parent="Margin/VBox/Top_Btns" unique_id=761112675]
 layout_mode = 2
 size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "递增排序"
 
 [node name="Btn_SortDescend" type="Button" parent="Margin/VBox/Top_Btns" unique_id=131473067]
 layout_mode = 2
 size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "递减排序"
 
 [node name="Btn_Shuffle" type="Button" parent="Margin/VBox/Top_Btns" unique_id=869661463]
 layout_mode = 2
 size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
-text = "打乱"
+theme_override_font_sizes/font_size = 20
+text = "打乱顺序"
 
 [node name="Btn_AllFront" type="Button" parent="Margin/VBox/Top_Btns" unique_id=2039207073]
 layout_mode = 2
 size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "全部正面"
 
 [node name="Btn_AllBack" type="Button" parent="Margin/VBox/Top_Btns" unique_id=1462089687]
 layout_mode = 2
 size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "全部背面"
 
 [node name="Btn_AllFlip" type="Button" parent="Margin/VBox/Top_Btns" unique_id=2005582934]
 layout_mode = 2
 size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
-text = "全部翻转"
+theme_override_font_sizes/font_size = 20
+text = "全部翻面"
+
+[node name="Btn_RandomFace" type="Button" parent="Margin/VBox/Top_Btns" unique_id=297003486]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "随机翻面"
+
+[node name="Btn_AllUpright" type="Button" parent="Margin/VBox/Top_Btns" unique_id=1501664926]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "全部正位"
+
+[node name="Btn_AllInverted" type="Button" parent="Margin/VBox/Top_Btns" unique_id=248939448]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "全部逆位"
+
+[node name="Btn_AllInvert" type="Button" parent="Margin/VBox/Top_Btns" unique_id=1675440689]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "全部颠倒"
+
+[node name="Btn_RandomUpright" type="Button" parent="Margin/VBox/Top_Btns" unique_id=110422109]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "随机正逆"
 
 [node name="Scroll_Top" type="ScrollContainer" parent="Margin/VBox" unique_id=1679606086]
 custom_minimum_size = Vector2(0, 200)
@@ -96,7 +137,7 @@ size_flags_vertical = 6
 
 [node name="Label_Bottom" type="Label" parent="Margin/VBox" unique_id=1930255135]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 25
 text = "即将取出"
 horizontal_alignment = 1
 
@@ -121,18 +162,32 @@ alignment = 1
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
-theme_override_font_sizes/font_size = 30
-text = "取消"
+theme_override_font_sizes/font_size = 25
+text = "关闭"
 
 [node name="Btn_Draw" type="Button" parent="Margin/VBox/BottomBar" unique_id=477980862]
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
-theme_override_font_sizes/font_size = 30
-text = "确定"
+theme_override_font_sizes/font_size = 25
+text = "取出"
 
 [node name="DragPreview" type="Control" parent="." unique_id=827640981]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_SortAscend" to="." method="_on_sort_ascend_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_SortDescend" to="." method="_on_sort_descend_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_Shuffle" to="." method="_on_shuffle_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllFront" to="." method="_on_all_front_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllBack" to="." method="_on_all_back_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllFlip" to="." method="_on_all_flip_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_RandomFace" to="." method="_on_random_face_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllUpright" to="." method="_on_all_upright_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllInverted" to="." method="_on_all_inverted_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllInvert" to="." method="_on_all_invert_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_RandomUpright" to="." method="_on_random_upright_pressed"]
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Cancel" to="." method="_on_cancel_pressed"]
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Draw" to="." method="_on_confirm_pressed"]

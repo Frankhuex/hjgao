@@ -75,6 +75,7 @@ func _run_client() -> void:
 	await process_frame
 	_check(game.chat_ui.is_input_focused(), "card mode can focus chat")
 	_check(not game.local_player.input_enabled, "chat focus pauses player input")
+	var notification_count_before_own_message := game.chat_ui.get_notification_count()
 
 	var status_before: int = game.local_player.player_status
 	var tooltip_before := game.card_description_tooltip.is_tooltip_enabled()
@@ -89,7 +90,7 @@ func _run_client() -> void:
 	game._input(_key_event(KEY_ENTER))
 	while not game.chat_ui.get_history_text().contains("玩家二: 你好"):
 		await process_frame
-	_check(game.chat_ui.get_notification_count() == 0, "own message has no notification")
+	_check(game.chat_ui.get_notification_count() == notification_count_before_own_message, "own message has no additional notification")
 
 	var history_before := game.chat_ui.get_history_text()
 	game.chat_ui.message_input.text = "草稿"
@@ -119,6 +120,12 @@ func _run_client() -> void:
 	game.chat_ui.message_input.grab_focus()
 	await process_frame
 	_check(not game.chat_ui.is_input_focused(), "move mode cannot focus chat")
+	game.chat_ui.message_input.text = "关闭前草稿"
+	game.chat_ui.close_button.pressed.emit()
+	await process_frame
+	_check(not game.chat_ui.is_open(), "close button hides chat")
+	_check(not game.chat_ui.is_input_focused(), "close button releases input focus")
+	_check(game.chat_ui.message_input.text == "关闭前草稿", "close button preserves draft")
 	print("CLIENT_OK")
 	await create_timer(0.4).timeout
 

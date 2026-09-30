@@ -12,3 +12,4 @@ Builds/
 /addons/godot_ai/
 /addons/.godot_ai_update/
 /godot-ai-LICENSE.txt
+tests/counter_test_28793.gd

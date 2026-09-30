@@ -201,7 +201,6 @@ text = "加入房间"
 layer = 100
 
 [node name="PauseButton" type="Button" parent="PauseCanvasLayer" unique_id=104981672]
-visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -214,13 +213,35 @@ theme_override_font_sizes/font_size = 28
 text = "⏸️"
 
 [node name="PauseOverlay" type="Control" parent="PauseCanvasLayer" unique_id=982391122]
-visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="GuideVBoxContainer" type="VBoxContainer" parent="PauseCanvasLayer/PauseOverlay" unique_id=1331838690]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PauseCanvasLayer/PauseOverlay/GuideVBoxContainer" unique_id=2059222694]
+layout_mode = 2
+size_flags_vertical = 10
+
+[node name="Label" type="Label" parent="PauseCanvasLayer/PauseOverlay/GuideVBoxContainer/HBoxContainer" unique_id=329614317]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+text = "【空格】切换移动/打牌【Q】显示/隐藏卡牌详情【R】开/关自动朝向【T】显示/隐藏聊天窗
+【WASD】移动【左键】拖动、抽牌【右键】翻转卡牌，设置牌堆、计数器"
+horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="DimBackground" type="ColorRect" parent="PauseCanvasLayer/PauseOverlay" unique_id=2106452787]
 layout_mode = 1
@@ -271,45 +292,69 @@ text = "玩家列表"
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 
-[node name="TooltipCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1393367753]
+[node name="HBoxContainer2" type="HBoxContainer" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=663931306]
+layout_mode = 2
+
+[node name="TooltipCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1393367753]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 button_pressed = true
 text = "显示卡牌说明（Q）"
 
-[node name="ChatPanelCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1623485077]
+[node name="ChatPanelCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1623485077]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "显示聊天窗（T）"
 
-[node name="ReturnGameButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=2040344990]
+[node name="AutoOrientationCheckBox" type="CheckBox" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=661334906]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "返回游戏"
+button_pressed = true
+text = "拖动自动朝向（R）"
 
-[node name="ClearTableButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=440364674]
+[node name="HBoxContainer" type="HBoxContainer" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1845588033]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "一键清场"
+size_flags_vertical = 4
 
-[node name="AddCounterButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=298222688]
-visible = false
+[node name="AddCounterButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=298222688]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "添加计数器"
 
-[node name="ClearCountersButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1655621198]
+[node name="ClearCountersButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1655621198]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "一键清计数器"
 
-[node name="ChangeDeckButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=1603623372]
+[node name="HBoxContainer4" type="HBoxContainer" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=387866182]
 layout_mode = 2
+
+[node name="ChangeDeckButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer4" unique_id=1603623372]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "更换卡组…"
 
-[node name="DisconnectButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=2068469577]
+[node name="ClearTableButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer4" unique_id=440364674]
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "一键清场"
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer" unique_id=358766700]
+layout_mode = 2
+
+[node name="ReturnGameButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=2040344990]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "返回游戏"
+
+[node name="DisconnectButton" type="Button" parent="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=2068469577]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "退出房间"
 
@@ -371,14 +416,15 @@ script = ExtResource("5_deck_change")
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer/HostButton" to="." method="_on_host_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/HBoxContainer2/JoinButton" to="." method="_on_join_button_pressed"]
 [connection signal="pressed" from="PauseCanvasLayer/PauseButton" to="." method="_on_pause_button_pressed"]
-[connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/TooltipCheckBox" to="." method="_on_tooltip_check_box_toggled"]
-[connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChatPanelCheckBox" to="." method="_on_chat_panel_check_box_toggled"]
-[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ReturnGameButton" to="." method="_on_return_game_button_pressed"]
-[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearTableButton" to="." method="_on_clear_table_button_pressed"]
-[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/AddCounterButton" to="." method="_on_add_counter_button_pressed"]
-[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ClearCountersButton" to="." method="_on_clear_counters_button_pressed"]
-[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChangeDeckButton" to="DeckChange" method="_choose_file"]
-[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/DisconnectButton" to="." method="_on_disconnect_button_pressed"]
+[connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/TooltipCheckBox" to="." method="_on_tooltip_check_box_toggled"]
+[connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/ChatPanelCheckBox" to="." method="_on_chat_panel_check_box_toggled"]
+[connection signal="toggled" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/AutoOrientationCheckBox" to="." method="_on_auto_orientation_check_box_toggled"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/AddCounterButton" to="." method="_on_add_counter_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/ClearCountersButton" to="." method="_on_clear_counters_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer4/ChangeDeckButton" to="DeckChange" method="_choose_file"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer4/ClearTableButton" to="." method="_on_clear_table_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/ReturnGameButton" to="." method="_on_return_game_button_pressed"]
+[connection signal="pressed" from="PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/DisconnectButton" to="." method="_on_disconnect_button_pressed"]
 [connection signal="file_selected" from="PauseCanvasLayer/DeckFileDialog" to="DeckChange" method="_file_selected"]
 [connection signal="confirmed" from="PauseCanvasLayer/DeckChangeConfirmation" to="DeckChange" method="_submit"]
 [connection signal="confirmed" from="PauseCanvasLayer/ClearTableConfirmation" to="." method="_on_clear_table_confirmed"]

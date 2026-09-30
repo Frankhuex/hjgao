@@ -4,6 +4,7 @@ extends CanvasLayer
 signal draw_confirmed(updated_card_ID_stack: Array[int], drawn_cards: Array[int])
 signal cancel_confirmed
 signal viewer_closed
+signal orientation_operation_requested(operation: Const.PileOrientationOperation, card_IDs: Array[int])
 
 # 1. 节点引用：严格匹配最新的 Margin/VBox 层级结构
 @onready var margin: MarginContainer        = $Margin
@@ -18,6 +19,11 @@ signal viewer_closed
 @onready var btn_all_front: Button    = $Margin/VBox/Top_Btns/Btn_AllFront
 @onready var btn_all_back: Button     = $Margin/VBox/Top_Btns/Btn_AllBack
 @onready var btn_all_flip: Button     = $Margin/VBox/Top_Btns/Btn_AllFlip
+@onready var btn_all_upright: Button  = $Margin/VBox/Top_Btns/Btn_AllUpright
+@onready var btn_all_inverted: Button = $Margin/VBox/Top_Btns/Btn_AllInverted
+@onready var btn_all_invert: Button   = $Margin/VBox/Top_Btns/Btn_AllInvert
+@onready var btn_random_face: Button  = $Margin/VBox/Top_Btns/Btn_RandomFace
+@onready var btn_random_upright: Button = $Margin/VBox/Top_Btns/Btn_RandomUpright
 @onready var btn_cancel: Button       = $Margin/VBox/BottomBar/Btn_Cancel
 @onready var btn_draw: Button         = $Margin/VBox/BottomBar/Btn_Draw
 
@@ -38,22 +44,15 @@ var target_list: Control
 var target_index: int
 
 func _ready() -> void:
-	btn_sort_ascend.pressed.connect(_on_sort_ascend_pressed)
-	btn_sort_descend.pressed.connect(_on_sort_descend_pressed)
-	btn_shuffle.pressed.connect(_on_shuffle_pressed)
-	btn_all_front.pressed.connect(_on_all_front_pressed)
-	btn_all_back.pressed.connect(_on_all_back_pressed)
-	btn_all_flip.pressed.connect(_on_all_flip_pressed)
-	btn_cancel.pressed.connect(_on_cancel_pressed)
-	btn_draw.pressed.connect(_on_confirm_pressed)
-
 	# R6 排除：六大理牌按钮有自己的成功音，按下不响确认音（悬停音保留）；
 	# node_added 连接确认音回调早于本 _ready 执行，因此回调内点击时检查组而非连接时检查
 	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle,
-			btn_all_front, btn_all_back, btn_all_flip]:
+			btn_all_front, btn_all_back, btn_all_flip,
+			btn_random_face, btn_random_upright]:
 		btn.add_to_group(SfxManager.GROUP_NO_CONFIRM)
 
 	_card_db.on_flip.connect(_check_flip_sound)
+	_card_db.orientation_changed.connect(_on_orientation_changed)
 
 	margin.mouse_filter = Control.MOUSE_FILTER_STOP
 	
@@ -71,6 +70,7 @@ func load_deck(deck_list: Array[int]) -> void:
 		card.preready(card_ID)
 		list_top.add_child(card)
 		card.drag_started.connect(_on_card_drag_started)
+		card.orientation_requested.connect(_on_card_orientation_requested)
 		
 	# 2. 处理从 3D 强行塞入的牌
 	#if injected_card_ID != -1:
@@ -127,6 +127,43 @@ func _on_all_flip_pressed():
 	for child in list_top.get_children():
 		var card := child as UICard
 		card.request_flip()
+
+func _on_all_upright_pressed():
+	_arm_shuffle_sound()
+	_emit_orientation_operation(Const.PileOrientationOperation.ALL_UPRIGHT)
+
+func _on_all_inverted_pressed():
+	_arm_shuffle_sound()
+	_emit_orientation_operation(Const.PileOrientationOperation.ALL_INVERTED)
+
+func _on_all_invert_pressed():
+	_arm_shuffle_sound()
+	_emit_orientation_operation(Const.PileOrientationOperation.ALL_TOGGLE)
+
+func _on_random_face_pressed():
+	_arm_shuffle_sound()
+	_emit_orientation_operation(Const.PileOrientationOperation.RANDOM_FACE)
+
+func _on_random_upright_pressed():
+	_arm_shuffle_sound()
+	_emit_orientation_operation(Const.PileOrientationOperation.RANDOM_UPRIGHT)
+
+func _on_card_orientation_requested(card_id: int) -> void:
+	var card_IDs: Array[int] = [card_id]
+	orientation_operation_requested.emit(Const.PileOrientationOperation.SINGLE_TOGGLE, card_IDs)
+
+func _emit_orientation_operation(operation: Const.PileOrientationOperation) -> void:
+	var card_IDs: Array[int] = []
+	for child in list_top.get_children() as Array[UICard]:
+		card_IDs.append(child.card_ID())
+	orientation_operation_requested.emit(operation, card_IDs)
+
+func _on_orientation_changed(_updates: Dictionary) -> void:
+	_check_flip_sound()
+	for child in drag_preview.get_children():
+		var preview := child as UICard
+		if preview != null:
+			preview.update_orientation()
 
 func _arm_shuffle_sound():
 	_shuffle_sound_armed_at = Time.get_ticks_msec()
@@ -185,8 +222,12 @@ func _input(event: InputEvent) -> void:
 				
 	elif Util.is_right_mouse_down(event): # 拖拽时按下右键 -> 翻面
 		if not dragging_card: return
-		dragging_card._flip_sound_armed_at = Time.get_ticks_msec()   # R5-2D：拖拽翻面也是本端右键申请，武装音效
-		dragging_card.request_flip()
+		var right_click := event as InputEventMouseButton
+		if right_click.shift_pressed:
+			dragging_card.request_orientation_toggle()
+		else:
+			dragging_card._flip_sound_armed_at = Time.get_ticks_msec()   # R5-2D：拖拽翻面也是本端右键申请，武装音效
+			dragging_card.request_flip()
 		# 找到鼠标底下正在拖拽的“替身”，让它的视觉也同步刷新
 		if drag_preview.get_child_count() > 0:
 			var visual_copy = drag_preview.get_child(0) as UICard

@@ -1,7 +1,7 @@
 extends SceneTree
 
 # --headless --path . --script res://tests/counter_test.gd -- parser|host|client|late_join
-const TEST_PORT: int = 28793
+const TEST_PORT: int = 28129
 var game: GameSession
 var failed: bool = false
 

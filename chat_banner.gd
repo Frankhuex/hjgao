@@ -30,7 +30,10 @@ func setup(sender_name: String, content: String) -> void:
 		preview = preview.replace("  ", " ")
 	if preview.length() > PREVIEW_MAX_LENGTH:
 		preview = preview.left(PREVIEW_MAX_LENGTH) + "…"
-	message_label.text = sender_name + ": " + preview
+	if sender_name.is_empty():
+		message_label.text = preview
+	else:
+		message_label.text = sender_name + ": " + preview
 
 func play_enter(extra_offset_y := 0.0) -> Tween:
 	_kill_active_tween()

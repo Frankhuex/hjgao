@@ -4,7 +4,7 @@ extends Node
 const SYNC_TIMEOUT_MS: int = 15000
 @onready var game: GameSession = get_parent() as GameSession
 @onready var database: CardDatabase = game.get_node("CardDatabase")
-@onready var button: Button = $"../PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/ChangeDeckButton"
+@onready var button: Button = $"../PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer4/ChangeDeckButton"
 @onready var file_dialog: FileDialog = $"../PauseCanvasLayer/DeckFileDialog"
 @onready var confirmation: ConfirmationDialog = $"../PauseCanvasLayer/DeckChangeConfirmation"
 @onready var message: AcceptDialog = $"../PauseCanvasLayer/DeckChangeMessage"

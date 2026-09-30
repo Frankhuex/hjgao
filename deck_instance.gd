@@ -4,14 +4,18 @@ extends Resource
 @export var deck_template: DeckTemplate
 @export var card_ID_to_card_name: Dictionary[int, String]
 @export var card_ID_to_is_front: Dictionary[int, bool]
+@export var card_ID_to_is_upright: Dictionary[int, bool]
 
-func _init(_deck_template: DeckTemplate, _card_ID_to_card_name: Dictionary[int,String], _card_ID_to_is_front: Dictionary[int, bool] = {}):
+func _init(_deck_template: DeckTemplate, _card_ID_to_card_name: Dictionary[int,String], _card_ID_to_is_front: Dictionary[int, bool] = {}, _card_ID_to_is_upright: Dictionary[int, bool] = {}):
 	self.deck_template = _deck_template
 	self.card_ID_to_card_name = _card_ID_to_card_name
 	self.card_ID_to_is_front = _card_ID_to_is_front
+	self.card_ID_to_is_upright = _card_ID_to_is_upright
 	for card_ID in _card_ID_to_card_name.keys():
 		if not _card_ID_to_is_front.has(card_ID):
 			self.card_ID_to_is_front[card_ID] = false
+		if not _card_ID_to_is_upright.has(card_ID):
+			self.card_ID_to_is_upright[card_ID] = true
 
 # 将整个卡组转为 JSON 字符串
 func serialize_to_json() -> String:
@@ -19,6 +23,7 @@ func serialize_to_json() -> String:
 	output["deck_template"] = deck_template.to_dict()
 	output["card_ID_to_card_name"] = card_ID_to_card_name # Dictionary[String, String], int变String了
 	output["card_ID_to_is_front"] = card_ID_to_is_front # Dictionary[String, bool]
+	output["card_ID_to_is_upright"] = card_ID_to_is_upright # Dictionary[String, bool]
 	return JSON.stringify(output, "\t") # "\t" 让输出的 JSON 带缩进，方便阅读
 
 static func load_from_json(input: Variant) -> DeckInstance:
@@ -99,4 +104,27 @@ static func load_from_json(input: Variant) -> DeckInstance:
 	for card_ID in _card_ID_to_card_name:
 		_card_ID_to_is_front[card_ID] = raw_front_dict.get(str(card_ID), raw_front_dict.get(card_ID, false))
 
-	return DeckInstance.new(_deck_template, _card_ID_to_card_name, _card_ID_to_is_front)		
+	# 4. 解析正逆位状态
+	var _card_ID_to_is_upright: Dictionary[int, bool] = {}
+	var raw_upright_map = dict.get("card_ID_to_is_upright", {})
+	if not (raw_upright_map is Dictionary):
+		push_error("Failed to load DeckInstance: card_ID_to_is_upright must be Dictionary.")
+		return null
+	var raw_upright_dict: Dictionary = raw_upright_map
+
+	for card_ID_raw in raw_upright_dict:
+		if not str(card_ID_raw).is_valid_int():
+			push_error("Failed to load DeckInstance: card_ID_to_is_upright key must be integer string.")
+			return null
+		var card_ID := int(str(card_ID_raw))
+		if not _card_ID_to_card_name.has(card_ID):
+			push_error("Failed to load DeckInstance: card_ID_to_is_upright contains unknown card_ID.")
+			return null
+		if not (raw_upright_dict[card_ID_raw] is bool):
+			push_error("Failed to load DeckInstance: is_upright value must be bool.")
+			return null
+
+	for card_ID in _card_ID_to_card_name:
+		_card_ID_to_is_upright[card_ID] = raw_upright_dict.get(str(card_ID), raw_upright_dict.get(card_ID, true))
+
+	return DeckInstance.new(_deck_template, _card_ID_to_card_name, _card_ID_to_is_front, _card_ID_to_is_upright)
