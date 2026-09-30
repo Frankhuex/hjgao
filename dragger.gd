@@ -5,12 +5,11 @@ var dragging_y       := 0.5
 var up_down_duration := 0.1
 var _sound_profile   := "object"   # "card"：拿起/放下用卡牌音；"object"：牌堆/计数器用物体音
 var _was_being_dragged := false    # 边沿检测：全端各自跟踪同一条所有权广播
+static var auto_orientation_enabled := true   # 本地偏好；朝向结果仍由 _sync_rot_y 全端同步
 
 @onready var _parent: Node3D = get_parent()
 var _owner_mux: OwnerMux
 var _ground_y_getter := func(): return 0.0
-
-
 
 func config(owner_mux: OwnerMux, _up_down_duration: float, _dragging_y: float, ground_y_getter: Callable = func(): return 0.0, sound_profile: String = "object"):
 	_owner_mux = owner_mux
@@ -66,7 +65,8 @@ func process_drag():
 		var target_pos: Vector3 = intersection
 		_parent.global_position.x = target_pos.x
 		_parent.global_position.z = target_pos.z
-		_sync_rot_y.rpc(get_viewport().get_camera_3d().global_rotation.y)
+		if auto_orientation_enabled:
+			_sync_rot_y.rpc(get_viewport().get_camera_3d().global_rotation.y)
 
 func should_animate_drag():
 	if _interaction_suspended:

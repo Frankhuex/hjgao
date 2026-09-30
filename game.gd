@@ -22,6 +22,7 @@ extends Node3D
 @onready var clear_counters_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearCountersConfirmation
 @onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/TooltipCheckBox
 @onready var chat_panel_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/ChatPanelCheckBox
+@onready var auto_orientation_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/AutoOrientationCheckBox
 @onready var card_description_tooltip: CardDescriptionTooltip = $CardDescriptionTooltip
 @onready var deck_change: DeckChange = $DeckChange
 @onready var chat_ui: ChatPanel = $ChatUI
@@ -76,6 +77,7 @@ func _ready():
 	pause_button.hide()
 	_sync_tooltip_check_box()
 	_sync_chat_panel_check_box()
+	_sync_auto_orientation_check_box()
 	
 	# 2. 解析命令行参数
 	var args := OS.get_cmdline_args()
@@ -370,6 +372,12 @@ func _input(event: InputEvent):
 			_sync_tooltip_check_box()
 			get_viewport().set_input_as_handled()
 		return
+	if key_event.keycode == KEY_R:
+		if session_active:
+			Dragger.auto_orientation_enabled = not Dragger.auto_orientation_enabled
+			_sync_auto_orientation_check_box()
+			get_viewport().set_input_as_handled()
+		return
 	if key_event.keycode != KEY_ESCAPE:
 		return
 	if session_active and is_instance_valid(local_player):
@@ -387,6 +395,7 @@ func _open_pause_menu():
 	add_counter_button.visible = session_active # 所有玩家都可添加计数器
 	_sync_tooltip_check_box()
 	_sync_chat_panel_check_box()
+	_sync_auto_orientation_check_box()
 	pause_overlay.show()
 	_sync_player_roster()
 
@@ -418,6 +427,12 @@ func _on_chat_panel_check_box_toggled(open: bool) -> void:
 
 func _sync_chat_panel_check_box() -> void:
 	chat_panel_check_box.set_pressed_no_signal(chat_ui.is_open())
+
+func _on_auto_orientation_check_box_toggled(enabled: bool) -> void:
+	Dragger.auto_orientation_enabled = enabled
+
+func _sync_auto_orientation_check_box() -> void:
+	auto_orientation_check_box.set_pressed_no_signal(Dragger.auto_orientation_enabled)
 
 func _request_player_roster() -> void:
 	if not session_active or Util.is_server(self):
