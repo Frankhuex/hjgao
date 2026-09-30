@@ -121,6 +121,9 @@ func show_notification(sender_name: String, content: String) -> void:
 	var tween := banner.play_enter(enter_slot_shift)
 	tween.finished.connect(_on_notification_entered.bind(banner))
 
+func show_local_notification(content: String) -> void:
+	show_notification("", content)
+
 func clear_notifications() -> void:
 	for entry: Dictionary in _notifications:
 		var banner := _banner_from_entry(entry)

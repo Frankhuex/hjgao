@@ -241,6 +241,8 @@ func _register_local_player(player_node: Player):
 	local_player = player_node
 	if not local_player.status_changed.is_connected(_update_pause_button):
 		local_player.status_changed.connect(_update_pause_button)
+	if not local_player.status_changed.is_connected(_on_local_player_status_changed):
+		local_player.status_changed.connect(_on_local_player_status_changed)
 	local_player.set_input_enabled(true)
 	local_player.apply_mouse_mode()
 	_update_pause_button()
@@ -364,20 +366,22 @@ func _input(event: InputEvent):
 		if session_active and is_instance_valid(local_player):
 			chat_ui.toggle()
 			_sync_chat_panel_check_box()
+			_notify_chat_panel_state()
 			get_viewport().set_input_as_handled()
 		return
 	if key_event.keycode == KEY_Q:
 		if session_active:
 			card_description_tooltip.toggle_tooltip_enabled()
 			_sync_tooltip_check_box()
+			_notify_tooltip_state()
 			get_viewport().set_input_as_handled()
 		return
 	if key_event.keycode == KEY_R:
 		if session_active:
 			Dragger.auto_orientation_enabled = not Dragger.auto_orientation_enabled
 			_sync_auto_orientation_check_box()
+			_notify_auto_orientation_state()
 			get_viewport().set_input_as_handled()
-		return
 	if key_event.keycode != KEY_ESCAPE:
 		return
 	if session_active and is_instance_valid(local_player):
@@ -433,6 +437,20 @@ func _on_auto_orientation_check_box_toggled(enabled: bool) -> void:
 
 func _sync_auto_orientation_check_box() -> void:
 	auto_orientation_check_box.set_pressed_no_signal(Dragger.auto_orientation_enabled)
+
+func _notify_chat_panel_state() -> void:
+	chat_ui.show_local_notification("聊天窗已打开" if chat_ui.is_open() else "聊天窗已隐藏")
+
+func _notify_tooltip_state() -> void:
+	chat_ui.show_local_notification("卡牌详情已打开" if card_description_tooltip.is_tooltip_enabled() else "卡牌详情已隐藏")
+
+func _notify_auto_orientation_state() -> void:
+	chat_ui.show_local_notification("自动朝向已打开" if Dragger.auto_orientation_enabled else "自动朝向已关闭")
+
+func _on_local_player_status_changed() -> void:
+	if not is_instance_valid(local_player):
+		return
+	chat_ui.show_local_notification("已切换为打牌模式" if local_player.is_card_mode() else "已切换为移动模式")
 
 func _request_player_roster() -> void:
 	if not session_active or Util.is_server(self):
