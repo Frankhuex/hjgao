@@ -63,6 +63,10 @@ func apply_mouse_mode():
 func is_card_mode() -> bool:
 	return player_status == PlayerStatus.CARD
 
+func _is_chat_panel_open() -> bool:
+	var game := get_node_or_null("/root/Game") as GameSession
+	return game != null and game.chat_ui.is_open()
+
 func _input(event):
 	if not is_multiplayer_authority(): return
 	if not input_enabled: return
@@ -91,11 +95,11 @@ func _physics_process(_delta):
 		velocity = Vector3.ZERO
 		return
 	
-	if player_status == PlayerStatus.CARD:
+	if player_status == PlayerStatus.CARD or _is_chat_panel_open():
 		velocity = Vector3.ZERO
 		return
 	
-	var input_dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	
 	if direction:
