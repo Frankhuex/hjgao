@@ -23,11 +23,23 @@ func open_for(counter: Counter) -> void:
 	btn_delete.visible = Util.my_id(self) == 1 or _counter.owner_mux.i_am_owner() # 房主或占用者可删
 	_refresh_fields()
 
+func _on_plus_pressed() -> void:
+	if _counter != null:
+		_counter.request_apply_step(1)
+
+func _on_minus_pressed() -> void:
+	if _counter != null:
+		_counter.request_apply_step(-1)
+
+func _on_dec_plus_pressed() -> void:
+	if _counter != null:
+		_counter.request_apply_decimals(_counter.decimals + 1)
+
+func _on_dec_minus_pressed() -> void:
+	if _counter != null:
+		_counter.request_apply_decimals(_counter.decimals - 1)
+
 func _ready() -> void:
-	btn_plus.pressed.connect(func(): _counter.request_apply_step(1))
-	btn_minus.pressed.connect(func(): _counter.request_apply_step(-1))
-	btn_dec_plus.pressed.connect(func(): _counter.request_apply_decimals(_counter.decimals + 1))
-	btn_dec_minus.pressed.connect(func(): _counter.request_apply_decimals(_counter.decimals - 1))
 	btn_close.pressed.connect(_on_close_pressed)
 	btn_delete.pressed.connect(delete_confirmation.popup_centered)
 	delete_confirmation.confirmed.connect(_on_delete_confirmed)

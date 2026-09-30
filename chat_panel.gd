@@ -13,6 +13,7 @@ const MAX_VISIBLE_NOTIFICATIONS := 2
 @onready var message_history: RichTextLabel = $ChatPanel/Margin/VBox/MessageHistory
 @onready var message_input: TextEdit = $ChatPanel/Margin/VBox/InputRow/MessageInput
 @onready var send_button: Button = $ChatPanel/Margin/VBox/InputRow/SendButton
+@onready var close_button: Button = $ChatPanel/Margin/VBox/TitleRow/CloseButton
 @onready var notification_stack: VBoxContainer = $NotificationStack
 
 var _notifications: Array[Dictionary] = []
@@ -25,12 +26,10 @@ func _ready() -> void:
 	panel.hide()
 	message_input.focus_mode = Control.FOCUS_CLICK
 	send_button.focus_mode = Control.FOCUS_NONE
+	close_button.focus_mode = Control.FOCUS_NONE
 	message_history.bbcode_enabled = false
 	message_history.scroll_following = false
 	notification_stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	message_input.focus_entered.connect(_on_input_focus_entered)
-	message_input.focus_exited.connect(_on_input_focus_exited)
-	send_button.pressed.connect(_on_send_button_pressed)
 
 func _process(_delta: float) -> void:
 	if _notifications.is_empty() or _transitioning:
@@ -166,6 +165,10 @@ func _on_input_focus_exited() -> void:
 
 func _on_send_button_pressed() -> void:
 	submit_current_input()
+
+func _on_close_button_pressed() -> void:
+	release_input_focus()
+	close()
 
 func _on_notification_entered(banner: ChatBanner) -> void:
 	for entry: Dictionary in _notifications:

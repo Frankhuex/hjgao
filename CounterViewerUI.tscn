@@ -146,3 +146,8 @@ ok_button_text = "删除"
 dialog_text = "确定要删除这个计数器吗？
 该操作对全部玩家生效，无法撤销。"
 cancel_button_text = "取消"
+
+[connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/ValueRow/Btn_Plus" to="." method="_on_plus_pressed"]
+[connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/ValueRow/Btn_Minus" to="." method="_on_minus_pressed"]
+[connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow/Btn_DecPlus" to="." method="_on_dec_plus_pressed"]
+[connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow/Btn_DecMinus" to="." method="_on_dec_minus_pressed"]

@@ -38,15 +38,6 @@ var target_list: Control
 var target_index: int
 
 func _ready() -> void:
-	btn_sort_ascend.pressed.connect(_on_sort_ascend_pressed)
-	btn_sort_descend.pressed.connect(_on_sort_descend_pressed)
-	btn_shuffle.pressed.connect(_on_shuffle_pressed)
-	btn_all_front.pressed.connect(_on_all_front_pressed)
-	btn_all_back.pressed.connect(_on_all_back_pressed)
-	btn_all_flip.pressed.connect(_on_all_flip_pressed)
-	btn_cancel.pressed.connect(_on_cancel_pressed)
-	btn_draw.pressed.connect(_on_confirm_pressed)
-
 	# R6 排除：六大理牌按钮有自己的成功音，按下不响确认音（悬停音保留）；
 	# node_added 连接确认音回调早于本 _ready 执行，因此回调内点击时检查组而非连接时检查
 	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle,

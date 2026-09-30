@@ -40,10 +40,22 @@ theme_override_constants/margin_bottom = 12
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="ChatTitle" type="Label" parent="ChatPanel/Margin/VBox"]
+[node name="TitleRow" type="HBoxContainer" parent="ChatPanel/Margin/VBox"]
 layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ChatTitle" type="Label" parent="ChatPanel/Margin/VBox/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 20
 text = "聊天"
+
+[node name="CloseButton" type="Button" parent="ChatPanel/Margin/VBox/TitleRow"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "关闭聊天"
+text = "×"
 
 [node name="MessageHistory" type="RichTextLabel" parent="ChatPanel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 240)
@@ -85,3 +97,8 @@ grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
+
+[connection signal="focus_entered" from="ChatPanel/Margin/VBox/InputRow/MessageInput" to="." method="_on_input_focus_entered"]
+[connection signal="focus_exited" from="ChatPanel/Margin/VBox/InputRow/MessageInput" to="." method="_on_input_focus_exited"]
+[connection signal="pressed" from="ChatPanel/Margin/VBox/InputRow/SendButton" to="." method="_on_send_button_pressed"]
+[connection signal="pressed" from="ChatPanel/Margin/VBox/TitleRow/CloseButton" to="." method="_on_close_button_pressed"]

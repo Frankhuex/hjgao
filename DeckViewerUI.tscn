@@ -136,3 +136,12 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_SortAscend" to="." method="_on_sort_ascend_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_SortDescend" to="." method="_on_sort_descend_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_Shuffle" to="." method="_on_shuffle_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllFront" to="." method="_on_all_front_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllBack" to="." method="_on_all_back_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllFlip" to="." method="_on_all_flip_pressed"]
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Cancel" to="." method="_on_cancel_pressed"]
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Draw" to="." method="_on_confirm_pressed"]

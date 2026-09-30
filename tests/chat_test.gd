@@ -119,6 +119,12 @@ func _run_client() -> void:
 	game.chat_ui.message_input.grab_focus()
 	await process_frame
 	_check(not game.chat_ui.is_input_focused(), "move mode cannot focus chat")
+	game.chat_ui.message_input.text = "关闭前草稿"
+	game.chat_ui.close_button.pressed.emit()
+	await process_frame
+	_check(not game.chat_ui.is_open(), "close button hides chat")
+	_check(not game.chat_ui.is_input_focused(), "close button releases input focus")
+	_check(game.chat_ui.message_input.text == "关闭前草稿", "close button preserves draft")
 	print("CLIENT_OK")
 	await create_timer(0.4).timeout
 
