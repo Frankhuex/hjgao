@@ -96,6 +96,14 @@ static func validate(data: Variant) -> String:
 			return "正反面映射包含无效或未知 ID：%s" % str(key)
 		if not fronts[key] is bool:
 			return "ID %s 的正反面必须是 true 或 false。" % key
+	var uprights: Variant = root.get("card_ID_to_is_upright", {})
+	if not uprights is Dictionary:
+		return "card_ID_to_is_upright 必须是对象。"
+	for key: Variant in uprights:
+		if not _valid_id(key) or not ids.has(str(key).to_int()):
+			return "正逆位映射包含无效或未知 ID：%s" % str(key)
+		if not uprights[key] is bool:
+			return "ID %s 的正逆位必须是 true 或 false。" % key
 	return ""
 
 static func _valid_id(value: Variant) -> bool:

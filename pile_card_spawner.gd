@@ -41,5 +41,6 @@ func server_spawn_card_by_IDs(card_IDs: Array[int]):
 		var spawn_pos := card_ID_to_spawn_pos[card_ID]
 		var card: Card = CARD.instantiate()
 		card.preready(card_ID, spawn_pos)
+		card.rotation.y = 0.0 if _card_database.is_upright(card_ID) else PI
 		_card_sorter.add_child(card)
 		_card_sorter.server_register_card(card.card_ID())

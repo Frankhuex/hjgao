@@ -703,6 +703,7 @@ func server_clear_table() -> void:
 	clear_table_in_progress = true
 	set_clear_table_busy.rpc(true)
 	prepare_for_table_clear.rpc()
+	card_db.reset_face_and_orientation()
 
 	_clear_board_nodes()
 

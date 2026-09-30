@@ -62,3 +62,12 @@ const PURPOSE_TO_SOURCE: Dictionary[Purpose, CardSource] = {
 	Purpose.PILE_OUTPUT_BOTTOM: CardSource.BOTTOM,
 	Purpose.PILE_OUTPUT_RANDOM: CardSource.RANDOM,
 }
+
+enum PileOrientationOperation {
+	SINGLE_TOGGLE = 0,
+	ALL_UPRIGHT = 1,
+	ALL_INVERTED = 2,
+	ALL_TOGGLE = 3,
+	RANDOM_FACE = 4,
+	RANDOM_UPRIGHT = 5,
+}

@@ -19,7 +19,7 @@ func _run() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var role: String = args[0] if not args.is_empty() else "parser"
 	if role == "parser":
-		_test_parser()
+		await _test_parser()
 		quit(1 if failed else 0)
 		return
 	create_timer(35.0).timeout.connect(func() -> void: _check(false, "test timeout"))
@@ -39,6 +39,8 @@ func _run() -> void:
 			await process_frame
 		_check_board()
 		print("HOST_CHANGE_OK")
+		game.card_db.deck_instance.card_ID_to_is_front[101] = false
+		game.card_db.deck_instance.card_ID_to_is_upright[101] = false
 		await game.server_clear_table()
 		_check_board()
 		# 为后续重连/迟加入客户端留出验证窗口。
@@ -52,7 +54,7 @@ func _run() -> void:
 		if role == "upload":
 			await create_timer(0.5).timeout
 			var old_deck: DeckInstance = game.card_db.deck_instance
-			game.deck_change._file_selected("res://poker.json")
+			game.deck_change._file_selected("res://deck_instances/poker.json")
 			_check(game.card_db.deck_instance == old_deck and game.deck_change.confirmation.visible, "local preview is non-mutating")
 			game.deck_change.confirmation.hide()
 			game.deck_change.request_change.rpc_id(1, "{}")
@@ -93,6 +95,7 @@ func _run() -> void:
 func _check_board() -> void:
 	_check(game.card_db.get_all_IDs().size() == 3, "new card count")
 	_check(game.card_db.is_front(101) and not game.card_db.is_front(205), "faces preserved")
+	_check(game.card_db.is_upright(101), "orientation reset after clear")
 	_check(game.card_db.get_card_tooltip_text(101) == "杀: 测试说明", "description loaded")
 	_check(game.card_sorter.get_child_count() == 0, "old scattered cards removed")
 	var full_piles: int = 0
@@ -106,7 +109,7 @@ func _check_board() -> void:
 	_check(full_piles == 1, "exactly one full pile")
 
 func _test_parser() -> void:
-	var source: String = FileAccess.get_file_as_string("res://poker.json")
+	var source: String = FileAccess.get_file_as_string("res://deck_instances/poker.json")
 	var original := DeckJson.parse(source)
 	_check(original.deck != null, "poker parses")
 	var parsed := DeckJson.parse(NEW_DECK)
@@ -117,4 +120,64 @@ func _test_parser() -> void:
 		_check(DeckJson.parse(text).deck == null, "reject invalid deck: " + text)
 	var minimal := DeckJson.parse('{"deck_template":{"ordered_card_templates":[{"name":"","count":1}]}}')
 	_check(minimal.deck != null and not minimal.deck.card_ID_to_is_front[1], "optional maps and blank-name compatibility")
+	var oriented := DeckJson.parse('{"deck_template":{"ordered_card_templates":[{"name":"A","count":2}]},"card_ID_to_is_upright":{"1":true,"2":false}}')
+	_check(oriented.deck != null and oriented.deck.card_ID_to_is_upright[1] and not oriented.deck.card_ID_to_is_upright[2], "orientation parses")
+	var orientation_round_trip := DeckJson.parse(oriented.deck.serialize_to_json())
+	_check(orientation_round_trip.deck.card_ID_to_is_upright == oriented.deck.card_ID_to_is_upright, "orientation round trip")
+	for invalid_orientation: String in [
+		'{"deck_template":{"ordered_card_templates":[{"name":"A","count":1}]},"card_ID_to_is_upright":{"2":true}}',
+		'{"deck_template":{"ordered_card_templates":[{"name":"A","count":1}]},"card_ID_to_is_upright":{"1":"true"}}',
+		'{"deck_template":{"ordered_card_templates":[{"name":"A","count":1}]},"card_ID_to_is_upright":{"01":true}}',
+	]:
+		_check(DeckJson.parse(invalid_orientation).deck == null, "reject invalid orientation")
+	await _test_orientation_ui(oriented.deck)
 	print("PARSER_OK")
+
+func _test_orientation_ui(deck: DeckInstance) -> void:
+	var game := Node.new()
+	game.name = "Game"
+	root.add_child(game)
+	var card_db := CardDatabase.new()
+	card_db.name = "CardDatabase"
+	game.add_child(card_db)
+	card_db.deck_instance = deck
+	var tooltip := (load("res://CardDescriptionTooltip.tscn") as PackedScene).instantiate() as CardDescriptionTooltip
+	tooltip.name = "CardDescriptionTooltip"
+	game.add_child(tooltip)
+
+	var viewer := (load("res://DeckViewerUI.tscn") as PackedScene).instantiate() as DeckViewerUI
+	root.add_child(viewer)
+	viewer.load_deck([1, 2])
+	await process_frame
+	_check(viewer.list_top.get_child_count() == 2, "orientation viewer loads cards")
+	_check(viewer.btn_all_upright != null and viewer.btn_all_inverted != null and viewer.btn_all_invert != null, "orientation buttons load")
+	var upright_card := viewer.list_top.get_child(0) as UICard
+	var inverted_card := viewer.list_top.get_child(1) as UICard
+	_check(upright_card._visual.rotation == 0.0, "upright card displays upright")
+	_check(absf(inverted_card._visual.rotation - PI) < 0.01, "inverted card displays rotated")
+
+	var shift_right_click := InputEventMouseButton.new()
+	shift_right_click.button_index = MOUSE_BUTTON_RIGHT
+	shift_right_click.pressed = true
+	shift_right_click.shift_pressed = true
+	var requested_card_ids: Array[int] = []
+	upright_card.orientation_requested.connect(func(card_id: int): requested_card_ids.append(card_id))
+	upright_card._gui_input(shift_right_click)
+	_check(requested_card_ids == [upright_card.card_ID()], "shift right click requests orientation toggle")
+
+	deck.card_ID_to_is_upright[1] = false
+	card_db.orientation_changed.emit({1: false})
+	await process_frame
+	_check(absf(upright_card._visual.rotation - PI) < 0.01, "orientation update rotates card")
+
+	seed(12345)
+	card_db.apply_orientation_operation(Const.PileOrientationOperation.RANDOM_FACE, [1, 2])
+	await process_frame
+	_check(card_db.is_front(1) is bool and card_db.is_front(2) is bool, "random face keeps booleans")
+	card_db.apply_orientation_operation(Const.PileOrientationOperation.RANDOM_UPRIGHT, [1, 2])
+	await process_frame
+	_check(card_db.is_upright(1) is bool and card_db.is_upright(2) is bool, "random upright keeps booleans")
+
+	viewer.queue_free()
+	game.queue_free()
+	await process_frame

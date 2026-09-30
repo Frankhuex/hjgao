@@ -1,0 +1,396 @@
+{
+  "deck_template": {
+    "ordered_card_templates": [
+      {
+        "name": "愚人",
+        "count": 1,
+        "description": "大阿尔卡纳首牌，象征新的开始、开放与冒险。"
+      },
+      {
+        "name": "魔术师",
+        "count": 1,
+        "description": "大阿尔卡纳，象征意志、创造与行动力。"
+      },
+      {
+        "name": "女祭司",
+        "count": 1,
+        "description": "大阿尔卡纳，象征直觉、潜意识与内在智慧。"
+      },
+      {
+        "name": "女皇",
+        "count": 1,
+        "description": "大阿尔卡纳，象征丰饶、滋养与创造力。"
+      },
+      {
+        "name": "皇帝",
+        "count": 1,
+        "description": "大阿尔卡纳，象征秩序、权威与稳定。"
+      },
+      {
+        "name": "教皇",
+        "count": 1,
+        "description": "大阿尔卡纳，象征传统、信仰与指引。"
+      },
+      {
+        "name": "恋人",
+        "count": 1,
+        "description": "大阿尔卡纳，象征关系、选择与价值一致。"
+      },
+      {
+        "name": "战车",
+        "count": 1,
+        "description": "大阿尔卡纳，象征前进、胜利与意志控制。"
+      },
+      {
+        "name": "力量",
+        "count": 1,
+        "description": "大阿尔卡纳，象征勇气、耐心与温柔的力量。"
+      },
+      {
+        "name": "隐士",
+        "count": 1,
+        "description": "大阿尔卡纳，象征独处、内省与内在智慧。"
+      },
+      {
+        "name": "命运之轮",
+        "count": 1,
+        "description": "大阿尔卡纳，象征循环、转折与时机。"
+      },
+      {
+        "name": "正义",
+        "count": 1,
+        "description": "大阿尔卡纳，象征公平、责任与因果。"
+      },
+      {
+        "name": "倒吊人",
+        "count": 1,
+        "description": "大阿尔卡纳，象征暂停、换位与牺牲。"
+      },
+      {
+        "name": "死亡",
+        "count": 1,
+        "description": "大阿尔卡纳，象征结束、改变与释放。"
+      },
+      {
+        "name": "节制",
+        "count": 1,
+        "description": "大阿尔卡纳，象征平衡、调和与节制。"
+      },
+      {
+        "name": "恶魔",
+        "count": 1,
+        "description": "大阿尔卡纳，象征束缚、欲望与阴影。"
+      },
+      {
+        "name": "塔",
+        "count": 1,
+        "description": "大阿尔卡纳，象征突变、瓦解与觉醒。"
+      },
+      {
+        "name": "星星",
+        "count": 1,
+        "description": "大阿尔卡纳，象征希望、疗愈与灵感。"
+      },
+      {
+        "name": "月亮",
+        "count": 1,
+        "description": "大阿尔卡纳，象征幻象、恐惧与潜意识。"
+      },
+      {
+        "name": "太阳",
+        "count": 1,
+        "description": "大阿尔卡纳，象征喜悦、成功与生命力。"
+      },
+      {
+        "name": "审判",
+        "count": 1,
+        "description": "大阿尔卡纳，象征觉醒、召唤与重生。"
+      },
+      {
+        "name": "世界",
+        "count": 1,
+        "description": "大阿尔卡纳，象征完成、整合与圆满。"
+      },
+      {
+        "name": "权杖 Ace",
+        "count": 1,
+        "description": "权杖花色首牌，象征灵感、新行动与潜在能量。"
+      },
+      {
+        "name": "权杖二",
+        "count": 1,
+        "description": "权杖二，象征规划、远见与选择方向。"
+      },
+      {
+        "name": "权杖三",
+        "count": 1,
+        "description": "权杖三，象征拓展、等待结果与远行。"
+      },
+      {
+        "name": "权杖四",
+        "count": 1,
+        "description": "权杖四，象征庆祝、稳定与归属。"
+      },
+      {
+        "name": "权杖五",
+        "count": 1,
+        "description": "权杖五，象征竞争、冲突与磨合。"
+      },
+      {
+        "name": "权杖六",
+        "count": 1,
+        "description": "权杖六，象征胜利、认可与信心。"
+      },
+      {
+        "name": "权杖七",
+        "count": 1,
+        "description": "权杖七，象征防守、坚持与立场。"
+      },
+      {
+        "name": "权杖八",
+        "count": 1,
+        "description": "权杖八，象征迅速、消息与进展。"
+      },
+      {
+        "name": "权杖九",
+        "count": 1,
+        "description": "权杖九，象征韧性、戒备与最后坚持。"
+      },
+      {
+        "name": "权杖十",
+        "count": 1,
+        "description": "权杖十，象征负担、责任与压力。"
+      },
+      {
+        "name": "权杖侍从",
+        "count": 1,
+        "description": "权杖宫廷牌，象征探索、热情与学习。"
+      },
+      {
+        "name": "权杖骑士",
+        "count": 1,
+        "description": "权杖宫廷牌，象征行动、冒险与冲劲。"
+      },
+      {
+        "name": "权杖王后",
+        "count": 1,
+        "description": "权杖宫廷牌，象征自信、魅力与温暖领导。"
+      },
+      {
+        "name": "权杖国王",
+        "count": 1,
+        "description": "权杖宫廷牌，象征愿景、领导与掌控。"
+      },
+      {
+        "name": "圣杯 Ace",
+        "count": 1,
+        "description": "圣杯花色首牌，象征情感、爱与新的联结。"
+      },
+      {
+        "name": "圣杯二",
+        "count": 1,
+        "description": "圣杯二，象征伙伴、吸引与双向关系。"
+      },
+      {
+        "name": "圣杯三",
+        "count": 1,
+        "description": "圣杯三，象征友谊、庆祝与社群。"
+      },
+      {
+        "name": "圣杯四",
+        "count": 1,
+        "description": "圣杯四，象征冷淡、倦怠与重新评估。"
+      },
+      {
+        "name": "圣杯五",
+        "count": 1,
+        "description": "圣杯五，象征失落、遗憾与哀伤。"
+      },
+      {
+        "name": "圣杯六",
+        "count": 1,
+        "description": "圣杯六，象征怀旧、纯真与旧日联系。"
+      },
+      {
+        "name": "圣杯七",
+        "count": 1,
+        "description": "圣杯七，象征幻想、选择与迷惑。"
+      },
+      {
+        "name": "圣杯八",
+        "count": 1,
+        "description": "圣杯八，象征离开、寻找与情感转向。"
+      },
+      {
+        "name": "圣杯九",
+        "count": 1,
+        "description": "圣杯九，象征满足、愿望达成与享受。"
+      },
+      {
+        "name": "圣杯十",
+        "count": 1,
+        "description": "圣杯十，象征家庭、和谐与情感圆满。"
+      },
+      {
+        "name": "圣杯侍从",
+        "count": 1,
+        "description": "圣杯宫廷牌，象征敏感、想象与情感讯息。"
+      },
+      {
+        "name": "圣杯骑士",
+        "count": 1,
+        "description": "圣杯宫廷牌，象征浪漫、追求与理想主义。"
+      },
+      {
+        "name": "圣杯王后",
+        "count": 1,
+        "description": "圣杯宫廷牌，象征共情、直觉与关怀。"
+      },
+      {
+        "name": "圣杯国王",
+        "count": 1,
+        "description": "圣杯宫廷牌，象征情感成熟、包容与平衡。"
+      },
+      {
+        "name": "宝剑 Ace",
+        "count": 1,
+        "description": "宝剑花色首牌，象征清晰、真相与突破。"
+      },
+      {
+        "name": "宝剑二",
+        "count": 1,
+        "description": "宝剑二，象征僵局、回避与抉择。"
+      },
+      {
+        "name": "宝剑三",
+        "count": 1,
+        "description": "宝剑三，象征心痛、悲伤与刺痛真相。"
+      },
+      {
+        "name": "宝剑四",
+        "count": 1,
+        "description": "宝剑四，象征休息、恢复与暂停。"
+      },
+      {
+        "name": "宝剑五",
+        "count": 1,
+        "description": "宝剑五，象征冲突、失利与代价。"
+      },
+      {
+        "name": "宝剑六",
+        "count": 1,
+        "description": "宝剑六，象征过渡、疗愈与离开困境。"
+      },
+      {
+        "name": "宝剑七",
+        "count": 1,
+        "description": "宝剑七，象征策略、隐瞒与独行。"
+      },
+      {
+        "name": "宝剑八",
+        "count": 1,
+        "description": "宝剑八，象征限制、恐惧与自我束缚。"
+      },
+      {
+        "name": "宝剑九",
+        "count": 1,
+        "description": "宝剑九，象征焦虑、梦魇与精神压力。"
+      },
+      {
+        "name": "宝剑十",
+        "count": 1,
+        "description": "宝剑十，象征终结、谷底与彻底转变。"
+      },
+      {
+        "name": "宝剑侍从",
+        "count": 1,
+        "description": "宝剑宫廷牌，象征好奇、观察与思维敏捷。"
+      },
+      {
+        "name": "宝剑骑士",
+        "count": 1,
+        "description": "宝剑宫廷牌，象征果断、迅速与直接行动。"
+      },
+      {
+        "name": "宝剑王后",
+        "count": 1,
+        "description": "宝剑宫廷牌，象征理性、独立与明辨。"
+      },
+      {
+        "name": "宝剑国王",
+        "count": 1,
+        "description": "宝剑宫廷牌，象征权威、逻辑与公正判断。"
+      },
+      {
+        "name": "星币 Ace",
+        "count": 1,
+        "description": "星币花色首牌，象征资源、机会与物质新起点。"
+      },
+      {
+        "name": "星币二",
+        "count": 1,
+        "description": "星币二，象征平衡、灵活与多任务。"
+      },
+      {
+        "name": "星币三",
+        "count": 1,
+        "description": "星币三，象征协作、技艺与初步成果。"
+      },
+      {
+        "name": "星币四",
+        "count": 1,
+        "description": "星币四，象征保守、掌控与安全感。"
+      },
+      {
+        "name": "星币五",
+        "count": 1,
+        "description": "星币五，象征匮乏、孤立与困难。"
+      },
+      {
+        "name": "星币六",
+        "count": 1,
+        "description": "星币六，象征给予、接受与公平交换。"
+      },
+      {
+        "name": "星币七",
+        "count": 1,
+        "description": "星币七，象征评估、耐心与长期投入。"
+      },
+      {
+        "name": "星币八",
+        "count": 1,
+        "description": "星币八，象征专注、练习与工艺。"
+      },
+      {
+        "name": "星币九",
+        "count": 1,
+        "description": "星币九，象征独立、丰盛与自我价值。"
+      },
+      {
+        "name": "星币十",
+        "count": 1,
+        "description": "星币十，象征财富、传承与长期稳定。"
+      },
+      {
+        "name": "星币侍从",
+        "count": 1,
+        "description": "星币宫廷牌，象征学习、务实与新的技能。"
+      },
+      {
+        "name": "星币骑士",
+        "count": 1,
+        "description": "星币宫廷牌，象征勤勉、可靠与稳步前进。"
+      },
+      {
+        "name": "星币王后",
+        "count": 1,
+        "description": "星币宫廷牌，象征滋养、务实与资源管理。"
+      },
+      {
+        "name": "星币国王",
+        "count": 1,
+        "description": "星币宫廷牌，象征成就、稳定与物质掌控。"
+      }
+    ]
+  }
+}

@@ -24,7 +24,7 @@ func preready(id: int, _global_position: Vector3):
 
 func _ready():
 	global_position   = _preready_global_position
-	#global_rotation.y = _preready_global_rot_y
+	rotation.y = 0.0 if _card_db.is_upright(card_ID()) else PI
 	
 	_label.text = _card_db.get_card_name(card_ID())
 	var is_front := _card_db.is_front(card_ID())

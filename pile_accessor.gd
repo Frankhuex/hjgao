@@ -27,6 +27,7 @@ func _open_deck_viewer():
 	_viewer.load_deck(_parent.card_ID_stack) # 内有-1判断逻辑
 	_viewer.draw_confirmed.connect(_on_draw_confirmed)
 	_viewer.cancel_confirmed.connect(_on_cancel)
+	_viewer.orientation_operation_requested.connect(_on_orientation_operation_requested)
 
 func _close_deck_viewer():
 	if _viewer:
@@ -42,6 +43,17 @@ func request_viewer_operation(updated_card_ID_stack: Array[int], drawn_card_IDs:
 	else:
 		server_viewer_operation.rpc_id(1, updated_card_ID_stack, drawn_card_IDs)
 
+func request_orientation_operation(operation: Const.PileOrientationOperation, card_IDs: Array[int]) -> void:
+	if Util.is_server(self):
+		server_orientation_operation(operation, card_IDs)
+	else:
+		server_orientation_operation.rpc_id(1, operation, card_IDs)
+
+func _on_orientation_operation_requested(operation: Const.PileOrientationOperation, card_IDs: Array[int]) -> void:
+	if not i_am_viewing():
+		return
+	request_orientation_operation(operation, card_IDs)
+
 @rpc("any_peer", "call_remote", "reliable")
 func server_viewer_operation(updated_card_ID_stack: Array[int], drawn_card_IDs: Array[int]):
 	if Util.not_server(self): return
@@ -51,6 +63,25 @@ func server_viewer_operation(updated_card_ID_stack: Array[int], drawn_card_IDs: 
 	_parent.card_ID_stack = updated_card_ID_stack
 	_parent.server_sync_card_ID_stack()
 	_parent.owner_mux.server_reset_owner()
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_orientation_operation(operation: Const.PileOrientationOperation, card_IDs: Array[int]):
+	if Util.not_server(self) or Util.board_locked(self):
+		return
+	if not is_being_viewed():
+		return
+	var sender := Util.sender_id(self)
+	if sender == 0:
+		sender = 1
+	if _parent.owner_mux.get_owner_id() != sender:
+		return
+	var valid_card_IDs: Array[int] = []
+	for card_id: int in card_IDs:
+		if _parent.card_ID_stack.has(card_id):
+			valid_card_IDs.append(card_id)
+	if valid_card_IDs.is_empty():
+		return
+	_card_database.apply_orientation_operation(operation, valid_card_IDs)
 	
 func _on_cancel():
 	if not i_am_viewing(): return
