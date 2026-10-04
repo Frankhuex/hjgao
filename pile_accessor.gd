@@ -24,14 +24,24 @@ func check_and_show_viewer():
 func _open_deck_viewer():
 	_viewer = DECK_VIEWER.instantiate()
 	get_tree().root.add_child(_viewer)
+	_viewer.open_for(_parent)
 	_viewer.load_deck(_parent.card_ID_stack) # 内有-1判断逻辑
+	_viewer.delete_confirmed.connect(_on_delete)
 	_viewer.draw_confirmed.connect(_on_draw_confirmed)
 	_viewer.cancel_confirmed.connect(_on_cancel)
 	_viewer.orientation_operation_requested.connect(_on_orientation_operation_requested)
 
 func _close_deck_viewer():
-	if _viewer:
+	if is_instance_valid(_viewer):
 		_viewer.queue_free()
+	_viewer = null
+
+func _exit_tree() -> void:
+	_close_deck_viewer()
+
+func _on_delete() -> void:
+	if i_am_viewing():
+		_parent.request_delete_pile()
 	
 func _on_draw_confirmed(updated_card_ID_stack: Array[int], drawn_card_IDs: Array[int]):
 	if not i_am_viewing(): return

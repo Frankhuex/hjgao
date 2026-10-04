@@ -331,3 +331,9 @@ python3 tests/run_counter_tests.py
 - [docs/player-name-customization.md](docs/player-name-customization.md) — 玩家昵称与花名册
 - [docs/card-text-wrapping-and-centering.md](docs/card-text-wrapping-and-centering.md) — 卡牌文本排版
 - [docs/godot-472-and-godot-ai-mcp.md](docs/godot-472-and-godot-ai-mcp.md) — Godot 4.7.2 与 godot-ai MCP 环境说明
+
+## 新建与删除牌堆
+
+所有入房玩家可在暂停菜单点击“新建牌堆”创建空牌堆，服务器选取桌面空位并同步给所有玩家。牌堆查看器底栏的“删除牌堆”仅在服务器实际牌堆为空时显示，确认后由服务器删除；房主或当前查看者具有删除权限。将牌移入“即将取出”区后，在确认取出前仍算非空。公共牌堆、玩家初始空堆和新增空堆遵循同一规则；清场或换库沿原流程重建标准牌堆。自动化回归：`python3 tests/run_pile_lifecycle_tests.py`。
+
+暂停菜单“新建牌堆”旁的“一键清空牌堆”经确认后，只删除服务器实际无牌的所有牌堆（包括玩家初始空堆），不重建牌堆，也不影响非空堆、散牌和计数器；被删除空堆的查看器同步关闭。“一键清场”与“更换卡组”同一行，仍执行原有完整桌面重建。

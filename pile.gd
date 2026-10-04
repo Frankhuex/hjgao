@@ -19,6 +19,27 @@ const SMALL_LENGTH      = 0.001
 const BASE_THICKNESS    = 0.05
 
 var card_ID_stack: Array[int] = []
+signal stack_changed
+
+func request_delete_pile() -> void:
+	if Util.is_server(self):
+		server_delete_pile()
+	else:
+		server_delete_pile.rpc_id(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_delete_pile() -> void:
+	if Util.not_server(self) or Util.board_locked(self) or is_queued_for_deletion():
+		return
+	var game := get_node("/root/Game") as GameSession
+	if not game.session_active or not card_ID_stack.is_empty():
+		return
+	var sender := Util.sender_id(self)
+	if sender == 0:
+		sender = 1
+	if sender != 1 and not (owner_mux.get_owner_id() == sender and owner_mux.purpose == Const.Purpose.PILE_VIEW):
+		return
+	queue_free()
 
 func preready(_name:String, _card_ID_stack: Array[int]):
 	name = _name
@@ -46,6 +67,7 @@ func server_sync_card_ID_stack():
 func sync_card_ID_stack(_card_ID_stack: Array[int]):
 	card_ID_stack = _card_ID_stack
 	_update_visuals()
+	stack_changed.emit()
 
 # Inputs
 func _on_base_area_input_event(camera: Node, event: InputEvent, _event_position: Vector3, _normal: Vector3, _shape_idx: int) -> void:
@@ -77,6 +99,8 @@ func _on_hotspot_random_input_event(camera: Node, event: InputEvent, event_posit
 			get_viewport().set_input_as_handled() 
 
 func _process(_delta):
+	if multiplayer.multiplayer_peer == null or is_queued_for_deletion():
+		return
 	dragger.process_drag()
 
 func release_local_interaction():

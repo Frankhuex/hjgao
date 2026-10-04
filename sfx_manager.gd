@@ -104,7 +104,10 @@ func _varies_pitch(snd: Snd) -> bool:
 
 # R1a/R6：自动为一切 BaseButton 挂悬停音与按下确认音（节点释放时连接自动断开）
 func _hook_buttons_under(node: Node) -> void:
-	for child in node.get_children():
+	if not is_instance_valid(node) or node.is_queued_for_deletion():
+		return
+	# AcceptDialog 的确认/取消按钮属于引擎内部子节点，默认遍历会跳过它们。
+	for child in node.get_children(true):
 		var button := child as BaseButton
 		if button != null:
 			_hook_button(button)

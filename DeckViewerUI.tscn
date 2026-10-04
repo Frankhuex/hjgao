@@ -166,11 +166,27 @@ theme_override_font_sizes/font_size = 25
 text = "关闭"
 
 [node name="Btn_Draw" type="Button" parent="Margin/VBox/BottomBar" unique_id=477980862]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 25
 text = "取出"
+
+[node name="Btn_Delete" type="Button" parent="Margin/VBox/BottomBar"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 25
+text = "删除牌堆"
+
+[node name="DeleteConfirmation" type="ConfirmationDialog" parent="."]
+title = "确认删除牌堆"
+size = Vector2i(500, 180)
+ok_button_text = "删除"
+dialog_text = "确定要删除这个空牌堆吗？该操作对全部玩家生效。"
+cancel_button_text = "取消"
 
 [node name="DragPreview" type="Control" parent="." unique_id=827640981]
 layout_mode = 3
@@ -191,3 +207,6 @@ offset_bottom = 40.0
 [connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_RandomUpright" to="." method="_on_random_upright_pressed"]
 [connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Cancel" to="." method="_on_cancel_pressed"]
 [connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Draw" to="." method="_on_confirm_pressed"]
+[connection signal="child_order_changed" from="Margin/VBox/Scroll_Bottom/List_Bottom" to="." method="_refresh_draw_button"]
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Delete" to="." method="_on_delete_pressed"]
+[connection signal="confirmed" from="DeleteConfirmation" to="." method="_on_delete_confirmed"]

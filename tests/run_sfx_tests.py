@@ -39,7 +39,7 @@ try:
     else:
         raise RuntimeError("Host did not start")
 
-    run("client")  # 玩家二：悬停/查看器/拖动/抽牌/入堆/翻牌全流程
+    run("client", marker="CLIENT_OK")  # 玩家二：悬停/查看器/拖动/抽牌/入堆/翻牌全流程
     # 注意：不要用 communicate()——for 行迭代器的预读缓冲区里可能还压着
     # HOST_ALL_OK 等已读走的行，communicate 读底层 fd 会把它们丢掉；
     # 用同一个文件对象 read() 排空即可。

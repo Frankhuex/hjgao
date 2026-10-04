@@ -3,6 +3,32 @@ extends CanvasLayer
 
 signal draw_confirmed(updated_card_ID_stack: Array[int], drawn_cards: Array[int])
 signal cancel_confirmed
+signal delete_confirmed
+var _pile: Pile
+@onready var btn_delete: Button = $Margin/VBox/BottomBar/Btn_Delete
+@onready var delete_confirmation: ConfirmationDialog = $DeleteConfirmation
+
+func open_for(pile: Pile) -> void:
+	_pile = pile
+	_pile.stack_changed.connect(_refresh_delete_button)
+	_refresh_delete_button()
+
+func _refresh_delete_button() -> void:
+	if is_queued_for_deletion() or not is_instance_valid(btn_delete):
+		return
+	btn_delete.visible = is_instance_valid(_pile) and _pile.card_ID_stack.is_empty()
+	if not btn_delete.visible and is_instance_valid(delete_confirmation):
+		delete_confirmation.hide()
+
+func _on_delete_pressed() -> void:
+	_refresh_delete_button()
+	if btn_delete.visible and _pile.accessor.i_am_viewing():
+		delete_confirmation.popup_centered()
+
+func _on_delete_confirmed() -> void:
+	_refresh_delete_button()
+	if btn_delete.visible and _pile.accessor.i_am_viewing():
+		delete_confirmed.emit()
 signal viewer_closed
 signal orientation_operation_requested(operation: Const.PileOrientationOperation, card_IDs: Array[int])
 
@@ -44,6 +70,7 @@ var target_list: Control
 var target_index: int
 
 func _ready() -> void:
+	_refresh_draw_button()
 	# R6 排除：六大理牌按钮有自己的成功音，按下不响确认音（悬停音保留）；
 	# node_added 连接确认音回调早于本 _ready 执行，因此回调内点击时检查组而非连接时检查
 	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle,
@@ -62,6 +89,11 @@ func _ready() -> void:
 	insert_cursor.hide()
 	insert_cursor.top_level = true # 设置为顶级节点，不受任何容器排版影响，随便飞
 	add_child(insert_cursor)
+
+func _refresh_draw_button() -> void:
+	if is_queued_for_deletion() or not is_instance_valid(btn_draw) or not is_instance_valid(list_bottom):
+		return
+	btn_draw.visible = list_bottom.get_child_count() > 0
 
 func load_deck(deck_list: Array[int]) -> void:
 	# 1. 先正常加载已有的牌堆

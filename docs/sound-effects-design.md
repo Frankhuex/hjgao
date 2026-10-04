@@ -533,3 +533,7 @@ func _update_button_hover(shape_idx: int) -> void:
 
 不需要改动：owner_mux.gd、pile.gd、game.gd、pile_card_spawner.gd、网络/RPC 层
 （全端音效复用既有广播与 MultiplayerSpawner 同步，音效本身是本地表现层逻辑）。
+
+## 暂停确认框内部按钮修复（2026-10-04）
+
+Godot ConfirmationDialog 的确认和取消按钮属于内部子节点。SfxManager 的全树及弹窗补扫使用 get_children(true) 包含内部节点，沿用 Callable 去重，确保重复打开弹窗不会重复发声；延迟扫描检查节点有效性与待删除状态。tests/sfx_test.gd 的 parser 覆盖真实一键清场、一键清计数器确认框的确认/取消按钮，两轮弹出后分别断言悬停与点击音效恰好一次。

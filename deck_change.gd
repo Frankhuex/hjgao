@@ -4,7 +4,7 @@ extends Node
 const SYNC_TIMEOUT_MS: int = 15000
 @onready var game: GameSession = get_parent() as GameSession
 @onready var database: CardDatabase = game.get_node("CardDatabase")
-@onready var button: Button = $"../PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer4/ChangeDeckButton"
+@onready var button: Button = $"../PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxChangeDeck/ChangeDeckButton"
 @onready var file_dialog: FileDialog = $"../PauseCanvasLayer/DeckFileDialog"
 @onready var confirmation: ConfirmationDialog = $"../PauseCanvasLayer/DeckChangeConfirmation"
 @onready var message: AcceptDialog = $"../PauseCanvasLayer/DeckChangeMessage"
@@ -54,13 +54,16 @@ func _submit() -> void:
 	_set_status("等待服务器校验卡组…")
 	var text: String = candidate_json
 	candidate_json = ""
+	request_change(text)
+
+func request_change(text: String) -> void:
 	if multiplayer.is_server():
-		request_change(text)
+		server_change(text)
 	else:
-		request_change.rpc_id(1, text)
+		server_change.rpc_id(1, text)
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_change(text: String) -> void:
+func server_change(text: String) -> void:
 	if not multiplayer.is_server() or not game.session_active:
 		return
 	var sender: int = multiplayer.get_remote_sender_id()
@@ -165,10 +168,10 @@ func _ack(id: int, stage: String) -> void:
 	if multiplayer.is_server():
 		waiting.erase(1)
 	else:
-		acknowledge.rpc_id(1, id, stage)
+		server_acknowledge.rpc_id(1, id, stage)
 
 @rpc("any_peer", "call_remote", "reliable")
-func acknowledge(id: int, stage: String) -> void:
+func server_acknowledge(id: int, stage: String) -> void:
 	if multiplayer.is_server() and active and id == transaction and stage == phase:
 		waiting.erase(multiplayer.get_remote_sender_id())
 

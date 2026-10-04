@@ -170,7 +170,7 @@ func request_apply_decimals(new_decimals: int):
 	else:
 		server_apply_decimals.rpc_id(1, new_decimals)
 
-func request_delete():
+func request_delete_counter():
 	if Util.is_server(self):
 		server_delete_counter()
 	else:

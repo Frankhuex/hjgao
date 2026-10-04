@@ -15,14 +15,18 @@ extends Node3D
 @onready var pause_button: Button = $PauseCanvasLayer/PauseButton
 @onready var pause_overlay: Control = $PauseCanvasLayer/PauseOverlay
 @onready var player_list: ItemList = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/PlayerList
-@onready var clear_table_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer4/ClearTableButton
+@onready var clear_table_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxChangeDeck/ClearTableButton
 @onready var clear_table_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearTableConfirmation
-@onready var add_counter_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/AddCounterButton
-@onready var clear_counters_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/ClearCountersButton
+@onready var add_counter_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCounters/AddCounterButton
+@onready var add_pile_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxPiles/AddPileButton
+@onready var clear_empty_piles_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxPiles/ClearEmptyPilesButton
+@onready var clear_empty_piles_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearEmptyPilesConfirmation
+var _next_pile_number: int = 0
+@onready var clear_counters_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCounters/ClearCountersButton
 @onready var clear_counters_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearCountersConfirmation
-@onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/TooltipCheckBox
-@onready var chat_panel_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/ChatPanelCheckBox
-@onready var auto_orientation_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/AutoOrientationCheckBox
+@onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCheckBoxes/TooltipCheckBox
+@onready var chat_panel_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCheckBoxes/ChatPanelCheckBox
+@onready var auto_orientation_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCheckBoxes/AutoOrientationCheckBox
 @onready var card_description_tooltip: CardDescriptionTooltip = $CardDescriptionTooltip
 @onready var deck_change: DeckChange = $DeckChange
 @onready var chat_ui: ChatPanel = $ChatUI
@@ -147,6 +151,11 @@ func _on_host_button_pressed() -> void:
 		return
 	start_server(int(host_port_str), false)
 
+func _on_card_editor_button_pressed() -> void:
+	var error := OS.shell_open("https://frankhuex.github.io/HJGAOCardEditor/index.html")
+	if error != OK:
+		push_error("无法打开卡组编辑器：%s" % error_string(error))
+
 func add_player(id: int, display_name: String = "") -> Player:
 	var player := PLAYER.instantiate() as Player
 	var final_name := Util.sanitize_player_name(display_name, id, PLAYER_NAME_MAX_LENGTH)
@@ -156,15 +165,46 @@ func add_player(id: int, display_name: String = "") -> Player:
 	players.add_child(player)
 	return player
 
-func add_pile(card_IDs: Array[int], pile_name: String) -> Pile:
+func add_pile(card_IDs: Array[int], pile_name: String, initial_position: Vector3 = Vector3.ZERO) -> Pile:
 	var pile: Pile = PILE.instantiate()
 	pile.preready(pile_name, card_IDs)
+	pile.position = initial_position
 	piles.add_child(pile, true)
 	return pile
+
+func _on_add_pile_button_pressed() -> void:
+	request_add_pile()
+
+func request_add_pile() -> void:
+	if not session_active or Util.board_locked(self):
+		return
+	chat_ui.release_input_focus()
+	if multiplayer.is_server():
+		server_add_pile()
+	else:
+		server_add_pile.rpc_id(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_add_pile() -> void:
+	if Util.not_server(self) or not session_active or Util.board_locked(self):
+		return
+	var sender := Util.sender_id(self)
+	if sender != 0 and sender != 1 and not player_names.has(sender):
+		return
+	_next_pile_number += 1
+	var pile_name := "extra_pile_%d" % _next_pile_number
+	while piles.has_node(pile_name):
+		_next_pile_number += 1
+		pile_name = "extra_pile_%d" % _next_pile_number
+	var empty_ids: Array[int] = []
+	add_pile(empty_ids, pile_name, _find_free_counter_position())
 
 ###################################################
 # Counter
 func _on_add_counter_button_pressed() -> void:
+	request_add_counter()
+
+func request_add_counter() -> void:
 	if not session_active or clear_table_in_progress:
 		return
 	chat_ui.release_input_focus()
@@ -397,9 +437,12 @@ func _open_pause_menu():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	pause_button.hide()
 	add_counter_button.visible = session_active # 所有玩家都可添加计数器
+	add_pile_button.visible = session_active
+	add_pile_button.disabled = clear_table_in_progress
 	_sync_tooltip_check_box()
 	_sync_chat_panel_check_box()
 	_sync_auto_orientation_check_box()
+	($PauseCanvasLayer as CanvasLayer).show()
 	pause_overlay.show()
 	_sync_player_roster()
 
@@ -455,7 +498,7 @@ func _on_local_player_status_changed() -> void:
 func _request_player_roster() -> void:
 	if not session_active or Util.is_server(self):
 		return
-	request_player_roster.rpc_id(1)
+	server_player_roster.rpc_id(1)
 
 func _sync_player_roster() -> void:
 	if not session_active:
@@ -475,7 +518,7 @@ func _broadcast_player_roster() -> void:
 	receive_player_roster.rpc(roster)
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_player_roster() -> void:
+func server_player_roster() -> void:
 	if Util.not_server(self):
 		return
 	var sender_id := Util.sender_id(self)
@@ -537,6 +580,9 @@ func _refresh_player_list() -> void:
 		player_list.add_item(text)
 
 func _on_chat_send_requested(content: String) -> void:
+	request_submit_chat_message(content)
+
+func request_submit_chat_message(content: String) -> void:
 	if not session_active:
 		return
 	var message := Util.sanitize_chat_message(content, CHAT_MESSAGE_MAX_LENGTH, CHAT_MESSAGE_MAX_LINES)
@@ -550,7 +596,7 @@ func _on_chat_send_requested(content: String) -> void:
 func _send_chat_message_to_server(content: String) -> void:
 	if not session_active or Util.is_server(self):
 		return
-	var error := multiplayer.rpc(1, self, &"submit_chat_message", [content])
+	var error := multiplayer.rpc(1, self, &"server_submit_chat_message", [content])
 	if error != OK:
 		printerr("发送聊天消息失败，错误码：", error)
 
@@ -574,7 +620,7 @@ func _has_blocking_modal() -> bool:
 	return deck_change.has_dialog() or clear_table_confirmation.visible
 
 @rpc("any_peer", "call_remote", "reliable")
-func submit_chat_message(content: String) -> void:
+func server_submit_chat_message(content: String) -> void:
 	if Util.not_server(self) or not session_active:
 		return
 	var sender_id := Util.sender_id(self)
@@ -624,7 +670,7 @@ func receive_chat_message(sender_id: int, sender_name: String, content: String) 
 		chat_ui.show_notification(sender_name, message)
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_chat_history() -> void:
+func server_chat_history() -> void:
 	if Util.not_server(self) or not session_active:
 		return
 	var sender_id := Util.sender_id(self)
@@ -642,7 +688,7 @@ func receive_chat_history(history: Array) -> void:
 func _request_chat_history() -> void:
 	if not session_active or Util.is_server(self):
 		return
-	request_chat_history.rpc_id(1)
+	server_chat_history.rpc_id(1)
 
 func _release_local_interactions():
 	card_description_tooltip.hide_all()
@@ -685,6 +731,9 @@ func _on_clear_table_button_pressed() -> void:
 	clear_table_confirmation.popup_centered(Vector2i(640, 260))
 
 func _on_clear_table_confirmed() -> void:
+	request_clear_table()
+
+func request_clear_table() -> void:
 	if not session_active:
 		return
 	if Util.is_server(self):
@@ -733,6 +782,7 @@ func _rebuild_board() -> void:
 @rpc("authority", "call_local", "reliable")
 func prepare_for_table_clear() -> void:
 	clear_table_confirmation.hide()
+	clear_empty_piles_confirmation.hide()
 	card_description_tooltip.hide_all()
 	_close_local_deck_viewers()
 
@@ -740,6 +790,8 @@ func prepare_for_table_clear() -> void:
 func set_clear_table_busy(busy: bool) -> void:
 	clear_table_in_progress = busy
 	clear_table_button.disabled = busy
+	clear_empty_piles_button.disabled = busy
+	add_pile_button.disabled = busy
 	deck_change.set_busy(busy)
 
 func _card_id_less(card_id_a: int, card_id_b: int) -> bool:
@@ -769,6 +821,46 @@ func _clear_board_nodes() -> void:
 
 ###################################################
 # 一键清计数器（与一键清场相互独立，见设计文档 Q2）
+func _on_clear_empty_piles_button_pressed() -> void:
+	if not session_active or Util.board_locked(self):
+		return
+	chat_ui.release_input_focus()
+	clear_empty_piles_confirmation.popup_centered(Vector2i(640, 260))
+
+func _on_clear_empty_piles_confirmed() -> void:
+	request_clear_empty_piles()
+
+func request_clear_empty_piles() -> void:
+	if not session_active:
+		return
+	if Util.is_server(self):
+		server_clear_empty_piles()
+	else:
+		server_clear_empty_piles.rpc_id(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_clear_empty_piles() -> void:
+	if Util.not_server(self) or not session_active or Util.board_locked(self):
+		return
+	clear_table_in_progress = true
+	set_clear_table_busy.rpc(true)
+	prepare_for_empty_piles_clear.rpc()
+	var removed: Array[Pile] = []
+	for child: Node in piles.get_children():
+		var pile := child as Pile
+		if pile != null and pile.card_ID_stack.is_empty():
+			removed.append(pile)
+			pile.queue_free()
+	for pile: Pile in removed:
+		while is_instance_valid(pile):
+			await get_tree().process_frame
+	if session_active and multiplayer.multiplayer_peer != null:
+		set_clear_table_busy.rpc(false)
+
+@rpc("authority", "call_local", "reliable")
+func prepare_for_empty_piles_clear() -> void:
+	clear_empty_piles_confirmation.hide()
+
 func _on_clear_counters_button_pressed() -> void:
 	if not session_active or clear_table_in_progress:
 		return
@@ -776,6 +868,9 @@ func _on_clear_counters_button_pressed() -> void:
 	clear_counters_confirmation.popup_centered(Vector2i(640, 260))
 
 func _on_clear_counters_confirmed() -> void:
+	request_clear_counters()
+
+func request_clear_counters() -> void:
 	if not session_active:
 		return
 	if Util.is_server(self):
@@ -878,7 +973,9 @@ func _return_to_main_menu(reason: String):
 	session_active = false
 	clear_table_in_progress = false
 	clear_table_confirmation.hide()
+	clear_empty_piles_confirmation.hide()
 	clear_table_button.disabled = false
+	clear_empty_piles_button.disabled = false
 	pause_overlay.hide()
 	pause_button.hide()
 	player_list.clear()
