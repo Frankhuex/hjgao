@@ -17,27 +17,23 @@ const DEFAULT_CAMERA_ROTATION_DEGREES = Vector3(-77.6, 0.0, 0.0)
 func _enter_tree():
 	set_multiplayer_authority(name.to_int())
 	
-func _ready():
-	set_random_pos()
-	if is_multiplayer_authority(): 
-		var main_camera := get_viewport().get_camera_3d()
-		main_camera.reparent(pivot)
-		main_camera.position = Vector3.ZERO #相对于pivot
+func preready(camera_transform: Transform3D, side: int) -> void:
+	# 以主菜单视角为基准，绕桌面中心转到四边之一；服务器在入树前选定。
+	var yaw: float = side * PI / 2.0
+	position = camera_transform.origin.rotated(Vector3.UP, yaw)
+	# 水平正对桌面中心，固定俯角由主菜单高度和水平距离确定。
+	rotation = Vector3(0.0, atan2(position.x, position.z), 0.0)
+	var camera_pivot: Node3D = get_node("CameraPivot") as Node3D
+	var horizontal_distance: float = Vector2(position.x, position.z).length()
+	camera_pivot.rotation = Vector3(-atan2(position.y, horizontal_distance), 0.0, 0.0)
 
-func set_random_pos():
-	var center := Vector3(0, 5.669, 0)
-	var radius := 2.5
-	
-	# 1. 在 0 到 360 度（2π 弧度）之间随机选一个角度
-	# TAU 是 Godot 内置常量，等价于 2 * PI
-	var angle := randf_range(0.0, TAU)
-	
-	# 2. 利用三角函数计算出 XZ 平面上的圆周偏移量
-	var offset_x := cos(angle) * radius
-	var offset_z := sin(angle) * radius
-	
-	global_position = center + Vector3(offset_x, 0, offset_z)
-	
+func _ready():
+	if is_multiplayer_authority():
+		var main_camera: Camera3D = get_viewport().get_camera_3d()
+		var camera_scale: Vector3 = main_camera.scale
+		main_camera.reparent(pivot)
+		# 朝向由玩家和 pivot 承担，保留原摄像机缩放，避免重复叠加旋转。
+		main_camera.transform = Transform3D(Basis.from_scale(camera_scale), Vector3.ZERO)
 
 #func set_random_color():
 	#mesh.get_active_material(0).albedo_color = Color(randf(), randf(), randf())
@@ -85,8 +81,8 @@ func _unhandled_input(event: InputEvent):
 	if player_status == PlayerStatus.MOVE and event is InputEventMouseMotion:
 		var event_mouse_motion: InputEventMouseMotion = event
 		rotate_y(-event_mouse_motion.relative.x * 0.002)
-		pivot.rotate_x(-event_mouse_motion.relative.y * 0.002)
-		pivot.rotation.x = clamp(pivot.rotation.x, -1.5, 1.5) #弧度制
+		# 先限制俯仰角再赋值，避免越过竖直方向后欧拉角转换产生翻转。
+		pivot.rotation.x = clampf(pivot.rotation.x - event_mouse_motion.relative.y * 0.002, -PI / 2.0, PI / 2.0)
 
 func _physics_process(_delta):
 	if not is_multiplayer_authority(): 

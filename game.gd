@@ -77,6 +77,8 @@ func _ready():
 	chat_ui.input_focus_entered.connect(_on_chat_input_focus_entered)
 	chat_ui.input_focus_exited.connect(_on_chat_input_focus_exited)
 	main_camera_initial_transform = main_camera.transform
+	var player_spawner: MultiplayerSpawner = $MultiplayerSpawner_Players
+	player_spawner.spawn_function = _spawn_player
 	pause_overlay.hide()
 	pause_button.hide()
 	_sync_tooltip_check_box()
@@ -157,12 +159,23 @@ func _on_card_editor_button_pressed() -> void:
 		push_error("无法打开卡组编辑器：%s" % error_string(error))
 
 func add_player(id: int, display_name: String = "") -> Player:
-	var player := PLAYER.instantiate() as Player
 	var final_name := Util.sanitize_player_name(display_name, id, PLAYER_NAME_MAX_LENGTH)
-	player.name = str(id)
-	player.display_name = final_name
 	player_names[id] = final_name
-	players.add_child(player)
+	var player_spawner: MultiplayerSpawner = $MultiplayerSpawner_Players
+	return player_spawner.spawn({"id": id, "display_name": final_name, "side": randi_range(0, 3)}) as Player
+
+func _spawn_player(data: Variant) -> Node:
+	if not data is Dictionary:
+		return null
+	var spawn_data: Dictionary = data
+	var side_value: Variant = spawn_data.get("side")
+	if not side_value is int:
+		return null
+	var side: int = side_value
+	var player: Player = PLAYER.instantiate() as Player
+	player.name = str(spawn_data["id"])
+	player.display_name = str(spawn_data["display_name"])
+	player.preready(main_camera_initial_transform, side)
 	return player
 
 func add_pile(card_IDs: Array[int], pile_name: String, initial_position: Vector3 = Vector3.ZERO) -> Pile:
