@@ -56,9 +56,10 @@ func server_delete_pile() -> void:
 		return
 	queue_free()
 
-func preready(_name:String, _card_ID_stack: Array[int]):
+func preready(_name:String, _card_ID_stack: Array[int], initial_display_name: String = ""):
 	name = _name
 	card_ID_stack = _card_ID_stack
+	(get_node("NameEditor") as NameEditor).initialize_name(initial_display_name)
 
 func _ready():
 	name_editor.configure(owner_mux, Const.Purpose.PILE_VIEW)

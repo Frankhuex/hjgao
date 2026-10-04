@@ -54,12 +54,12 @@ func _local_tests() -> void:
 	await _start()
 	var pile := _pile()
 	var old_path: NodePath = pile.get_path()
-	_check(pile.display_name == "" and not pile._name_label.visible, "initial empty name")
+	_check(pile.display_name == "未分类" and pile._name_label.visible, "initial untyped name")
 	pile.name_editor.server_apply_name("非法", 1)
-	_check(pile.display_name == "", "no viewer rejected")
+	_check(pile.display_name == "未分类", "no viewer rejected")
 	pile.owner_mux.server_set_owner(Const.Purpose.DRAG, 1)
 	pile.name_editor.server_apply_name("拖动中", 4)
-	_check(pile.display_name == "", "wrong owner purpose rejected")
+	_check(pile.display_name == "未分类", "wrong owner purpose rejected")
 	pile.owner_mux.server_reset_owner()
 	pile.accessor.request_open_viewer()
 	await process_frame
@@ -178,7 +178,7 @@ func _client(late: bool) -> void:
 		return
 	pile.name_editor.request_apply_name("未占用", 1)
 	await create_timer(0.15).timeout
-	_check(pile.display_name == "", "remote unowned request rejected")
+	_check(pile.display_name == "未分类", "remote unowned request rejected")
 	pile.accessor.request_open_viewer()
 	while _viewer() == null:
 		await process_frame

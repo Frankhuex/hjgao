@@ -29,6 +29,7 @@ func _open_deck_viewer():
 	_viewer.delete_confirmed.connect(_on_delete)
 	_viewer.draw_confirmed.connect(_on_draw_confirmed)
 	_viewer.draw_to_new_pile_confirmed.connect(request_extract_to_new_pile)
+	_viewer.classify_to_new_piles_confirmed.connect(request_classify_to_new_piles)
 	_viewer.cancel_confirmed.connect(_on_cancel)
 	_viewer.orientation_operation_requested.connect(_on_orientation_operation_requested)
 
@@ -138,6 +139,19 @@ func request_extract_to_new_pile(remaining_ids: Array[int], extracted_ids: Array
 
 @rpc("any_peer", "call_remote", "reliable")
 func server_extract_to_new_pile(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int) -> void:
+	_extract_to_new_piles(remaining_ids, extracted_ids, submission_id, false)
+
+func request_classify_to_new_piles(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int) -> void:
+	if Util.is_server(self):
+		server_classify_to_new_piles(remaining_ids, extracted_ids, submission_id)
+	else:
+		server_classify_to_new_piles.rpc_id(1, remaining_ids, extracted_ids, submission_id)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_classify_to_new_piles(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int) -> void:
+	_extract_to_new_piles(remaining_ids, extracted_ids, submission_id, true)
+
+func _extract_to_new_piles(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int, classify: bool) -> void:
 	if Util.not_server(self):
 		return
 	var sender := Util.sender_id(self)
@@ -150,20 +164,47 @@ func server_extract_to_new_pile(remaining_ids: Array[int], extracted_ids: Array[
 		_reply_extract_failure(sender, submission_id, reason)
 		return
 	var game := get_node("/root/Game") as GameSession
+	var stacks: Array[Array] = []
+	var initial_names: Array[String] = []
+	if classify:
+		var deck := _card_database.deck_instance
+		var groups := deck.group_card_IDs_by_type(extracted_ids)
+		for card_type: String in deck.deck_template.ordered_types:
+			if groups.has(card_type):
+				stacks.append(groups[card_type])
+				initial_names.append("未分类" if card_type == CardTemplate.UNTYPED else card_type)
+	else:
+		stacks.append(extracted_ids)
+		initial_names.append("")
 	var position: Vector3 = _parent.calc_spawn_pos([extracted_ids[0]])[extracted_ids[0]]
 	position.y = 0.0
-	var target := game.prepare_extra_pile(extracted_ids, position, _parent.global_rotation)
-	if target == null:
-		_reply_extract_failure(sender, submission_id, "创建牌堆失败，请重试。")
-		return
+	var direction := 1.0 if _parent.global_position.x < 0.0 else -1.0
+	var targets: Array[Pile] = []
+	# 全部准备完成后才改源栈，持续保留 PILE_VIEW，无跨帧等待。
+	for index: int in range(stacks.size()):
+		var ids: Array[int] = []
+		ids.assign(stacks[index])
+		var target_position := position + Vector3(direction * index * GameSession.TYPE_PILE_SPACING_X, 0, 0)
+		var target := game.prepare_extra_pile(ids, target_position, _parent.global_rotation, initial_names[index])
+		if target == null:
+			for prepared: Pile in targets:
+				prepared.free()
+			_reply_extract_failure(sender, submission_id, "创建牌堆失败，请重试。")
+			return
+		targets.append(target)
 	var previous_ids := _parent.card_ID_stack.duplicate()
 	_parent.card_ID_stack = remaining_ids.duplicate()
-	game.piles.add_child(target, true)
-	if target.get_parent() != game.piles:
-		_parent.card_ID_stack = previous_ids
-		target.free()
-		_reply_extract_failure(sender, submission_id, "创建牌堆失败，请重试。")
-		return
+	for target: Pile in targets:
+		game.piles.add_child(target, true)
+		if target.get_parent() != game.piles:
+			_parent.card_ID_stack = previous_ids
+			for prepared: Pile in targets:
+				if prepared.is_inside_tree():
+					prepared.queue_free()
+				else:
+					prepared.free()
+			_reply_extract_failure(sender, submission_id, "创建牌堆失败，请重试。")
+			return
 	_parent.server_sync_card_ID_stack()
 	# 最后释放：同步 on_owner_change 会关闭主机查看器。
 	_parent.owner_mux.server_reset_owner()

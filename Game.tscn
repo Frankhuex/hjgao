@@ -423,9 +423,9 @@ ok_button_text = "确认清场"
 dialog_text = "这会删除桌面上的全部散牌和现有牌堆，
 并取消所有玩家正在进行的牌堆操作。
 
-随后将在桌面中央重新生成一副完整牌，
+随后将在桌面中央按类型重建完整的递增牌堆，
 以及每位玩家对应的空牌堆。
-卡牌正反面状态会保留。"
+卡牌将重置为正面及正位。"
 cancel_button_text = "取消"
 
 [node name="ClearCountersConfirmation" type="ConfirmationDialog" parent="PauseCanvasLayer" unique_id=592142970]

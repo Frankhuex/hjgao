@@ -25,6 +25,9 @@ func export_deck_instance() -> String:
 func get_all_IDs() -> Array[int]:
 	return deck_instance.card_ID_to_card_name.keys()
 
+func get_ordered_card_IDs_by_type() -> Dictionary[String, Array]:
+	return deck_instance.get_ordered_card_IDs_by_type()
+
 func get_card_name(id: int) -> String:
 	return deck_instance.card_ID_to_card_name[id]
 

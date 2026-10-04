@@ -61,7 +61,7 @@ HJGAO 是 Godot 4.7.2 / GDScript 编写的多人 3D 桌面棋牌工具，使用 
 
 牌堆 `card_ID_stack` 的前端是顶牌，堆内卡牌仅保存为数据；抽取后由 `PileCardSpawner.server_spawn_card_by_IDs()` 创建 Card，放回后回收 3D 节点。`CardSorter` 负责散牌栈与高度：拿起时移出，落下时注册并重排。
 
-当前源码已实现 `card_ID_to_is_front` 和 `card_ID_to_is_upright` 两个独立布尔映射，缺省均为 `true`，快照会序列化二者。普通右键翻面，Shift+右键切换正逆位；查看器已有全部正位、全部逆位、全部颠倒、随机正反面和随机正逆位操作。新增状态请求沿 `DeckViewerUI` 信号到 `PileAccessor`，服务器校验 PILE_VIEW owner、全局锁和牌 ID 属于目标堆后应用；批量操作取上方牌列 ID，不包含下方待抽取区。2D 旋转由 UICard 的视觉子节点承担，保留外层布局和拾取区域。3D 出牌按正逆位初始化根节点 Y 旋转，翻面由 Pivot 的 X 旋转承担，spawn 同步包含 rotation。
+当前源码已实现 `card_ID_to_is_front` 和 `card_ID_to_is_upright` 两个独立布尔映射，缺省正反面为 `false`（背面）、正逆位为 `true`，快照会序列化二者。普通右键翻面，Shift+右键切换正逆位；查看器已有全部正位、全部逆位、全部颠倒、随机正反面和随机正逆位操作。新增状态请求沿 `DeckViewerUI` 信号到 `PileAccessor`，服务器校验 PILE_VIEW owner、全局锁和牌 ID 属于目标堆后应用；批量操作取上方牌列 ID，不包含下方待抽取区。2D 旋转由 UICard 的视觉子节点承担，保留外层布局和拾取区域。3D 出牌按正逆位初始化根节点 Y 旋转，翻面由 Pivot 的 X 旋转承担，spawn 同步包含 rotation。
 
 `Dragger.auto_orientation_enabled` 是本地偏好，开启后拖动朝向跟随相机，并由 RPC 同步结果；关闭时保留当前朝向。拖动不反写牌堆正逆位，也不持续叠加逆位的 180 度偏移。正逆位设计稿的部分步骤与验收描述存在历史差异，以当前源码和任务要求核实。
 
@@ -181,6 +181,8 @@ GODOT_BIN='/Applications/Godot 4.7.2.app/Contents/MacOS/Godot'
 
 ## 牌堆生命周期补充
 
+DeckViewerUI 的“分类到新牌堆”沿用 PILE_VIEW 占用和取出到新牌堆的无 await 提交段。服务器按 `DeckTemplate.ordered_types` 与类型内牌名顺序分组待取 ID，先准备全部目标 Pile，再改源栈、发布目标并最后释放源占用；空类型显示“未分类”，源空堆保留。目标位置从源堆旁沿世界 X 轴连续展开，继承源堆朝向，允许超界和重叠。按钮与其他取出按钮共用待取区显示条件，失败保留本地草稿。专项测试为 `python3 tests/run_pile_classify_tests.py`。
+
 暂停菜单“新建牌堆”允许所有已入房玩家请求服务器创建空堆，命名 extra_pile_N，位置在加入 Piles 前设置并复用计数器空位扫描。DeckViewerUI 的删除入口只在绑定堆的服务器实际栈为空时显示，待抽取区的本地移动不会改变判定。删除经 PileAccessor 转交 Pile，由服务器校验有效会话、全局锁、空栈和房主或当前 PILE_VIEW owner 权限，Spawner 同步销毁；PileAccessor 出树时回收 /root 查看器。清场/换库清理新增堆并重建标准桌面。相关文档：docs/pile-create-delete-plan.md，测试：python3 tests/run_pile_lifecycle_tests.py。当前计数器创建同样允许所有玩家，以上旧模块说明中的“仅房主添加”应以源码为准。
 
 ## 请求与服务器函数命名
@@ -203,3 +205,12 @@ DetailViewer 是 Card/Pile/Counter 的共用 3D 悬浮绑定，内容由 Callabl
 DeckViewerUI 操作分组路径为 Top_Btns/FlipSection、Top_Btns/DirectionSection、Top_Btns2/SortSection、Top_Btns2/SelectSection。新增排序/抽取按钮的 pressed 固化在 tscn；逆转与顶部/底部/随机 n 张抽取只操作本地 UICard 列表，所选/剩余子序列顺序保持，追加到待取区末尾，不提前请求服务器。Input_Number 的焦点同样须清理移动动作，确认取出才提交既有查看器事务。
 
 取出到新牌堆通过 PileAccessor.request_extract_to_new_pile/server_extract_to_new_pile 提交两列 ID，服务端验证真实查看 owner 和完整无重复分区，保持 PILE_VIEW 至同步更新源栈、发布新堆和广播结束，最后释放；提交段无 await，不设置清场全局锁。新堆复用第一张散牌取出的 X/Z 落点、落桌 Y=0，继承源朝向，名称为空，源空堆保留。Pile 的 rotation 仅复制 spawn 初值，持续旋转沿 Dragger RPC。专项测试：python3 tests/run_pile_extract_tests.py。
+
+
+## 卡牌类型与分类初始化
+
+CardTemplate.type 默认 CardTemplate.UNTYPED（空字符串）。缺失/null/空字符串/纯空白统一为空类型，非空去首尾空白、区分大小写、最多 64 字符并拒绝内部控制字符；字面 untyped 是普通类型。DeckTemplate 保留 ordered_card_names/card_name_to_priority 的原 JSON 全局顺序，并从同一 ordered_card_templates 派生 ordered_types/type_to_priority 和 type_to_ordered_card_names（Dictionary[String,Array]，值为 Array[String]）。类型按首次出现、组内牌名按同类子序列；索引空字符串键正常维护，使用 has 判断存在，不能将空键跳过。
+
+DeckInstance.get_ordered_card_IDs_by_type 先按每类有序牌名，再按同名数值 ID 递增展开；自动 ID 也按原 ordered_card_names 生成。派生索引不序列化，type 随模板输出并在认证/换库快照解析后重建。混合堆升降序继续使用原全局优先级。
+
+GameSession 开房及 _rebuild_board 共用 _create_initial_type_piles；重建前准备 ID 分组，清场/换库在原全局锁内删除、等待离树、生成完整分类堆与个人空堆后解锁，不转调会拒绝全局锁的公开新增入口。分类堆每行 4 个，X 间距 1.5、Z 间距 2.0，每行及整体居中，允许超出桌面或与保留计数器重叠。初始 display_name 为类型名，空类型显示“未分类”，通过 NameEditor.initialize_name 在入树前注入；运行时编辑的占用校验不变。仅单一空类型沿用公共牌堆网络路径，其他情况使用 type_pile_N，不用用户类型字符串作为节点路径。个人、手工新增及拆堆的名称仍默认为空。方案 docs/card-type-pile-initialization-plan.md；专项 python3 tests/run_card_type_tests.py。

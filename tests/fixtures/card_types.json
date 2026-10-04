@@ -1,0 +1,17 @@
+{
+  "deck_template": {
+    "ordered_card_templates": [
+      {"name": "A", "count": 2, "type": "X"},
+      {"name": "B", "count": 1, "type": "Y"},
+      {"name": "C", "count": 1, "type": "X"},
+      {"name": "D", "count": 1, "type": null},
+      {"name": "E", "count": 1, "type": ""},
+      {"name": "F", "count": 1, "type": "Z"},
+      {"name": "G", "count": 1, "type": "untyped"},
+      {"name": "H", "count": 1, "type": " W "}
+    ]
+  },
+  "card_ID_to_card_name": {"303": "A", "205": "B", "9": "C", "101": "A", "401": "D", "402": "E", "501": "F", "601": "G", "701": "H"},
+  "card_ID_to_is_front": {"101": true},
+  "card_ID_to_is_upright": {"101": false}
+}

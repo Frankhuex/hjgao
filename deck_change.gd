@@ -80,6 +80,7 @@ func server_change(text: String) -> void:
 	if canonical.to_utf8_buffer().size() > DeckJson.MAX_BYTES:
 		_reply(sender, "展开后的完整卡组超过 1 MiB，请缩小卡组。")
 		return
+	var initial_groups := result.deck.get_ordered_card_IDs_by_type()
 	transaction += 1
 	var current: int = transaction
 	var connection: MultiplayerPeer = multiplayer.multiplayer_peer
@@ -104,7 +105,7 @@ func server_change(text: String) -> void:
 	install_change.rpc(current, canonical)
 	if not await _wait_for_peers(current, connection):
 		return
-	game._rebuild_board()
+	game._rebuild_board(initial_groups)
 	finish_change.rpc(current)
 	network.refuse_new_connections = false
 	phase = ""

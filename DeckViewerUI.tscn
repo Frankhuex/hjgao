@@ -246,6 +246,14 @@ size_flags_vertical = 4
 theme_override_font_sizes/font_size = 25
 text = "取出到新牌堆"
 
+[node name="Btn_ClassifyToPiles" type="Button" parent="Margin/VBox/BottomBar"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 25
+text = "分类到新牌堆"
+
 [node name="SubmissionStatus" type="Label" parent="Margin/VBox"]
 visible = false
 layout_mode = 2
@@ -306,3 +314,5 @@ offset_bottom = 40.0
 [connection signal="focus_exited" from="Margin/VBox/Top_Btns2/SelectSection/Input_Number" to="." method="_on_number_focus_exited"]
 
 [connection signal="pressed" from="Margin/VBox/BottomBar/Btn_DrawToPile" to="." method="_on_draw_to_pile_pressed"]
+
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_ClassifyToPiles" to="." method="_on_classify_to_piles_pressed"]

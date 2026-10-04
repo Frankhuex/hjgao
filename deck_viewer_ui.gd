@@ -2,10 +2,12 @@ class_name DeckViewerUI
 extends CanvasLayer
 
 signal draw_confirmed(updated_card_ID_stack: Array[int], drawn_cards: Array[int])
+signal classify_to_new_piles_confirmed(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int)
 signal draw_to_new_pile_confirmed(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int)
 static var _next_submission_id: int = 0
 var _submission_id: int = 0
 var _submission_pending := false
+@onready var btn_classify_to_piles: Button = $Margin/VBox/BottomBar/Btn_ClassifyToPiles
 @onready var btn_draw_to_pile: Button = $Margin/VBox/BottomBar/Btn_DrawToPile
 @onready var submission_status: Label = $Margin/VBox/SubmissionStatus
 @onready var submission_blocker: Control = $SubmissionBlocker
@@ -111,6 +113,8 @@ func _refresh_draw_button() -> void:
 	btn_draw.visible = list_bottom.get_child_count() > 0
 	if is_instance_valid(btn_draw_to_pile):
 		btn_draw_to_pile.visible = btn_draw.visible
+	if is_instance_valid(btn_classify_to_piles):
+		btn_classify_to_piles.visible = btn_draw.visible
 
 func load_deck(deck_list: Array[int]) -> void:
 	# 1. 先正常加载已有的牌堆
@@ -463,6 +467,12 @@ func is_editing_text() -> bool:
 	return name_row.is_editing_text() or input_number.has_focus()
 
 func _on_draw_to_pile_pressed() -> void:
+	_submit_to_new_piles(false)
+
+func _on_classify_to_piles_pressed() -> void:
+	_submit_to_new_piles(true)
+
+func _submit_to_new_piles(classify: bool) -> void:
 	if _submission_pending or dragging_card != null or not is_instance_valid(_pile):
 		return
 	if Util.board_locked(self) or not _pile.accessor.i_am_viewing():
@@ -480,10 +490,13 @@ func _on_draw_to_pile_pressed() -> void:
 	_submission_pending = true
 	get_viewport().gui_release_focus()
 	submission_blocker.show()
-	submission_status.text = "正在取出到新牌堆…"
+	submission_status.text = "正在分类到新牌堆…" if classify else "正在取出到新牌堆…"
 	submission_status.show()
 	Util.clear_pending_move_input()
-	draw_to_new_pile_confirmed.emit(remaining_ids, extracted_ids, _submission_id)
+	if classify:
+		classify_to_new_piles_confirmed.emit(remaining_ids, extracted_ids, _submission_id)
+	else:
+		draw_to_new_pile_confirmed.emit(remaining_ids, extracted_ids, _submission_id)
 
 func extract_to_pile_failed(submission_id: int, reason: String) -> void:
 	if is_queued_for_deletion() or not _submission_pending or submission_id != _submission_id:

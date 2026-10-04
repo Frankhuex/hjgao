@@ -132,7 +132,7 @@ func start_server(port: int, headless: bool):
 	chat_rate_second.clear()
 	chat_history_served.clear()
 	chat_ui.reset()
-	add_pile(card_db.get_all_IDs(), "公共牌堆")
+	_create_initial_type_piles(card_db.get_ordered_card_IDs_by_type())
 	
 	if not headless:
 		var host_name := Util.sanitize_player_name(input_player_name.text, Util.my_id(self), PLAYER_NAME_MAX_LENGTH)
@@ -178,9 +178,9 @@ func _spawn_player(data: Variant) -> Node:
 	player.preready(main_camera_initial_transform, side)
 	return player
 
-func add_pile(card_IDs: Array[int], pile_name: String, initial_position: Vector3 = Vector3.ZERO) -> Pile:
+func add_pile(card_IDs: Array[int], pile_name: String, initial_position: Vector3 = Vector3.ZERO, initial_display_name: String = "") -> Pile:
 	var pile: Pile = PILE.instantiate()
-	pile.preready(pile_name, card_IDs)
+	pile.preready(pile_name, card_IDs, initial_display_name)
 	pile.position = initial_position
 	piles.add_child(pile, true)
 	return pile
@@ -216,11 +216,11 @@ func _allocate_extra_pile_name() -> String:
 		pile_name = "extra_pile_%d" % _next_pile_number
 	return pile_name
 
-func prepare_extra_pile(card_ids: Array[int], world_position: Vector3, world_rotation: Vector3) -> Pile:
+func prepare_extra_pile(card_ids: Array[int], world_position: Vector3, world_rotation: Vector3, initial_display_name: String = "") -> Pile:
 	var pile := PILE.instantiate() as Pile
 	if pile == null:
 		return null
-	pile.preready(_allocate_extra_pile_name(), card_ids.duplicate())
+	pile.preready(_allocate_extra_pile_name(), card_ids.duplicate(), initial_display_name)
 	pile.position = piles.to_local(world_position)
 	pile.rotation = world_rotation - piles.global_rotation
 	return pile
@@ -778,6 +778,7 @@ func server_clear_table() -> void:
 		printerr("一键清场失败：牌库尚未初始化")
 		return
 
+	var initial_groups := card_db.get_ordered_card_IDs_by_type()
 	clear_table_in_progress = true
 	set_clear_table_busy.rpc(true)
 	prepare_for_table_clear.rpc()
@@ -793,16 +794,15 @@ func server_clear_table() -> void:
 		set_clear_table_busy.rpc(false)
 		return
 
-	_rebuild_board()
+	_rebuild_board(initial_groups)
 	clear_table_in_progress = false
 	set_clear_table_busy.rpc(false)
 	print("一键清场完成")
 
-func _rebuild_board() -> void:
-	var all_card_ids: Array[int] = card_db.get_all_IDs()
-	all_card_ids.sort_custom(_card_id_less)
-	var public_pile := add_pile(all_card_ids, "公共牌堆")
-	public_pile.global_position = Vector3.ZERO
+func _rebuild_board(initial_groups: Dictionary[String, Array] = {}) -> void:
+	if initial_groups.is_empty():
+		initial_groups = card_db.get_ordered_card_IDs_by_type()
+	_create_initial_type_piles(initial_groups)
 	for child: Node in players.get_children():
 		if child is Player and not child.is_queued_for_deletion():
 			var empty_card_ids: Array[int] = []
@@ -823,12 +823,27 @@ func set_clear_table_busy(busy: bool) -> void:
 	add_pile_button.disabled = busy
 	deck_change.set_busy(busy)
 
-func _card_id_less(card_id_a: int, card_id_b: int) -> bool:
-	var priority_a := card_db.get_priority(card_id_a)
-	var priority_b := card_db.get_priority(card_id_b)
-	if priority_a == priority_b:
-		return card_id_a < card_id_b
-	return priority_a < priority_b
+const TYPE_PILES_PER_ROW: int = 4
+const TYPE_PILE_SPACING_X: float = 1.5
+const TYPE_PILE_SPACING_Z: float = 2.0
+
+func _initial_type_pile_position(index: int, count: int) -> Vector3:
+	var row := floori(float(index) / TYPE_PILES_PER_ROW)
+	var rows := ceili(float(count) / TYPE_PILES_PER_ROW)
+	var row_count := mini(TYPE_PILES_PER_ROW, count - row * TYPE_PILES_PER_ROW)
+	var column := index % TYPE_PILES_PER_ROW
+	return Vector3((column - (row_count - 1) * 0.5) * TYPE_PILE_SPACING_X,
+		0.0, (row - (rows - 1) * 0.5) * TYPE_PILE_SPACING_Z)
+
+func _create_initial_type_piles(groups: Dictionary[String, Array]) -> void:
+	var types := card_db.deck_instance.deck_template.ordered_types
+	for index: int in range(types.size()):
+		var card_type := types[index]
+		var ids: Array[int] = []
+		ids.assign(groups[card_type])
+		var pile_name := "公共牌堆" if types.size() == 1 and card_type == CardTemplate.UNTYPED else "type_pile_%d" % (index + 1)
+		var initial_name := "未分类" if card_type == CardTemplate.UNTYPED else card_type
+		add_pile(ids, pile_name, _initial_type_pile_position(index, types.size()), initial_name)
 
 func _board_objects_are_pending_deletion() -> bool:
 	for child: Node in card_sorter.get_children():

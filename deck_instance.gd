@@ -53,7 +53,7 @@ static func load_from_json(input: Variant) -> DeckInstance:
 	if raw_id_map == null:
 		# 情况 A：没有映射，根据模板自动生成 ID
 		var cur_ID := 1
-		for card_name in _deck_template.card_name_to_card_template:
+		for card_name in _deck_template.ordered_card_names:
 			var card_tmpl = _deck_template.card_name_to_card_template[card_name]
 			for i in range(card_tmpl.count):
 				_card_ID_to_card_name[cur_ID] = card_name
@@ -128,3 +128,25 @@ static func load_from_json(input: Variant) -> DeckInstance:
 		_card_ID_to_is_upright[card_ID] = raw_upright_dict.get(str(card_ID), raw_upright_dict.get(card_ID, true))
 
 	return DeckInstance.new(_deck_template, _card_ID_to_card_name, _card_ID_to_is_front, _card_ID_to_is_upright)
+
+# 先按模板牌名顺序展开，同名副本按数值 ID 递增。
+func get_ordered_card_IDs_by_type() -> Dictionary[String, Array]:
+	return group_card_IDs_by_type(card_ID_to_card_name.keys())
+
+func group_card_IDs_by_type(card_ids: Array[int]) -> Dictionary[String, Array]:
+	var ids_by_name: Dictionary[String, Array] = {}
+	for card_name: String in deck_template.ordered_card_names:
+		var ids: Array[int] = []
+		ids_by_name[card_name] = ids
+	for card_id: int in card_ids:
+		ids_by_name[card_ID_to_card_name[card_id]].append(card_id)
+	for ids: Array in ids_by_name.values():
+		ids.sort()
+	var groups: Dictionary[String, Array] = {}
+	for card_type: String in deck_template.ordered_types:
+		var ordered_ids: Array[int] = []
+		for card_name: String in deck_template.type_to_ordered_card_names[card_type]:
+			ordered_ids.append_array(ids_by_name[card_name])
+		if not ordered_ids.is_empty():
+			groups[card_type] = ordered_ids
+	return groups

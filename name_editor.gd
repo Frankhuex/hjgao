@@ -10,6 +10,13 @@ var _mux: OwnerMux
 var _purpose: Const.Purpose
 var _next_request_id := 0
 
+# 生成入树前注入初始状态；运行时修改仍需查看占用。
+func initialize_name(initial_name: String) -> void:
+	if is_inside_tree():
+		push_error("NameEditor initialization must happen before entering the tree")
+		return
+	display_name = initial_name
+
 func configure(mux: OwnerMux, purpose: Const.Purpose) -> void:
 	_mux = mux
 	_purpose = purpose

@@ -48,6 +48,9 @@ static func validate(data: Variant) -> String:
 		var count: Variant = entry_dict.get("count", 1)
 		if not raw_name is String or not raw_description is String:
 			return "name 和 description 必须是字符串。"
+		var type_error := CardTemplate.validate_type(entry_dict.get("type", CardTemplate.UNTYPED))
+		if not type_error.is_empty():
+			return type_error
 		var card_name: String = raw_name
 		var description: String = raw_description
 		if card_name.length() > 64:
