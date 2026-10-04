@@ -4,12 +4,14 @@ extends CanvasLayer
 signal draw_confirmed(updated_card_ID_stack: Array[int], drawn_cards: Array[int])
 signal cancel_confirmed
 signal delete_confirmed
+@onready var name_row: NameEditorUI = $Margin/VBox/NameRow
 var _pile: Pile
 @onready var btn_delete: Button = $Margin/VBox/BottomBar/Btn_Delete
 @onready var delete_confirmation: ConfirmationDialog = $DeleteConfirmation
 
 func open_for(pile: Pile) -> void:
 	_pile = pile
+	name_row.open_for(pile.get_node("NameEditor") as NameEditor)
 	_pile.stack_changed.connect(_refresh_delete_button)
 	_refresh_delete_button()
 
@@ -365,3 +367,6 @@ func _drop_card() -> void:
 	#visual_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	#visual_copy.size = c_size
 	#drag_preview.show()
+
+func is_editing_text() -> bool:
+	return name_row.is_editing_text()

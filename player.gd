@@ -41,6 +41,8 @@ func _ready():
 func toggle_status():
 	if not input_enabled:
 		return
+	Util.clear_pending_move_input()
+	velocity = Vector3.ZERO
 	if player_status == PlayerStatus.CARD:
 		player_status = PlayerStatus.MOVE
 	else:
@@ -49,9 +51,9 @@ func toggle_status():
 	status_changed.emit()
 
 func set_input_enabled(enabled: bool):
+	Util.clear_pending_move_input()
+	velocity = Vector3.ZERO
 	input_enabled = enabled
-	if not input_enabled:
-		velocity = Vector3.ZERO
 
 func apply_mouse_mode():
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if player_status == PlayerStatus.MOVE else Input.MOUSE_MODE_VISIBLE)

@@ -190,3 +190,12 @@ GODOT_BIN='/Applications/Godot 4.7.2.app/Contents/MacOS/Godot'
 命名配对只适用于语义对应的直接包装，修改前逐项检查参数、返回值、身份补充、权限判断及主机/客户端分支，不为了配对改掉已有的独立语义。OwnerMux 保留 request_own(purpose)：它为自己申请占用并补充 my_id，server_set_owner(purpose, new_owner) 设置显式 owner；保留 request_release()：它先检查自己是否为 owner，server_reset_owner() 则执行服务器重置。DeckChange._ack 保留本地阶段确认语义，主机直接移除自身等待项，客户端才调用 server_acknowledge。GameSession._request_player_roster/_request_chat_history 保留仅客户端请求的私有入口；各自的 server_ RPC 负责校验并回传数据，不机械要求本地入口改名。
 
 UI 回调、服务器内部辅助方法、由占用变化触发的业务处理及 sync/receive 广播保持自身职责名称。新建纯请求包装可按 request_/server_ 配对；发现现有函数承担不同语义时，保留原名并记录原因，不增加无意义别名或空包装来满足形式配对。
+
+
+## 可编辑名称与悬浮详情
+
+牌堆/计数器的用户名称为 display_name（初值空字符串），唯一状态由 NameEditor 子组件维护，禁止改动 Node.name/RPC 路径。NameEditorUI 仅在修改按钮或回车时提交，关闭、失焦和理牌事务均不提交名称；64 字符上限、纯文本清洗、允许清空与重名。server_apply_name 检查有效会话、真实 sender、全局锁和对应 PILE_VIEW/COUNTER_VIEW owner；sync_name/name_result 使用固定服务器 authority，OwnerMux 递归切换父节点权限后必须恢复 NameEditor 为 peer 1。晚加入通过 request_sync_name/server_sync_name 取得状态，勿交给随 owner 切换的根 Synchronizer。
+
+DetailViewer 是 Card/Pile/Counter 的共用 3D 悬浮绑定，内容由 Callable 提供；UICard 通过兼容入口使用同一个 CardDescriptionTooltip 渲染器。名称浮层只显示名称，空名隐藏独立 NameLabel 和浮层，牌数/计数值保留；卡牌正反面隐藏逻辑保留。物体查看器加入 object_viewer 组，浮层据此隐藏被模态遮挡的 3D 提示。牌堆需合并 body、底座和热点悬浮，销毁来源时安全回收。相关方案 docs/pile-counter-naming-plan.md，专项测试 python3 tests/run_name_editor_tests.py。
+
+文本输入及模态界面切换必须通过 Util.clear_pending_move_input 清空缓冲事件并释放四个 move_* 动作，防止中文输入法吞掉 key-up 后卡键。焦点进入/退出、查看器销毁、玩家输入启停及 CARD/MOVE 切换都应覆盖，不能只把 velocity 置零；清理仅在切换时执行，保持后续真实移动输入有效。

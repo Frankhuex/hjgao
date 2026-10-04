@@ -727,6 +727,9 @@ func _close_local_deck_viewers():
 func _counter_viewer_editing() -> bool:
 	for node in get_tree().root.get_children():
 		var viewer := node as CounterViewerUI
+		var deck_viewer := node as DeckViewerUI
+		if deck_viewer != null and deck_viewer.is_editing_text():
+			return true
 		if viewer != null and viewer.is_editing_text():
 			return true
 	return false

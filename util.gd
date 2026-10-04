@@ -124,3 +124,9 @@ static func safe_call_float(c: Callable) -> float:
 		res_float = float(res_int)
 	print("safe_call_float: ", res_float)
 	return res_float
+
+# 输入法可能吞掉移动键的释放事件；文本/模态界面切换时主动清理动作状态。
+static func clear_pending_move_input() -> void:
+	Input.flush_buffered_events()
+	for action: StringName in [&"move_left", &"move_right", &"move_up", &"move_down"]:
+		Input.action_release(action)

@@ -15,10 +15,12 @@ signal delete_confirmed
 @onready var btn_delete: Button       = $Margin/Center/Panel/InnerMargin/VBox/BottomBar/Btn_Delete
 @onready var delete_confirmation: ConfirmationDialog = $DeleteConfirmation
 
+@onready var name_row: NameEditorUI = $Margin/Center/Panel/InnerMargin/VBox/NameRow
 var _counter: Counter
 
 func open_for(counter: Counter) -> void:
 	_counter = counter
+	name_row.open_for(counter.get_node("NameEditor") as NameEditor)
 	_counter.state_changed.connect(_refresh_fields)
 	btn_delete.visible = Util.my_id(self) == 1 or _counter.owner_mux.i_am_owner() # 房主或占用者可删
 	_refresh_fields()
@@ -60,7 +62,7 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func is_editing_text() -> bool:
-	return value_edit.has_focus() or step_edit.has_focus() or decimals_edit.has_focus()
+	return name_row.is_editing_text() or value_edit.has_focus() or step_edit.has_focus() or decimals_edit.has_focus()
 
 func _exit_tree() -> void:
 	_restore_player_input() # 编辑中查看器被外部关闭（如删除/断线）时恢复玩家输入
@@ -135,6 +137,7 @@ func _on_delete_confirmed() -> void:
 ###################################
 # 输入框聚焦期间禁用本地玩家键鼠（仿聊天输入框处理）
 func _on_edit_focus_entered() -> void:
+	Util.clear_pending_move_input()
 	var game: GameSession = get_node_or_null("/root/Game")
 	if game != null and is_instance_valid(game.local_player):
 		game.local_player.set_input_enabled(false)
@@ -143,6 +146,7 @@ func _on_edit_focus_exited() -> void:
 	_restore_player_input()
 
 func _restore_player_input() -> void:
+	Util.clear_pending_move_input()
 	var game: GameSession = get_node_or_null("/root/Game")
 	if game == null or not game.session_active: return
 	if game.pause_overlay.visible or game.clear_table_in_progress: return # 暂停/清场期间由菜单接管输入

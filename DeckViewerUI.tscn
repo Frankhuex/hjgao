@@ -2,7 +2,9 @@
 
 [ext_resource type="Script" uid="uid://c0x7w666bfrk0" path="res://deck_viewer_ui.gd" id="1_wfta2"]
 
-[node name="DeckViewerUI" type="CanvasLayer" unique_id=903300809]
+[ext_resource type="PackedScene" path="res://NameEditorUI.tscn" id="90_name_ui"]
+
+[node name="DeckViewerUI" type="CanvasLayer" unique_id=903300809 groups=["object_viewer"]]
 script = ExtResource("1_wfta2")
 
 [node name="Background" type="ColorRect" parent="." unique_id=1372290949]
@@ -37,6 +39,14 @@ size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 25
 text = "牌堆"
 horizontal_alignment = 1
+
+[node name="NameRow" parent="Margin/VBox" instance=ExtResource("90_name_ui")]
+layout_mode = 2
+
+[node name="PauseButtonSpace" type="Control" parent="Margin/VBox/NameRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(48, 0)
+mouse_filter = 2
 
 [node name="SubTitle" type="HBoxContainer" parent="Margin/VBox" unique_id=1003953899]
 layout_mode = 2

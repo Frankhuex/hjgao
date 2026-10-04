@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://dyr770lpagwk0" path="res://Dragger.tscn" id="3_21rx5"]
 [ext_resource type="PackedScene" uid="uid://bp6swckcvbg1s" path="res://OwnerMux.tscn" id="4_3ujke"]
 
+[ext_resource type="Script" path="res://detail_viewer.gd" id="91_detail"]
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hael8"]
 render_priority = 0
 shader = ExtResource("1_dd2wi")
@@ -27,6 +29,7 @@ properties/1/replication_mode = 1
 properties/2/path = NodePath(".:rotation")
 properties/2/spawn = true
 properties/2/replication_mode = 1
+
 
 [node name="Card" type="StaticBody3D" unique_id=778066825]
 script = ExtResource("1_hael8")
@@ -56,3 +59,6 @@ replication_config = SubResource("SceneReplicationConfig_hael8")
 [node name="Dragger" parent="." unique_id=1082115958 instance=ExtResource("3_21rx5")]
 
 [node name="OwnerMux" parent="." unique_id=1247069880 instance=ExtResource("4_3ujke")]
+
+[node name="DetailViewer" type="Node" parent="."]
+script = ExtResource("91_detail")

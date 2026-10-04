@@ -8,7 +8,6 @@ signal input_focus_exited
 const BANNER_SCENE := preload("res://ChatBanner.tscn")
 const NOTIFICATION_DURATION_MSEC := 10_000
 const MAX_VISIBLE_NOTIFICATIONS := 2
-const MOVE_ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down"]
 
 @onready var panel: PanelContainer = $ChatPanel
 @onready var message_history: RichTextLabel = $ChatPanel/Margin/VBox/MessageHistory
@@ -79,9 +78,7 @@ func release_input_focus() -> void:
 		_clear_pending_move_input()
 
 func _clear_pending_move_input() -> void:
-	Input.flush_buffered_events()
-	for action in MOVE_ACTIONS:
-		Input.action_release(action)
+	Util.clear_pending_move_input()
 
 func clear_input() -> void:
 	message_input.clear()

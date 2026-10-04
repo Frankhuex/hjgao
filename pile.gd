@@ -21,6 +21,21 @@ const BASE_THICKNESS    = 0.05
 var card_ID_stack: Array[int] = []
 signal stack_changed
 
+@onready var name_editor: NameEditor = $NameEditor
+@onready var detail_viewer: DetailViewer = $DetailViewer
+@onready var _name_label: Label3D = $NameLabel
+var display_name: String:
+	get:
+		return name_editor.display_name if is_instance_valid(name_editor) else ""
+
+func _refresh_name() -> void:
+	_name_label.text = display_name
+	_name_label.visible = not display_name.is_empty()
+	detail_viewer.refresh()
+
+func _detail_text() -> String:
+	return "" if dragger.is_being_dragged() else display_name
+
 func request_delete_pile() -> void:
 	if Util.is_server(self):
 		server_delete_pile()
@@ -46,6 +61,10 @@ func preready(_name:String, _card_ID_stack: Array[int]):
 	card_ID_stack = _card_ID_stack
 
 func _ready():
+	name_editor.configure(owner_mux, Const.Purpose.PILE_VIEW)
+	name_editor.name_changed.connect(_refresh_name)
+	detail_viewer.configure(self, _detail_text, [self, $BaseArea, $Hotspot_Bottom, $Hotspot_Random])
+	_refresh_name()
 	dragger.config(owner_mux, UP_DOWN_DURATION, DRAGGING_Y)
 	accessor.config()
 	spawner.config()
@@ -130,6 +149,7 @@ func _update_visuals():
 	var h := card_ID_stack.size() * CARD_THICKNESS
 	_label.text = str(len(card_ID_stack))
 	_label.position.y = h + SMALL_LENGTH + BASE_THICKNESS
+	_name_label.position.y = h + BASE_THICKNESS + 0.015
 	_mesh.size.y = max(h, SMALL_LENGTH)
 	_mesh.position.y = h / 2.0 + BASE_THICKNESS
 	_collision.shape = _collision.shape.duplicate() # 独立化资源
