@@ -66,6 +66,7 @@ func _local_tests() -> void:
 	var viewer := _viewer()
 	_check(viewer != null, "pile viewer")
 	await _test_name_input_movement(viewer.name_row)
+	await _test_pile_selection(pile, viewer)
 	viewer.name_row.edit.text = "  弃牌堆 😀  "
 	viewer.name_row.button.pressed.emit()
 	_check(pile.display_name == "弃牌堆 😀" and pile._name_label.visible, "button submits immediately")
@@ -230,3 +231,76 @@ func _test_name_input_movement(row: NameEditorUI) -> void:
 	_check(game.local_player.velocity.is_zero_approx(), "name blur resets velocity")
 	_check_stationary_after_mode_switch()
 	await process_frame
+
+func _ids(list: Node) -> Array[int]:
+	var ids: Array[int] = []
+	for child: Node in list.get_children():
+		var card: UICard = child as UICard
+		ids.append(card.card_ID())
+	return ids
+
+func _test_pile_selection(pile: Pile, viewer: DeckViewerUI) -> void:
+	var original: Array[int] = _ids(viewer.list_top)
+	var stack_before: Array[int] = pile.card_ID_stack.duplicate()
+	for button: Button in [viewer.btn_all_front, viewer.btn_all_back, viewer.btn_all_flip,
+		viewer.btn_random_face, viewer.btn_all_upright, viewer.btn_all_inverted,
+		viewer.btn_all_invert, viewer.btn_random_upright, viewer.btn_sort_ascend,
+		viewer.btn_sort_descend, viewer.btn_shuffle, viewer.btn_reverse,
+		viewer.btn_select_front, viewer.btn_select_bottom, viewer.btn_select_random,
+		viewer.btn_cancel, viewer.btn_draw, viewer.btn_delete]:
+		_check(is_instance_valid(button) and button.pressed.has_connections(), "button path and scene signal: " + button.name)
+	viewer.btn_reverse.pressed.emit()
+	var reversed: Array[int] = original.duplicate()
+	reversed.reverse()
+	_check(_ids(viewer.list_top) == reversed, "reverse local order")
+	viewer.btn_reverse.pressed.emit()
+	viewer.input_number.text = "2"
+	viewer.btn_select_front.pressed.emit()
+	_check(_ids(viewer.list_top) == original.slice(2), "top selection leaves suffix")
+	_check(_ids(viewer.list_bottom) == original.slice(0, 2), "top selection preserves order")
+	viewer.btn_select_bottom.pressed.emit()
+	var prefix: Array[int] = original.slice(0, 2)
+	prefix.append_array(original.slice(original.size() - 2))
+	_check(_ids(viewer.list_bottom) == prefix, "bottom selection appended in original order")
+	var remaining: Array[int] = _ids(viewer.list_top)
+	viewer.btn_select_random.pressed.emit()
+	var selected: Array[int] = _ids(viewer.list_bottom).slice(prefix.size())
+	_check(selected.size() == 2 and selected[0] != selected[1], "random sampling without replacement")
+	_check(remaining.find(selected[0]) < remaining.find(selected[1]), "random selected subsequence order")
+	var expected: Array[int] = remaining.duplicate()
+	for id: int in selected:
+		expected.erase(id)
+	_check(_ids(viewer.list_top) == expected, "random selection preserves remaining order")
+	_check(_ids(viewer.list_bottom).slice(0, prefix.size()) == prefix, "existing pending order preserved")
+	for invalid: String in ["", "0", "-1", "1.5", "abc", "中文"]:
+		viewer.input_number.text = invalid
+		viewer.btn_select_front.pressed.emit()
+		_check(_ids(viewer.list_top) == expected, "invalid count ignored: " + invalid)
+	viewer.dragging_card = viewer.list_top.get_child(0) as UICard
+	viewer.input_number.text = "1"
+	viewer.btn_select_front.pressed.emit()
+	viewer.btn_reverse.pressed.emit()
+	_check(_ids(viewer.list_top) == expected, "batch operations do not alter active drag")
+	viewer.dragging_card = null
+	viewer.input_number.text = "9999"
+	var pending: Array[int] = _ids(viewer.list_bottom)
+	pending.append_array(expected)
+	viewer.btn_select_front.pressed.emit()
+	_check(viewer.list_top.get_child_count() == 0 and _ids(viewer.list_bottom) == pending, "oversized count takes all remaining")
+	_check(viewer.btn_draw.visible, "selection shows draw button")
+	viewer.btn_select_random.pressed.emit()
+	viewer.btn_reverse.pressed.emit()
+	_check(_ids(viewer.list_bottom) == pending, "empty source safe")
+	_check(pile.card_ID_stack == stack_before, "selection and reversal do not sync server stack")
+	viewer.input_number.grab_focus()
+	_press_movement()
+	_check(game._counter_viewer_editing(), "quantity field guards text input")
+	viewer.input_number.release_focus()
+	_check_movement_cleared("quantity field blur")
+	_check_stationary_after_mode_switch()
+	for card: Node in viewer.list_bottom.get_children():
+		card.free()
+	viewer.load_deck(original)
+	viewer.input_number.text = "1"
+	await process_frame
+	_check(not viewer.btn_draw.visible, "pending empty hides draw button")

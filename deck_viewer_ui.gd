@@ -41,17 +41,22 @@ signal orientation_operation_requested(operation: Const.PileOrientationOperation
 @onready var separator: HSeparator          = $Margin/VBox/HSeparator
 @onready var scroll_bottom: ScrollContainer = $Margin/VBox/Scroll_Bottom
 @onready var list_bottom: HBoxContainer     = $Margin/VBox/Scroll_Bottom/List_Bottom
-@onready var btn_sort_ascend: Button  = $Margin/VBox/Top_Btns/Btn_SortAscend
-@onready var btn_sort_descend: Button = $Margin/VBox/Top_Btns/Btn_SortDescend
-@onready var btn_shuffle: Button      = $Margin/VBox/Top_Btns/Btn_Shuffle
-@onready var btn_all_front: Button    = $Margin/VBox/Top_Btns/Btn_AllFront
-@onready var btn_all_back: Button     = $Margin/VBox/Top_Btns/Btn_AllBack
-@onready var btn_all_flip: Button     = $Margin/VBox/Top_Btns/Btn_AllFlip
-@onready var btn_all_upright: Button  = $Margin/VBox/Top_Btns/Btn_AllUpright
-@onready var btn_all_inverted: Button = $Margin/VBox/Top_Btns/Btn_AllInverted
-@onready var btn_all_invert: Button   = $Margin/VBox/Top_Btns/Btn_AllInvert
-@onready var btn_random_face: Button  = $Margin/VBox/Top_Btns/Btn_RandomFace
-@onready var btn_random_upright: Button = $Margin/VBox/Top_Btns/Btn_RandomUpright
+@onready var btn_sort_ascend: Button  = $Margin/VBox/Top_Btns2/SortSection/Btn_SortAscend
+@onready var btn_sort_descend: Button = $Margin/VBox/Top_Btns2/SortSection/Btn_SortDescend
+@onready var btn_shuffle: Button      = $Margin/VBox/Top_Btns2/SortSection/Btn_Shuffle
+@onready var btn_all_front: Button    = $Margin/VBox/Top_Btns/FlipSection/Btn_AllFront
+@onready var btn_all_back: Button     = $Margin/VBox/Top_Btns/FlipSection/Btn_AllBack
+@onready var btn_all_flip: Button     = $Margin/VBox/Top_Btns/FlipSection/Btn_AllFlip
+@onready var btn_all_upright: Button  = $Margin/VBox/Top_Btns/DirectionSection/Btn_AllUpright
+@onready var btn_all_inverted: Button = $Margin/VBox/Top_Btns/DirectionSection/Btn_AllInverted
+@onready var btn_all_invert: Button   = $Margin/VBox/Top_Btns/DirectionSection/Btn_AllInvert
+@onready var btn_random_face: Button  = $Margin/VBox/Top_Btns/FlipSection/Btn_RandomFace
+@onready var btn_random_upright: Button = $Margin/VBox/Top_Btns/DirectionSection/Btn_RandomUpright
+@onready var btn_reverse: Button = $Margin/VBox/Top_Btns2/SortSection/Btn_Reverse
+@onready var btn_select_front: Button = $Margin/VBox/Top_Btns2/SelectSection/Btn_Front
+@onready var btn_select_bottom: Button = $Margin/VBox/Top_Btns2/SelectSection/Btn_Bottom
+@onready var btn_select_random: Button = $Margin/VBox/Top_Btns2/SelectSection/Btn_Random
+@onready var input_number: LineEdit = $Margin/VBox/Top_Btns2/SelectSection/Input_Number
 @onready var btn_cancel: Button       = $Margin/VBox/BottomBar/Btn_Cancel
 @onready var btn_draw: Button         = $Margin/VBox/BottomBar/Btn_Draw
 
@@ -75,7 +80,7 @@ func _ready() -> void:
 	_refresh_draw_button()
 	# R6 排除：六大理牌按钮有自己的成功音，按下不响确认音（悬停音保留）；
 	# node_added 连接确认音回调早于本 _ready 执行，因此回调内点击时检查组而非连接时检查
-	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle,
+	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle, btn_reverse,
 			btn_all_front, btn_all_back, btn_all_flip,
 			btn_random_face, btn_random_upright]:
 		btn.add_to_group(SfxManager.GROUP_NO_CONFIRM)
@@ -143,6 +148,64 @@ func _on_shuffle_pressed():
 	for i in range(children.size()):
 		list_top.move_child(children[i], i)
 	SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)
+
+func _on_reverse_pressed() -> void:
+	if dragging_card != null or list_top.get_child_count() < 2:
+		return
+	var children: Array[Node] = list_top.get_children()
+	children.reverse()
+	for index in range(children.size()):
+		list_top.move_child(children[index], index)
+	SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)
+
+func _on_select_front_pressed() -> void:
+	_select_cards(Const.CardSource.TOP)
+
+func _on_select_bottom_pressed() -> void:
+	_select_cards(Const.CardSource.BOTTOM)
+
+func _on_select_random_pressed() -> void:
+	_select_cards(Const.CardSource.RANDOM)
+
+func _select_cards(source: Const.CardSource) -> void:
+	if dragging_card != null:
+		return
+	var text: String = input_number.text.strip_edges()
+	if not text.is_valid_int() or text.to_int() <= 0:
+		return
+	var children: Array[Node] = list_top.get_children()
+	var count: int = mini(text.to_int(), children.size())
+	if count == 0:
+		return
+	var indices: Array[int] = []
+	for index in range(children.size()):
+		indices.append(index)
+	if source == Const.CardSource.BOTTOM:
+		indices = indices.slice(children.size() - count)
+	elif source == Const.CardSource.RANDOM:
+		indices.shuffle()
+		indices.resize(count)
+		indices.sort() # 随机选子序列，仍按原牌列顺序追加。
+	else:
+		indices.resize(count)
+	for index: int in indices:
+		children[index].reparent(list_bottom, false)
+	_refresh_draw_button()
+
+func _on_number_focus_entered() -> void:
+	Util.clear_pending_move_input()
+	var game: GameSession = get_node_or_null("/root/Game") as GameSession
+	if game != null and is_instance_valid(game.local_player):
+		game.local_player.set_input_enabled(false)
+
+func _on_number_focus_exited() -> void:
+	Util.clear_pending_move_input()
+	var game: GameSession = get_node_or_null("/root/Game") as GameSession
+	if game != null and game.session_active and not game.pause_overlay.visible and not Util.board_locked(self) and is_instance_valid(game.local_player):
+		game.local_player.set_input_enabled(true)
+
+func _exit_tree() -> void:
+	_on_number_focus_exited()
 
 func _on_all_front_pressed():
 	_arm_shuffle_sound()
@@ -240,6 +303,14 @@ func _on_confirm_pressed():
 	draw_confirmed.emit(deck_card_IDs, drawn_card_IDs)
 
 func _input(event: InputEvent) -> void:
+	if input_number.has_focus() and event is InputEventKey:
+		var key: InputEventKey = event
+		if key.pressed and key.keycode == KEY_ESCAPE:
+			var game: GameSession = get_node_or_null("/root/Game") as GameSession
+			if game != null:
+				game._open_pause_menu()
+			get_viewport().set_input_as_handled()
+		return
 	if Util.is_left_mouse_up(event):
 		if dragging_card:
 			_drop_card()
@@ -369,4 +440,4 @@ func _drop_card() -> void:
 	#drag_preview.show()
 
 func is_editing_text() -> bool:
-	return name_row.is_editing_text()
+	return name_row.is_editing_text() or input_number.has_focus()

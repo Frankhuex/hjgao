@@ -199,3 +199,5 @@ UI 回调、服务器内部辅助方法、由占用变化触发的业务处理�
 DetailViewer 是 Card/Pile/Counter 的共用 3D 悬浮绑定，内容由 Callable 提供；UICard 通过兼容入口使用同一个 CardDescriptionTooltip 渲染器。名称浮层只显示名称，空名隐藏独立 NameLabel 和浮层，牌数/计数值保留；卡牌正反面隐藏逻辑保留。物体查看器加入 object_viewer 组，浮层据此隐藏被模态遮挡的 3D 提示。牌堆需合并 body、底座和热点悬浮，销毁来源时安全回收。相关方案 docs/pile-counter-naming-plan.md，专项测试 python3 tests/run_name_editor_tests.py。
 
 文本输入及模态界面切换必须通过 Util.clear_pending_move_input 清空缓冲事件并释放四个 move_* 动作，防止中文输入法吞掉 key-up 后卡键。焦点进入/退出、查看器销毁、玩家输入启停及 CARD/MOVE 切换都应覆盖，不能只把 velocity 置零；清理仅在切换时执行，保持后续真实移动输入有效。
+
+DeckViewerUI 操作分组路径为 Top_Btns/FlipSection、Top_Btns/DirectionSection、Top_Btns2/SortSection、Top_Btns2/SelectSection。新增排序/抽取按钮的 pressed 固化在 tscn；逆转与顶部/底部/随机 n 张抽取只操作本地 UICard 列表，所选/剩余子序列顺序保持，追加到待取区末尾，不提前请求服务器。Input_Number 的焦点同样须清理移动动作，确认取出才提交既有查看器事务。
