@@ -52,6 +52,9 @@ func server_set_owner(purpose: Const.Purpose, new_owner: int):
 func server_reset_owner():
 	if Util.not_server(self): return
 	if not is_owned():          return
+	var sender := Util.sender_id(self)
+	if sender != 0 and sender != 1 and sender != _owner:
+		return
 	_set_owner.rpc(0, Const.Purpose.NIL)
 	
 @rpc("any_peer", "call_local", "reliable")

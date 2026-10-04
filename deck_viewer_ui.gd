@@ -2,6 +2,14 @@ class_name DeckViewerUI
 extends CanvasLayer
 
 signal draw_confirmed(updated_card_ID_stack: Array[int], drawn_cards: Array[int])
+signal draw_to_new_pile_confirmed(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int)
+static var _next_submission_id: int = 0
+var _submission_id: int = 0
+var _submission_pending := false
+@onready var btn_draw_to_pile: Button = $Margin/VBox/BottomBar/Btn_DrawToPile
+@onready var submission_status: Label = $Margin/VBox/SubmissionStatus
+@onready var submission_blocker: Control = $SubmissionBlocker
+
 signal cancel_confirmed
 signal delete_confirmed
 @onready var name_row: NameEditorUI = $Margin/VBox/NameRow
@@ -101,6 +109,8 @@ func _refresh_draw_button() -> void:
 	if is_queued_for_deletion() or not is_instance_valid(btn_draw) or not is_instance_valid(list_bottom):
 		return
 	btn_draw.visible = list_bottom.get_child_count() > 0
+	if is_instance_valid(btn_draw_to_pile):
+		btn_draw_to_pile.visible = btn_draw.visible
 
 func load_deck(deck_list: Array[int]) -> void:
 	# 1. 先正常加载已有的牌堆
@@ -246,6 +256,8 @@ func _on_random_upright_pressed():
 	_emit_orientation_operation(Const.PileOrientationOperation.RANDOM_UPRIGHT)
 
 func _on_card_orientation_requested(card_id: int) -> void:
+	if _submission_pending:
+		return
 	var card_IDs: Array[int] = [card_id]
 	orientation_operation_requested.emit(Const.PileOrientationOperation.SINGLE_TOGGLE, card_IDs)
 
@@ -271,6 +283,8 @@ func _check_flip_sound():
 		SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)   # R2：翻面类操作的落地广播到达，仅本端响一次
 
 func _on_card_drag_started(card: UICard) -> void:
+	if _submission_pending:
+		return
 	dragging_card = card
 	drag_offset = drag_preview.get_global_mouse_position() - card.global_position
 	
@@ -288,10 +302,14 @@ func _on_card_drag_started(card: UICard) -> void:
 	SfxManager.I.play(SfxManager.Snd.PICKUP_CARD)   # 2D 理牌拖起，仅本端
 
 func _on_cancel_pressed():
+	if _submission_pending:
+		return
 	cancel_confirmed.emit()
 	queue_free()
 
 func _on_confirm_pressed():
+	if _submission_pending:
+		return
 	var drawn_card_IDs: Array[int] = []
 	for child in list_bottom.get_children() as Array[UICard]:
 		drawn_card_IDs.append(child.card_ID())
@@ -303,6 +321,8 @@ func _on_confirm_pressed():
 	draw_confirmed.emit(deck_card_IDs, drawn_card_IDs)
 
 func _input(event: InputEvent) -> void:
+	if _submission_pending:
+		return
 	if input_number.has_focus() and event is InputEventKey:
 		var key: InputEventKey = event
 		if key.pressed and key.keycode == KEY_ESCAPE:
@@ -441,3 +461,34 @@ func _drop_card() -> void:
 
 func is_editing_text() -> bool:
 	return name_row.is_editing_text() or input_number.has_focus()
+
+func _on_draw_to_pile_pressed() -> void:
+	if _submission_pending or dragging_card != null or not is_instance_valid(_pile):
+		return
+	if Util.board_locked(self) or not _pile.accessor.i_am_viewing():
+		return
+	var remaining_ids: Array[int] = []
+	var extracted_ids: Array[int] = []
+	for card: UICard in list_top.get_children():
+		remaining_ids.append(card.card_ID())
+	for card: UICard in list_bottom.get_children():
+		extracted_ids.append(card.card_ID())
+	if extracted_ids.is_empty():
+		return
+	_next_submission_id += 1
+	_submission_id = _next_submission_id
+	_submission_pending = true
+	get_viewport().gui_release_focus()
+	submission_blocker.show()
+	submission_status.text = "正在取出到新牌堆…"
+	submission_status.show()
+	Util.clear_pending_move_input()
+	draw_to_new_pile_confirmed.emit(remaining_ids, extracted_ids, _submission_id)
+
+func extract_to_pile_failed(submission_id: int, reason: String) -> void:
+	if is_queued_for_deletion() or not _submission_pending or submission_id != _submission_id:
+		return
+	_submission_pending = false
+	submission_blocker.hide()
+	submission_status.text = reason
+	submission_status.show()

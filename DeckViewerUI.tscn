@@ -238,6 +238,28 @@ size_flags_vertical = 4
 theme_override_font_sizes/font_size = 25
 text = "取出"
 
+[node name="Btn_DrawToPile" type="Button" parent="Margin/VBox/BottomBar"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 25
+text = "取出到新牌堆"
+
+[node name="SubmissionStatus" type="Label" parent="Margin/VBox"]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="SubmissionBlocker" type="Control" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
 [node name="Btn_Delete" type="Button" parent="Margin/VBox/BottomBar" unique_id=853058011]
 visible = false
 layout_mode = 2
@@ -282,3 +304,5 @@ offset_bottom = 40.0
 [connection signal="pressed" from="Margin/VBox/Top_Btns2/SelectSection/Btn_Random" to="." method="_on_select_random_pressed"]
 [connection signal="focus_entered" from="Margin/VBox/Top_Btns2/SelectSection/Input_Number" to="." method="_on_number_focus_entered"]
 [connection signal="focus_exited" from="Margin/VBox/Top_Btns2/SelectSection/Input_Number" to="." method="_on_number_focus_exited"]
+
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_DrawToPile" to="." method="_on_draw_to_pile_pressed"]

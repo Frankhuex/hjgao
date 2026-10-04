@@ -204,13 +204,26 @@ func server_add_pile() -> void:
 	var sender := Util.sender_id(self)
 	if sender != 0 and sender != 1 and not player_names.has(sender):
 		return
+	var pile_name := _allocate_extra_pile_name()
+	var empty_ids: Array[int] = []
+	add_pile(empty_ids, pile_name, _find_free_counter_position())
+
+func _allocate_extra_pile_name() -> String:
 	_next_pile_number += 1
 	var pile_name := "extra_pile_%d" % _next_pile_number
 	while piles.has_node(pile_name):
 		_next_pile_number += 1
 		pile_name = "extra_pile_%d" % _next_pile_number
-	var empty_ids: Array[int] = []
-	add_pile(empty_ids, pile_name, _find_free_counter_position())
+	return pile_name
+
+func prepare_extra_pile(card_ids: Array[int], world_position: Vector3, world_rotation: Vector3) -> Pile:
+	var pile := PILE.instantiate() as Pile
+	if pile == null:
+		return null
+	pile.preready(_allocate_extra_pile_name(), card_ids.duplicate())
+	pile.position = piles.to_local(world_position)
+	pile.rotation = world_rotation - piles.global_rotation
+	return pile
 
 ###################################################
 # Counter

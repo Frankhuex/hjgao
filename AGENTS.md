@@ -201,3 +201,5 @@ DetailViewer 是 Card/Pile/Counter 的共用 3D 悬浮绑定，内容由 Callabl
 文本输入及模态界面切换必须通过 Util.clear_pending_move_input 清空缓冲事件并释放四个 move_* 动作，防止中文输入法吞掉 key-up 后卡键。焦点进入/退出、查看器销毁、玩家输入启停及 CARD/MOVE 切换都应覆盖，不能只把 velocity 置零；清理仅在切换时执行，保持后续真实移动输入有效。
 
 DeckViewerUI 操作分组路径为 Top_Btns/FlipSection、Top_Btns/DirectionSection、Top_Btns2/SortSection、Top_Btns2/SelectSection。新增排序/抽取按钮的 pressed 固化在 tscn；逆转与顶部/底部/随机 n 张抽取只操作本地 UICard 列表，所选/剩余子序列顺序保持，追加到待取区末尾，不提前请求服务器。Input_Number 的焦点同样须清理移动动作，确认取出才提交既有查看器事务。
+
+取出到新牌堆通过 PileAccessor.request_extract_to_new_pile/server_extract_to_new_pile 提交两列 ID，服务端验证真实查看 owner 和完整无重复分区，保持 PILE_VIEW 至同步更新源栈、发布新堆和广播结束，最后释放；提交段无 await，不设置清场全局锁。新堆复用第一张散牌取出的 X/Z 落点、落桌 Y=0，继承源朝向，名称为空，源空堆保留。Pile 的 rotation 仅复制 spawn 初值，持续旋转沿 Dragger RPC。专项测试：python3 tests/run_pile_extract_tests.py。

@@ -21,7 +21,14 @@ func request_receive_card(card_ID: int, source: Const.CardSource) -> bool:
 func server_receive_card(card_ID: int, source: Const.CardSource):
 	if Util.not_server(self): return
 	if Util.board_locked(self): return
-	_parent.owner_mux.server_set_owner(Const.INPUT_SOURCE_TO_PURPOSE[source], Util.sender_id(self))
+	if _parent.owner_mux.is_owned() or not Const.INPUT_SOURCE_TO_PURPOSE.has(source):
+		return
+	var sender := Util.sender_id(self)
+	if sender == 0:
+		sender = 1
+	_parent.owner_mux.server_set_owner(Const.INPUT_SOURCE_TO_PURPOSE[source], sender)
+	if _parent.owner_mux.get_owner_id() != sender:
+		return
 	match source:
 		Const.CardSource.BOTTOM:
 			_parent.card_ID_stack.push_back(card_ID)
