@@ -25,6 +25,9 @@ func export_deck_instance() -> String:
 func get_all_IDs() -> Array[int]:
 	return deck_instance.card_ID_to_card_name.keys()
 
+func get_ordered_card_IDs_by_type() -> Dictionary[String, Array]:
+	return deck_instance.get_ordered_card_IDs_by_type()
+
 func get_card_name(id: int) -> String:
 	return deck_instance.card_ID_to_card_name[id]
 
@@ -40,6 +43,9 @@ func get_card_tooltip_text(id: int) -> String:
 	if description.is_empty():
 		return card_name
 	return card_name + ": " + description
+
+func get_card_type(id: int) -> String:
+	return get_card_template(id).type.strip_edges()
 
 func is_front(id: int) -> bool:
 	return deck_instance.card_ID_to_is_front[id]

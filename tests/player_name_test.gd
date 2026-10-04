@@ -42,6 +42,8 @@ func _run_host() -> void:
 	game.set("suppress_auto_host", false)
 	game.start_server(TEST_PORT, false)
 	_check(game.session_active, "host starts")
+	await process_frame
+	_check_spawn_view(game.local_player)
 	_check(str(game.player_names.get(1, "")) == "房主", "host name is sanitized")
 	print("HOST_READY")
 
@@ -74,6 +76,7 @@ func _run_client() -> void:
 		await process_frame
 	var client_id := Util.my_id(game)
 	_check(game.local_player.display_name == "玩家二", "client player name")
+	_check_spawn_view(game.local_player)
 	_check(client_id > 1, "client peer id")
 	_check(game.player_roster_cache.size() == 2, "client receives full roster")
 
@@ -84,6 +87,19 @@ func _run_client() -> void:
 	_check(_find_item_index("房主  [ID 1]  [房主]") >= 0, "host row")
 	print("CLIENT_OK")
 	await create_timer(0.5).timeout
+
+func _check_spawn_view(player: Player) -> void:
+	var initial: Transform3D = game.main_camera_initial_transform
+	var side: int = roundi(player.rotation.y / (PI / 2.0))
+	_check(is_equal_approx(player.rotation.y, side * PI / 2.0), "spawn uses a table side")
+	_check(player.position.is_equal_approx(initial.origin.rotated(Vector3.UP, side * PI / 2.0)), "spawn preserves menu camera distance and height")
+	var view_direction: Vector3 = -(player.basis * player.pivot.basis).z
+	_check(view_direction.is_equal_approx(-player.position.normalized()), "spawn looks directly at table center")
+	var pitch: float = -atan2(initial.origin.y, Vector2(initial.origin.x, initial.origin.z).length())
+	_check(player.pivot.rotation.is_equal_approx(Vector3(pitch, 0.0, 0.0)), "spawn uses fixed downward pitch without roll")
+	_check(game.main_camera.position.is_equal_approx(Vector3.ZERO), "camera centered on pivot")
+	_check(game.main_camera.rotation.is_equal_approx(Vector3.ZERO), "camera rotation is not applied twice")
+	_check(player.collision_layer == 2 and player.collision_mask == 1, "players do not collide with player layer")
 
 func _item_texts() -> PackedStringArray:
 	var texts: PackedStringArray = []

@@ -26,7 +26,26 @@ var step: float   = 1.0   # 步长 > 0
 var decimals: int = 0     # 小数位数 [0, MAX_DECIMALS]
 var _hovered_button_shape := -1   # R1c：按 shape 跟踪 +/- 按钮悬停边沿
 
+@onready var name_editor: NameEditor = $NameEditor
+@onready var detail_viewer: DetailViewer = $DetailViewer
+@onready var _name_label: Label3D = $NameLabel
+var display_name: String:
+	get:
+		return name_editor.display_name if is_instance_valid(name_editor) else ""
+
+func _refresh_name() -> void:
+	_name_label.text = display_name
+	_name_label.visible = not display_name.is_empty()
+	detail_viewer.refresh()
+
+func _detail_text() -> String:
+	return "" if dragger.is_being_dragged() else display_name
+
 func _ready():
+	name_editor.configure(owner_mux, Const.Purpose.COUNTER_VIEW)
+	name_editor.name_changed.connect(_refresh_name)
+	detail_viewer.configure(self, _detail_text, [self])
+	_refresh_name()
 	dragger.config(owner_mux, UP_DOWN_DURATION, DRAGGING_Y)
 	accessor.config()
 	_update_visuals()
@@ -170,7 +189,7 @@ func request_apply_decimals(new_decimals: int):
 	else:
 		server_apply_decimals.rpc_id(1, new_decimals)
 
-func request_delete():
+func request_delete_counter():
 	if Util.is_server(self):
 		server_delete_counter()
 	else:

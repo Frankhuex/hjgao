@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://dc46yokkd77ib"]
 
-[ext_resource type="Script" path="res://card_description_tooltip.gd" id="1_tooltip"]
+[ext_resource type="Script" uid="uid://bkfkkltmddvqq" path="res://card_description_tooltip.gd" id="1_tooltip"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tooltip"]
 bg_color = Color(0.035, 0.02, 0.075, 0.9)
@@ -14,16 +14,16 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
-[node name="CardDescriptionTooltip" type="CanvasLayer"]
+[node name="CardDescriptionTooltip" type="CanvasLayer" unique_id=250210755]
 layer = 90
 script = ExtResource("1_tooltip")
 
-[node name="Panel" type="PanelContainer" parent="."]
+[node name="Panel" type="PanelContainer" parent="." unique_id=1323469829]
 visible = false
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_tooltip")
 
-[node name="Margin" type="MarginContainer" parent="Panel"]
+[node name="Margin" type="MarginContainer" parent="Panel" unique_id=502370151]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_left = 12
@@ -31,12 +31,22 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
-[node name="Description" type="Label" parent="Panel/Margin"]
+[node name="Content" type="VBoxContainer" parent="Panel/Margin" unique_id=1647382911]
 layout_mode = 2
-mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Top" type="Label" parent="Panel/Margin/Content" unique_id=1748392012]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.65, 0.7, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 14
+
+[node name="MainText" type="Label" parent="Panel/Margin/Content" unique_id=1859403113]
+layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.95, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
 theme_override_font_sizes/font_size = 20
-autowrap_mode = 0

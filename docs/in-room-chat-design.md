@@ -136,12 +136,12 @@ Godot 4.7.2 的 `TextEdit` 支持多行文本、占位文字、换行模式和�
 
 | RPC | 注解 | 作用 |
 | --- | --- | --- |
-| `submit_chat_message(content)` | `any_peer`、`call_remote`、`reliable`、默认通道 | 客户端请求发送消息 |
-| `request_chat_history()` | `any_peer`、`call_remote`、`reliable`、默认通道 | 客户端请求完整房间历史 |
+| `server_submit_chat_message(content)` | `any_peer`、`call_remote`、`reliable`、默认通道 | 客户端请求发送消息 |
+| `server_chat_history()` | `any_peer`、`call_remote`、`reliable`、默认通道 | 客户端请求完整房间历史 |
 | `receive_chat_history(history)` | `authority`、`call_remote`、`reliable`、默认通道 | 服务器只向请求者发送历史快照 |
 | `receive_chat_message(sender_id, sender_name, content)` | `authority`、`call_local`、`reliable`、默认通道 | 服务器广播已确认消息 |
 
-服务器收到 `submit_chat_message()` 后执行以下步骤：
+服务器收到 `server_submit_chat_message()` 后执行以下步骤：
 
 1. 确认节点是服务器且房间仍处于活动状态。
 2. 使用 `multiplayer.get_remote_sender_id()` 获取发送者，不接受客户端传入的玩家 ID。

@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://cetnupi1oyoqu"]
 
 [ext_resource type="Script" uid="uid://blweupfopi22m" path="res://counter_viewer_ui.gd" id="1_cviewer"]
+[ext_resource type="PackedScene" uid="uid://3ybehy0t04s2" path="res://NameEditorUI.tscn" id="90_name_ui"]
 
-[node name="CounterViewerUI" type="CanvasLayer" unique_id=498447280]
+[node name="CounterViewerUI" type="CanvasLayer" unique_id=498447280 groups=["object_viewer"]]
 script = ExtResource("1_cviewer")
 
 [node name="Background" type="ColorRect" parent="." unique_id=804922977]
@@ -47,32 +48,35 @@ theme_override_font_sizes/font_size = 28
 text = "计数器"
 horizontal_alignment = 1
 
+[node name="NameRow" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=1925270831 instance=ExtResource("90_name_ui")]
+layout_mode = 2
+
 [node name="ValueRow" type="HBoxContainer" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=1716543387]
 layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="ValueLabel" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox/ValueRow" unique_id=980569888]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "数值"
 
 [node name="Btn_Minus" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/ValueRow" unique_id=1309763747]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "+1"
 
 [node name="ValueEdit" type="LineEdit" parent="Margin/Center/Panel/InnerMargin/VBox/ValueRow" unique_id=1119393146]
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 placeholder_text = "数值"
 alignment = 1
 
 [node name="Btn_Plus" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/ValueRow" unique_id=768035760]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "+1"
 
 [node name="StepRow" type="HBoxContainer" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=1599635022]
@@ -81,19 +85,19 @@ theme_override_constants/separation = 10
 
 [node name="StepLabel" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox/StepRow" unique_id=498184800]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "步长"
 
 [node name="StepEdit" type="LineEdit" parent="Margin/Center/Panel/InnerMargin/VBox/StepRow" unique_id=742483014]
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 placeholder_text = "步长"
 alignment = 1
 
 [node name="ReturnLabel" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox/StepRow" unique_id=1334446908]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "（回车确认）"
 
 [node name="DecimalsRow" type="HBoxContainer" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=925216956]
@@ -102,26 +106,26 @@ theme_override_constants/separation = 10
 
 [node name="DecimalLabel" type="Label" parent="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow" unique_id=1725956652]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "小数"
 
 [node name="Btn_DecMinus" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow" unique_id=664441515]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "-"
 
 [node name="DecimalsEdit" type="LineEdit" parent="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow" unique_id=1351082293]
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 placeholder_text = "小数位"
 alignment = 1
 
 [node name="Btn_DecPlus" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow" unique_id=2117416030]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "+"
 
 [node name="BottomBar" type="HBoxContainer" parent="Margin/Center/Panel/InnerMargin/VBox" unique_id=1344362063]
@@ -131,12 +135,12 @@ alignment = 1
 
 [node name="Btn_Close" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/BottomBar" unique_id=1937994257]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "关闭"
 
 [node name="Btn_Delete" type="Button" parent="Margin/Center/Panel/InnerMargin/VBox/BottomBar" unique_id=514704861]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 20
 text = "删除计数器"
 
 [node name="DeleteConfirmation" type="ConfirmationDialog" parent="." unique_id=37042198]
@@ -147,7 +151,7 @@ dialog_text = "确定要删除这个计数器吗？
 该操作对全部玩家生效，无法撤销。"
 cancel_button_text = "取消"
 
-[connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/ValueRow/Btn_Plus" to="." method="_on_plus_pressed"]
 [connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/ValueRow/Btn_Minus" to="." method="_on_minus_pressed"]
-[connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow/Btn_DecPlus" to="." method="_on_dec_plus_pressed"]
+[connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/ValueRow/Btn_Plus" to="." method="_on_plus_pressed"]
 [connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow/Btn_DecMinus" to="." method="_on_dec_minus_pressed"]
+[connection signal="pressed" from="Margin/Center/Panel/InnerMargin/VBox/DecimalsRow/Btn_DecPlus" to="." method="_on_dec_plus_pressed"]

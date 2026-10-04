@@ -15,14 +15,18 @@ extends Node3D
 @onready var pause_button: Button = $PauseCanvasLayer/PauseButton
 @onready var pause_overlay: Control = $PauseCanvasLayer/PauseOverlay
 @onready var player_list: ItemList = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/PlayerList
-@onready var clear_table_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer4/ClearTableButton
+@onready var clear_table_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxChangeDeck/ClearTableButton
 @onready var clear_table_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearTableConfirmation
-@onready var add_counter_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/AddCounterButton
-@onready var clear_counters_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/ClearCountersButton
+@onready var add_counter_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCounters/AddCounterButton
+@onready var add_pile_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxPiles/AddPileButton
+@onready var clear_empty_piles_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxPiles/ClearEmptyPilesButton
+@onready var clear_empty_piles_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearEmptyPilesConfirmation
+var _next_pile_number: int = 0
+@onready var clear_counters_button: Button = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCounters/ClearCountersButton
 @onready var clear_counters_confirmation: ConfirmationDialog = $PauseCanvasLayer/ClearCountersConfirmation
-@onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/TooltipCheckBox
-@onready var chat_panel_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/ChatPanelCheckBox
-@onready var auto_orientation_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/AutoOrientationCheckBox
+@onready var tooltip_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCheckBoxes/TooltipCheckBox
+@onready var chat_panel_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCheckBoxes/ChatPanelCheckBox
+@onready var auto_orientation_check_box: CheckBox = $PauseCanvasLayer/PauseOverlay/PanelContainer/MarginContainer/VBoxContainer/HBoxCheckBoxes/AutoOrientationCheckBox
 @onready var card_description_tooltip: CardDescriptionTooltip = $CardDescriptionTooltip
 @onready var deck_change: DeckChange = $DeckChange
 @onready var chat_ui: ChatPanel = $ChatUI
@@ -73,6 +77,8 @@ func _ready():
 	chat_ui.input_focus_entered.connect(_on_chat_input_focus_entered)
 	chat_ui.input_focus_exited.connect(_on_chat_input_focus_exited)
 	main_camera_initial_transform = main_camera.transform
+	var player_spawner: MultiplayerSpawner = $MultiplayerSpawner_Players
+	player_spawner.spawn_function = _spawn_player
 	pause_overlay.hide()
 	pause_button.hide()
 	_sync_tooltip_check_box()
@@ -126,7 +132,7 @@ func start_server(port: int, headless: bool):
 	chat_rate_second.clear()
 	chat_history_served.clear()
 	chat_ui.reset()
-	add_pile(card_db.get_all_IDs(), "公共牌堆")
+	_create_initial_type_piles(card_db.get_ordered_card_IDs_by_type())
 	
 	if not headless:
 		var host_name := Util.sanitize_player_name(input_player_name.text, Util.my_id(self), PLAYER_NAME_MAX_LENGTH)
@@ -147,24 +153,84 @@ func _on_host_button_pressed() -> void:
 		return
 	start_server(int(host_port_str), false)
 
+func _on_card_editor_button_pressed() -> void:
+	var error := OS.shell_open("https://frankhuex.github.io/HJGAOCardStudio/index.html")
+	if error != OK:
+		push_error("无法打开卡组编辑器：%s" % error_string(error))
+
 func add_player(id: int, display_name: String = "") -> Player:
-	var player := PLAYER.instantiate() as Player
 	var final_name := Util.sanitize_player_name(display_name, id, PLAYER_NAME_MAX_LENGTH)
-	player.name = str(id)
-	player.display_name = final_name
 	player_names[id] = final_name
-	players.add_child(player)
+	var player_spawner: MultiplayerSpawner = $MultiplayerSpawner_Players
+	return player_spawner.spawn({"id": id, "display_name": final_name, "side": randi_range(0, 3)}) as Player
+
+func _spawn_player(data: Variant) -> Node:
+	if not data is Dictionary:
+		return null
+	var spawn_data: Dictionary = data
+	var side_value: Variant = spawn_data.get("side")
+	if not side_value is int:
+		return null
+	var side: int = side_value
+	var player: Player = PLAYER.instantiate() as Player
+	player.name = str(spawn_data["id"])
+	player.display_name = str(spawn_data["display_name"])
+	player.preready(main_camera_initial_transform, side)
 	return player
 
-func add_pile(card_IDs: Array[int], pile_name: String) -> Pile:
+func add_pile(card_IDs: Array[int], pile_name: String, initial_position: Vector3 = Vector3.ZERO, initial_display_name: String = "") -> Pile:
 	var pile: Pile = PILE.instantiate()
-	pile.preready(pile_name, card_IDs)
+	pile.preready(pile_name, card_IDs, initial_display_name)
+	pile.position = initial_position
 	piles.add_child(pile, true)
+	return pile
+
+func _on_add_pile_button_pressed() -> void:
+	request_add_pile()
+
+func request_add_pile() -> void:
+	if not session_active or Util.board_locked(self):
+		return
+	chat_ui.release_input_focus()
+	if multiplayer.is_server():
+		server_add_pile()
+	else:
+		server_add_pile.rpc_id(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_add_pile() -> void:
+	if Util.not_server(self) or not session_active or Util.board_locked(self):
+		return
+	var sender := Util.sender_id(self)
+	if sender != 0 and sender != 1 and not player_names.has(sender):
+		return
+	var pile_name := _allocate_extra_pile_name()
+	var empty_ids: Array[int] = []
+	add_pile(empty_ids, pile_name, _find_free_counter_position())
+
+func _allocate_extra_pile_name() -> String:
+	_next_pile_number += 1
+	var pile_name := "extra_pile_%d" % _next_pile_number
+	while piles.has_node(pile_name):
+		_next_pile_number += 1
+		pile_name = "extra_pile_%d" % _next_pile_number
+	return pile_name
+
+func prepare_extra_pile(card_ids: Array[int], world_position: Vector3, world_rotation: Vector3, initial_display_name: String = "") -> Pile:
+	var pile := PILE.instantiate() as Pile
+	if pile == null:
+		return null
+	pile.preready(_allocate_extra_pile_name(), card_ids.duplicate(), initial_display_name)
+	pile.position = piles.to_local(world_position)
+	pile.rotation = world_rotation - piles.global_rotation
 	return pile
 
 ###################################################
 # Counter
 func _on_add_counter_button_pressed() -> void:
+	request_add_counter()
+
+func request_add_counter() -> void:
 	if not session_active or clear_table_in_progress:
 		return
 	chat_ui.release_input_focus()
@@ -397,9 +463,12 @@ func _open_pause_menu():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	pause_button.hide()
 	add_counter_button.visible = session_active # 所有玩家都可添加计数器
+	add_pile_button.visible = session_active
+	add_pile_button.disabled = clear_table_in_progress
 	_sync_tooltip_check_box()
 	_sync_chat_panel_check_box()
 	_sync_auto_orientation_check_box()
+	($PauseCanvasLayer as CanvasLayer).show()
 	pause_overlay.show()
 	_sync_player_roster()
 
@@ -455,7 +524,7 @@ func _on_local_player_status_changed() -> void:
 func _request_player_roster() -> void:
 	if not session_active or Util.is_server(self):
 		return
-	request_player_roster.rpc_id(1)
+	server_player_roster.rpc_id(1)
 
 func _sync_player_roster() -> void:
 	if not session_active:
@@ -475,7 +544,7 @@ func _broadcast_player_roster() -> void:
 	receive_player_roster.rpc(roster)
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_player_roster() -> void:
+func server_player_roster() -> void:
 	if Util.not_server(self):
 		return
 	var sender_id := Util.sender_id(self)
@@ -537,6 +606,9 @@ func _refresh_player_list() -> void:
 		player_list.add_item(text)
 
 func _on_chat_send_requested(content: String) -> void:
+	request_submit_chat_message(content)
+
+func request_submit_chat_message(content: String) -> void:
 	if not session_active:
 		return
 	var message := Util.sanitize_chat_message(content, CHAT_MESSAGE_MAX_LENGTH, CHAT_MESSAGE_MAX_LINES)
@@ -550,7 +622,7 @@ func _on_chat_send_requested(content: String) -> void:
 func _send_chat_message_to_server(content: String) -> void:
 	if not session_active or Util.is_server(self):
 		return
-	var error := multiplayer.rpc(1, self, &"submit_chat_message", [content])
+	var error := multiplayer.rpc(1, self, &"server_submit_chat_message", [content])
 	if error != OK:
 		printerr("发送聊天消息失败，错误码：", error)
 
@@ -574,7 +646,7 @@ func _has_blocking_modal() -> bool:
 	return deck_change.has_dialog() or clear_table_confirmation.visible
 
 @rpc("any_peer", "call_remote", "reliable")
-func submit_chat_message(content: String) -> void:
+func server_submit_chat_message(content: String) -> void:
 	if Util.not_server(self) or not session_active:
 		return
 	var sender_id := Util.sender_id(self)
@@ -624,7 +696,7 @@ func receive_chat_message(sender_id: int, sender_name: String, content: String) 
 		chat_ui.show_notification(sender_name, message)
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_chat_history() -> void:
+func server_chat_history() -> void:
 	if Util.not_server(self) or not session_active:
 		return
 	var sender_id := Util.sender_id(self)
@@ -642,7 +714,7 @@ func receive_chat_history(history: Array) -> void:
 func _request_chat_history() -> void:
 	if not session_active or Util.is_server(self):
 		return
-	request_chat_history.rpc_id(1)
+	server_chat_history.rpc_id(1)
 
 func _release_local_interactions():
 	card_description_tooltip.hide_all()
@@ -668,6 +740,9 @@ func _close_local_deck_viewers():
 func _counter_viewer_editing() -> bool:
 	for node in get_tree().root.get_children():
 		var viewer := node as CounterViewerUI
+		var deck_viewer := node as DeckViewerUI
+		if deck_viewer != null and deck_viewer.is_editing_text():
+			return true
 		if viewer != null and viewer.is_editing_text():
 			return true
 	return false
@@ -685,6 +760,9 @@ func _on_clear_table_button_pressed() -> void:
 	clear_table_confirmation.popup_centered(Vector2i(640, 260))
 
 func _on_clear_table_confirmed() -> void:
+	request_clear_table()
+
+func request_clear_table() -> void:
 	if not session_active:
 		return
 	if Util.is_server(self):
@@ -700,6 +778,7 @@ func server_clear_table() -> void:
 		printerr("一键清场失败：牌库尚未初始化")
 		return
 
+	var initial_groups := card_db.get_ordered_card_IDs_by_type()
 	clear_table_in_progress = true
 	set_clear_table_busy.rpc(true)
 	prepare_for_table_clear.rpc()
@@ -715,16 +794,15 @@ func server_clear_table() -> void:
 		set_clear_table_busy.rpc(false)
 		return
 
-	_rebuild_board()
+	_rebuild_board(initial_groups)
 	clear_table_in_progress = false
 	set_clear_table_busy.rpc(false)
 	print("一键清场完成")
 
-func _rebuild_board() -> void:
-	var all_card_ids: Array[int] = card_db.get_all_IDs()
-	all_card_ids.sort_custom(_card_id_less)
-	var public_pile := add_pile(all_card_ids, "公共牌堆")
-	public_pile.global_position = Vector3.ZERO
+func _rebuild_board(initial_groups: Dictionary[String, Array] = {}) -> void:
+	if initial_groups.is_empty():
+		initial_groups = card_db.get_ordered_card_IDs_by_type()
+	_create_initial_type_piles(initial_groups)
 	for child: Node in players.get_children():
 		if child is Player and not child.is_queued_for_deletion():
 			var empty_card_ids: Array[int] = []
@@ -733,6 +811,7 @@ func _rebuild_board() -> void:
 @rpc("authority", "call_local", "reliable")
 func prepare_for_table_clear() -> void:
 	clear_table_confirmation.hide()
+	clear_empty_piles_confirmation.hide()
 	card_description_tooltip.hide_all()
 	_close_local_deck_viewers()
 
@@ -740,14 +819,31 @@ func prepare_for_table_clear() -> void:
 func set_clear_table_busy(busy: bool) -> void:
 	clear_table_in_progress = busy
 	clear_table_button.disabled = busy
+	clear_empty_piles_button.disabled = busy
+	add_pile_button.disabled = busy
 	deck_change.set_busy(busy)
 
-func _card_id_less(card_id_a: int, card_id_b: int) -> bool:
-	var priority_a := card_db.get_priority(card_id_a)
-	var priority_b := card_db.get_priority(card_id_b)
-	if priority_a == priority_b:
-		return card_id_a < card_id_b
-	return priority_a < priority_b
+const TYPE_PILES_PER_ROW: int = 4
+const TYPE_PILE_SPACING_X: float = 1.5
+const TYPE_PILE_SPACING_Z: float = 2.0
+
+func _initial_type_pile_position(index: int, count: int) -> Vector3:
+	var row := floori(float(index) / TYPE_PILES_PER_ROW)
+	var rows := ceili(float(count) / TYPE_PILES_PER_ROW)
+	var row_count := mini(TYPE_PILES_PER_ROW, count - row * TYPE_PILES_PER_ROW)
+	var column := index % TYPE_PILES_PER_ROW
+	return Vector3((column - (row_count - 1) * 0.5) * TYPE_PILE_SPACING_X,
+		0.0, (row - (rows - 1) * 0.5) * TYPE_PILE_SPACING_Z)
+
+func _create_initial_type_piles(groups: Dictionary[String, Array]) -> void:
+	var types := card_db.deck_instance.deck_template.ordered_types
+	for index: int in range(types.size()):
+		var card_type := types[index]
+		var ids: Array[int] = []
+		ids.assign(groups[card_type])
+		var pile_name := "公共牌堆" if types.size() == 1 and card_type == CardTemplate.UNTYPED else "type_pile_%d" % (index + 1)
+		var initial_name := "未分类" if card_type == CardTemplate.UNTYPED else card_type
+		add_pile(ids, pile_name, _initial_type_pile_position(index, types.size()), initial_name)
 
 func _board_objects_are_pending_deletion() -> bool:
 	for child: Node in card_sorter.get_children():
@@ -769,6 +865,46 @@ func _clear_board_nodes() -> void:
 
 ###################################################
 # 一键清计数器（与一键清场相互独立，见设计文档 Q2）
+func _on_clear_empty_piles_button_pressed() -> void:
+	if not session_active or Util.board_locked(self):
+		return
+	chat_ui.release_input_focus()
+	clear_empty_piles_confirmation.popup_centered(Vector2i(640, 260))
+
+func _on_clear_empty_piles_confirmed() -> void:
+	request_clear_empty_piles()
+
+func request_clear_empty_piles() -> void:
+	if not session_active:
+		return
+	if Util.is_server(self):
+		server_clear_empty_piles()
+	else:
+		server_clear_empty_piles.rpc_id(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func server_clear_empty_piles() -> void:
+	if Util.not_server(self) or not session_active or Util.board_locked(self):
+		return
+	clear_table_in_progress = true
+	set_clear_table_busy.rpc(true)
+	prepare_for_empty_piles_clear.rpc()
+	var removed: Array[Pile] = []
+	for child: Node in piles.get_children():
+		var pile := child as Pile
+		if pile != null and pile.card_ID_stack.is_empty():
+			removed.append(pile)
+			pile.queue_free()
+	for pile: Pile in removed:
+		while is_instance_valid(pile):
+			await get_tree().process_frame
+	if session_active and multiplayer.multiplayer_peer != null:
+		set_clear_table_busy.rpc(false)
+
+@rpc("authority", "call_local", "reliable")
+func prepare_for_empty_piles_clear() -> void:
+	clear_empty_piles_confirmation.hide()
+
 func _on_clear_counters_button_pressed() -> void:
 	if not session_active or clear_table_in_progress:
 		return
@@ -776,6 +912,9 @@ func _on_clear_counters_button_pressed() -> void:
 	clear_counters_confirmation.popup_centered(Vector2i(640, 260))
 
 func _on_clear_counters_confirmed() -> void:
+	request_clear_counters()
+
+func request_clear_counters() -> void:
 	if not session_active:
 		return
 	if Util.is_server(self):
@@ -878,7 +1017,9 @@ func _return_to_main_menu(reason: String):
 	session_active = false
 	clear_table_in_progress = false
 	clear_table_confirmation.hide()
+	clear_empty_piles_confirmation.hide()
 	clear_table_button.disabled = false
+	clear_empty_piles_button.disabled = false
 	pause_overlay.hide()
 	pause_button.hide()
 	player_list.clear()

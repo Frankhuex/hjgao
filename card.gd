@@ -14,7 +14,7 @@ const UP_DOWN_DURATION = 0.1
 
 # Preready Setup
 var _preready_global_position: Vector3
-var _is_mouse_hovering := false
+@onready var detail_viewer: DetailViewer = $DetailViewer
 # var _preready_global_rot_y: float
 
 func preready(id: int, _global_position: Vector3):
@@ -33,8 +33,7 @@ func _ready():
 	_dragger.config(_owner_mux, UP_DOWN_DURATION, DRAGGING_Y, func(): return _card_sorter.get_drop_y(), "card")
 	_owner_mux.on_owner_change.connect(_server_card_sorter_action)
 	_card_db.on_flip.connect(check_and_flip)
-	mouse_entered.connect(_on_mouse_entered)
-	mouse_exited.connect(_on_mouse_exited)
+	detail_viewer.configure(self, _detail_text, [self], _detail_top)
 	SfxManager.I.play(SfxManager.Snd.SPAWN)   # R8：Card.tscn 全项目仅 spawner 实例化，_ready 即"从牌堆取出"，全端播放
 
 func _exit_tree() -> void:
@@ -45,22 +44,19 @@ func _exit_tree() -> void:
 			and not Util.board_locked(self):
 		SfxManager.I.play(SfxManager.Snd.PILE_IN)   # R7：带着 DRAG 占用被回收 = 塞回牌堆，全端播放
 
-func _on_mouse_entered() -> void:
-	_is_mouse_hovering = true
-	_refresh_description_tooltip()
+func _detail_text() -> String:
+	if not _card_db.is_front(card_ID()) or _dragger.is_being_dragged():
+		return ""
+	return _card_db.get_card_tooltip_text(card_ID())
 
-func _on_mouse_exited() -> void:
-	_is_mouse_hovering = false
-	_description_tooltip.hide_for(self)
+func _detail_top() -> String:
+	if not _card_db.is_front(card_ID()) or _dragger.is_being_dragged():
+		return ""
+	return _card_db.get_card_type(card_ID())
 
 func _refresh_description_tooltip() -> void:
-	if not _is_mouse_hovering:
-		return
-	if Input.mouse_mode != Input.MOUSE_MODE_VISIBLE or not _card_db.is_front(card_ID()):
-		_description_tooltip.hide_for(self)
-		return
-	_description_tooltip.show_for(self, card_ID())
-	
+	detail_viewer.refresh()
+
 # Inputs
 func _input_event(_camera, event: InputEvent, _position, _normal, _shape_idx):
 	if Util.is_left_mouse_down(event):

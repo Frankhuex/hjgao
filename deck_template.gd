@@ -4,12 +4,24 @@ extends Resource
 @export var card_name_to_card_template: Dictionary[String, CardTemplate]
 @export var ordered_card_names: Array[String]
 var card_name_to_priority: Dictionary[String, int] = {}
+var ordered_types: Array[String] = []
+# 字典值保持 Array[String]，声明使用非嵌套的类型。
+var type_to_ordered_card_names: Dictionary[String, Array] = {}
+var type_to_priority: Dictionary[String, int] = {}
 
 func _init(_card_name_to_card_template: Dictionary[String, CardTemplate], _ordered_card_names: Array[String]):
 	self.card_name_to_card_template = _card_name_to_card_template
 	self.ordered_card_names = _ordered_card_names
 	for i in range(_ordered_card_names.size()):
-		card_name_to_priority[_ordered_card_names[i]] = i
+		var card_name := _ordered_card_names[i]
+		card_name_to_priority[card_name] = i
+		var card_type := card_name_to_card_template[card_name].type
+		if not type_to_ordered_card_names.has(card_type):
+			type_to_priority[card_type] = ordered_types.size()
+			ordered_types.append(card_type)
+			var names: Array[String] = []
+			type_to_ordered_card_names[card_type] = names
+		type_to_ordered_card_names[card_type].append(card_name)
 
 func to_dict() -> Dictionary[String,Variant]:
 	var output: Dictionary[String,Variant] = {}

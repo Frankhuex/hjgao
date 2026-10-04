@@ -8,6 +8,8 @@
 [ext_resource type="PackedScene" uid="uid://bp6swckcvbg1s" path="res://OwnerMux.tscn" id="6_7gun0"]
 [ext_resource type="Script" uid="uid://dcxmosbkoixjo" path="res://pile_card_spawner.gd" id="7_gkw3i"]
 [ext_resource type="Script" uid="uid://q06pjih3t25r" path="res://pile_card_receiver.gd" id="8_85taq"]
+[ext_resource type="Script" uid="uid://bua77grjiopuh" path="res://name_editor.gd" id="90_name"]
+[ext_resource type="Script" uid="uid://dks61do0lt147" path="res://detail_viewer.gd" id="91_detail"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xwq12"]
 render_priority = 0
@@ -36,6 +38,9 @@ size = Vector3(1, 0.05, 1.8)
 properties/0/path = NodePath(".:position")
 properties/0/spawn = true
 properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 0
 
 [node name="Pile" type="StaticBody3D" unique_id=1327163761]
 script = ExtResource("1_n1ose")
@@ -87,6 +92,20 @@ script = ExtResource("7_gkw3i")
 
 [node name="CardReceiver" type="Node" parent="." unique_id=1683815940]
 script = ExtResource("8_85taq")
+
+[node name="NameEditor" type="Node" parent="." unique_id=232478291]
+script = ExtResource("90_name")
+
+[node name="DetailViewer" type="Node" parent="." unique_id=870444898]
+script = ExtResource("91_detail")
+
+[node name="NameLabel" type="Label3D" parent="." unique_id=46613482]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.065, -0.3279676)
+visible = false
+font_size = 28
+outline_size = 5
+autowrap_mode = 3
+width = 160.0
 
 [connection signal="input_event" from="Hotspot_Bottom" to="." method="_on_hotspot_bottom_input_event"]
 [connection signal="input_event" from="Hotspot_Random" to="." method="_on_hotspot_random_input_event"]

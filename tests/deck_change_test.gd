@@ -37,7 +37,7 @@ func _run() -> void:
 		print("HOST_READY")
 		while not game.card_db.deck_instance.card_ID_to_card_name.has(101) or game.clear_table_in_progress:
 			await process_frame
-		_check_board()
+		_check_board(false)
 		print("HOST_CHANGE_OK")
 		game.card_db.deck_instance.card_ID_to_is_front[101] = false
 		game.card_db.deck_instance.card_ID_to_is_upright[101] = false
@@ -57,7 +57,7 @@ func _run() -> void:
 			game.deck_change._file_selected("res://deck_instances/poker.json")
 			_check(game.card_db.deck_instance == old_deck and game.deck_change.confirmation.visible, "local preview is non-mutating")
 			game.deck_change.confirmation.hide()
-			game.deck_change.request_change.rpc_id(1, "{}")
+			game.deck_change.server_change.rpc_id(1, "{}")
 			await create_timer(0.3).timeout
 			_check(game.card_db.deck_instance == old_deck, "invalid upload leaves active deck intact")
 			var pile: Pile = game.piles.get_child(0) as Pile
@@ -92,9 +92,9 @@ func _run() -> void:
 	await process_frame
 	quit(1 if failed else 0)
 
-func _check_board() -> void:
+func _check_board(faces_reset: bool = true) -> void:
 	_check(game.card_db.get_all_IDs().size() == 3, "new card count")
-	_check(game.card_db.is_front(101) and not game.card_db.is_front(205), "faces preserved")
+	_check(game.card_db.is_front(101) and game.card_db.is_front(205) == faces_reset, "faces reset after clear" if faces_reset else "faces preserved after install")
 	_check(game.card_db.is_upright(101), "orientation reset after clear")
 	_check(game.card_db.get_card_tooltip_text(101) == "杀: 测试说明", "description loaded")
 	_check(game.card_sorter.get_child_count() == 0, "old scattered cards removed")

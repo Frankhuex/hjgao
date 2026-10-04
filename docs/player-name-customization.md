@@ -114,7 +114,7 @@ func add_player(id: int, display_name: String) -> Player:
 
 ```gdscript
 @rpc("any_peer", "call_remote", "reliable")
-func request_player_roster() -> void:
+func server_player_roster() -> void:
 	if Util.not_server(self):
 		return
 	var sender_id := Util.sender_id(self)
@@ -128,7 +128,7 @@ func receive_player_roster(roster: Array) -> void:
 	_refresh_player_list()
 ```
 
-打开暂停菜单时，主机直接调用 `_apply_roster`，客户端调用 `request_player_roster.rpc_id(1)`。服务器在玩家加入、断开或名称变化后也可以主动调用 `receive_player_roster.rpc(roster)` 更新所有已连接客户端。请求式刷新保证新玩家一定拿到完整名册，主动广播保证暂停界面打开期间能及时看到变化。
+打开暂停菜单时，主机直接调用 `_apply_roster`，客户端调用 `_request_player_roster()`（包装入口调用 `server_player_roster.rpc_id(1)`）。服务器在玩家加入、断开或名称变化后也可以主动调用 `receive_player_roster.rpc(roster)` 更新所有已连接客户端。请求式刷新保证新玩家一定拿到完整名册，主动广播保证暂停界面打开期间能及时看到变化。
 
 客户端收到名册后，还可以按 `peer_id` 找到对应的 `Player` 节点并写入 `display_name`。该字段在客户端是展示缓存，服务器上的 `player_names` 和服务器 `Player.display_name` 才是名称事实来源。
 

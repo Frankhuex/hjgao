@@ -313,7 +313,7 @@ func _run_client() -> void:
 	_clear()
 	var drop_base := _count("DROP_CARD")
 	_check(pile.receiver.request_receive_card(card.card_ID(), Const.CardSource.TOP), "put into pile accepted")
-	while not is_instance_valid(card):
+	while is_instance_valid(card):
 		await process_frame
 	_check(_count("PILE_IN") == 1, "pile-in plays shuffle sound")
 	_check(_count("DROP_CARD") == drop_base, "no drop edge on pile-in")
@@ -395,4 +395,22 @@ func _test_parser() -> void:
 	sfx2.queue_free()
 	SfxManager.I = sfx
 	pre_existing.queue_free()
+
+	# 真实暂停菜单确认框的按钮是 internal children；重复弹出不能重复绑定。
+	var menu_game := (load("res://Game.tscn") as PackedScene).instantiate() as GameSession
+	menu_game.set_script(load("res://tests/deck_test_game.gd"))
+	root.add_child(menu_game)
+	for dialog: ConfirmationDialog in [menu_game.clear_table_confirmation, menu_game.clear_counters_confirmation, menu_game.clear_empty_piles_confirmation]:
+		for attempt in range(2):
+			dialog.popup_centered()
+			await process_frame
+			for dialog_button: Button in [dialog.get_ok_button(), dialog.get_cancel_button()]:
+				_clear()
+				dialog_button.mouse_entered.emit()
+				_check(_count("HOVER") == 1, "pause confirmation hover bound exactly once")
+				dialog_button.pressed.emit()
+				_check(_count("CONFIRM") == 1, "pause confirmation press bound exactly once")
+			dialog.hide()
+	menu_game.queue_free()
+	await process_frame
 	print("SFX_PARSER_OK")

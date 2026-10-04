@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://cdwrvutvmh5qs"]
 
 [ext_resource type="Script" uid="uid://c0x7w666bfrk0" path="res://deck_viewer_ui.gd" id="1_wfta2"]
+[ext_resource type="PackedScene" uid="uid://3ybehy0t04s2" path="res://NameEditorUI.tscn" id="90_name_ui"]
 
-[node name="DeckViewerUI" type="CanvasLayer" unique_id=903300809]
+[node name="DeckViewerUI" type="CanvasLayer" unique_id=903300809 groups=["object_viewer"]]
 script = ExtResource("1_wfta2")
 
 [node name="Background" type="ColorRect" parent="." unique_id=1372290949]
@@ -27,98 +28,162 @@ theme_override_constants/margin_bottom = 40
 [node name="VBox" type="VBoxContainer" parent="Margin" unique_id=1428150827]
 layout_mode = 2
 
-[node name="TopContainer" type="HBoxContainer" parent="Margin/VBox" unique_id=1213593273]
+[node name="NameRow" parent="Margin/VBox" unique_id=1136915648 instance=ExtResource("90_name_ui")]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="SubtitleRow" type="HBoxContainer" parent="Margin/VBox" unique_id=1213593273]
 layout_mode = 2
 size_flags_vertical = 8
 
-[node name="Label_Top" type="Label" parent="Margin/VBox/TopContainer" unique_id=246684071]
+[node name="Label_SubTitle" type="Label" parent="Margin/VBox/SubtitleRow" unique_id=1691795675]
 layout_mode = 2
 size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 25
-text = "牌堆"
+theme_override_font_sizes/font_size = 10
+text = "【左键】拖动【右键】翻面【Shift+右键】颠倒方向"
 horizontal_alignment = 1
 
-[node name="SubTitle" type="HBoxContainer" parent="Margin/VBox" unique_id=1003953899]
+[node name="Top_Btns" type="HBoxContainer" parent="Margin/VBox" unique_id=2016368681]
 layout_mode = 2
-size_flags_vertical = 8
 
-[node name="Label_SubTitle" type="Label" parent="Margin/VBox/SubTitle" unique_id=1691795675]
+[node name="FlipSection" type="HBoxContainer" parent="Margin/VBox/Top_Btns" unique_id=2676853]
 layout_mode = 2
-size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 15
-text = "【左键】拖动【右键】翻面【Shift+右键】颠倒"
-horizontal_alignment = 1
+size_flags_horizontal = 2
 
-[node name="Top_Btns" type="HBoxContainer" parent="Margin/VBox" unique_id=183764756]
+[node name="FlipLabel" type="Label" parent="Margin/VBox/Top_Btns/FlipSection" unique_id=1538976212]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 0
-
-[node name="Btn_SortAscend" type="Button" parent="Margin/VBox/Top_Btns" unique_id=761112675]
-layout_mode = 2
-size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
-text = "递增排序"
+text = "翻面："
 
-[node name="Btn_SortDescend" type="Button" parent="Margin/VBox/Top_Btns" unique_id=131473067]
-layout_mode = 2
-size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 20
-text = "递减排序"
-
-[node name="Btn_Shuffle" type="Button" parent="Margin/VBox/Top_Btns" unique_id=869661463]
-layout_mode = 2
-size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 20
-text = "打乱顺序"
-
-[node name="Btn_AllFront" type="Button" parent="Margin/VBox/Top_Btns" unique_id=2039207073]
+[node name="Btn_AllFront" type="Button" parent="Margin/VBox/Top_Btns/FlipSection" unique_id=2039207073]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
 text = "全部正面"
 
-[node name="Btn_AllBack" type="Button" parent="Margin/VBox/Top_Btns" unique_id=1462089687]
+[node name="Btn_AllBack" type="Button" parent="Margin/VBox/Top_Btns/FlipSection" unique_id=1462089687]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
 text = "全部背面"
 
-[node name="Btn_AllFlip" type="Button" parent="Margin/VBox/Top_Btns" unique_id=2005582934]
+[node name="Btn_AllFlip" type="Button" parent="Margin/VBox/Top_Btns/FlipSection" unique_id=2005582934]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
 text = "全部翻面"
 
-[node name="Btn_RandomFace" type="Button" parent="Margin/VBox/Top_Btns" unique_id=297003486]
+[node name="Btn_RandomFace" type="Button" parent="Margin/VBox/Top_Btns/FlipSection" unique_id=297003486]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
 text = "随机翻面"
 
-[node name="Btn_AllUpright" type="Button" parent="Margin/VBox/Top_Btns" unique_id=1501664926]
+[node name="DirectionSection" type="HBoxContainer" parent="Margin/VBox/Top_Btns" unique_id=1257562150]
+layout_mode = 2
+size_flags_horizontal = 2
+
+[node name="DirectionLabel" type="Label" parent="Margin/VBox/Top_Btns/DirectionSection" unique_id=1947169884]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "方向："
+
+[node name="Btn_AllUpright" type="Button" parent="Margin/VBox/Top_Btns/DirectionSection" unique_id=1501664926]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
 text = "全部正位"
 
-[node name="Btn_AllInverted" type="Button" parent="Margin/VBox/Top_Btns" unique_id=248939448]
+[node name="Btn_AllInverted" type="Button" parent="Margin/VBox/Top_Btns/DirectionSection" unique_id=248939448]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
 text = "全部逆位"
 
-[node name="Btn_AllInvert" type="Button" parent="Margin/VBox/Top_Btns" unique_id=1675440689]
+[node name="Btn_AllInvert" type="Button" parent="Margin/VBox/Top_Btns/DirectionSection" unique_id=1675440689]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
 text = "全部颠倒"
 
-[node name="Btn_RandomUpright" type="Button" parent="Margin/VBox/Top_Btns" unique_id=110422109]
+[node name="Btn_RandomUpright" type="Button" parent="Margin/VBox/Top_Btns/DirectionSection" unique_id=110422109]
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 20
 text = "随机正逆"
+
+[node name="Top_Btns2" type="HBoxContainer" parent="Margin/VBox" unique_id=183764756]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="SortSection" type="HBoxContainer" parent="Margin/VBox/Top_Btns2" unique_id=1498231860]
+layout_mode = 2
+size_flags_horizontal = 2
+
+[node name="SortLabel" type="Label" parent="Margin/VBox/Top_Btns2/SortSection" unique_id=2130523027]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "顺序："
+
+[node name="Btn_SortAscend" type="Button" parent="Margin/VBox/Top_Btns2/SortSection" unique_id=761112675]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "递增排序"
+
+[node name="Btn_SortDescend" type="Button" parent="Margin/VBox/Top_Btns2/SortSection" unique_id=131473067]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "递减排序"
+
+[node name="Btn_Shuffle" type="Button" parent="Margin/VBox/Top_Btns2/SortSection" unique_id=869661463]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "打乱顺序"
+
+[node name="Btn_Reverse" type="Button" parent="Margin/VBox/Top_Btns2/SortSection" unique_id=947886829]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 20
+text = "逆转顺序"
+
+[node name="SelectSection" type="HBoxContainer" parent="Margin/VBox/Top_Btns2" unique_id=497590496]
+layout_mode = 2
+size_flags_horizontal = 2
+
+[node name="SelectLabel" type="Label" parent="Margin/VBox/Top_Btns2/SelectSection" unique_id=1871155484]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "取牌："
+
+[node name="Btn_Front" type="Button" parent="Margin/VBox/Top_Btns2/SelectSection" unique_id=458159238]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "从顶部取"
+
+[node name="Btn_Bottom" type="Button" parent="Margin/VBox/Top_Btns2/SelectSection" unique_id=482635202]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "从底部取"
+
+[node name="Btn_Random" type="Button" parent="Margin/VBox/Top_Btns2/SelectSection" unique_id=2103650319]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "随机抽取"
+
+[node name="Input_Number" type="LineEdit" parent="Margin/VBox/Top_Btns2/SelectSection" unique_id=662274583]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "1"
+alignment = 1
+
+[node name="Zhang" type="Label" parent="Margin/VBox/Top_Btns2/SelectSection" unique_id=2109107825]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "张"
 
 [node name="Scroll_Top" type="ScrollContainer" parent="Margin/VBox" unique_id=1679606086]
 custom_minimum_size = Vector2(0, 200)
@@ -166,11 +231,57 @@ theme_override_font_sizes/font_size = 25
 text = "关闭"
 
 [node name="Btn_Draw" type="Button" parent="Margin/VBox/BottomBar" unique_id=477980862]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 25
 text = "取出"
+
+[node name="Btn_DrawToPile" type="Button" parent="Margin/VBox/BottomBar"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 25
+text = "取出到新牌堆"
+
+[node name="Btn_ClassifyToPiles" type="Button" parent="Margin/VBox/BottomBar"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 25
+text = "分类到新牌堆"
+
+[node name="SubmissionStatus" type="Label" parent="Margin/VBox"]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="SubmissionBlocker" type="Control" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Btn_Delete" type="Button" parent="Margin/VBox/BottomBar" unique_id=853058011]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 25
+text = "删除牌堆"
+
+[node name="DeleteConfirmation" type="ConfirmationDialog" parent="." unique_id=213448702]
+title = "确认删除牌堆"
+size = Vector2i(500, 180)
+ok_button_text = "删除"
+dialog_text = "确定要删除这个空牌堆吗？该操作对全部玩家生效。"
+cancel_button_text = "取消"
 
 [node name="DragPreview" type="Control" parent="." unique_id=827640981]
 layout_mode = 3
@@ -178,16 +289,30 @@ anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_SortAscend" to="." method="_on_sort_ascend_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_SortDescend" to="." method="_on_sort_descend_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_Shuffle" to="." method="_on_shuffle_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllFront" to="." method="_on_all_front_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllBack" to="." method="_on_all_back_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllFlip" to="." method="_on_all_flip_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_RandomFace" to="." method="_on_random_face_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllUpright" to="." method="_on_all_upright_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllInverted" to="." method="_on_all_inverted_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_AllInvert" to="." method="_on_all_invert_pressed"]
-[connection signal="pressed" from="Margin/VBox/Top_Btns/Btn_RandomUpright" to="." method="_on_random_upright_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/FlipSection/Btn_AllFront" to="." method="_on_all_front_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/FlipSection/Btn_AllBack" to="." method="_on_all_back_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/FlipSection/Btn_AllFlip" to="." method="_on_all_flip_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/FlipSection/Btn_RandomFace" to="." method="_on_random_face_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/DirectionSection/Btn_AllUpright" to="." method="_on_all_upright_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/DirectionSection/Btn_AllInverted" to="." method="_on_all_inverted_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/DirectionSection/Btn_AllInvert" to="." method="_on_all_invert_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns/DirectionSection/Btn_RandomUpright" to="." method="_on_random_upright_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns2/SortSection/Btn_SortAscend" to="." method="_on_sort_ascend_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns2/SortSection/Btn_SortDescend" to="." method="_on_sort_descend_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns2/SortSection/Btn_Shuffle" to="." method="_on_shuffle_pressed"]
+[connection signal="child_order_changed" from="Margin/VBox/Scroll_Bottom/List_Bottom" to="." method="_refresh_draw_button"]
 [connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Cancel" to="." method="_on_cancel_pressed"]
 [connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Draw" to="." method="_on_confirm_pressed"]
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_Delete" to="." method="_on_delete_pressed"]
+[connection signal="confirmed" from="DeleteConfirmation" to="." method="_on_delete_confirmed"]
+
+[connection signal="pressed" from="Margin/VBox/Top_Btns2/SortSection/Btn_Reverse" to="." method="_on_reverse_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns2/SelectSection/Btn_Front" to="." method="_on_select_front_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns2/SelectSection/Btn_Bottom" to="." method="_on_select_bottom_pressed"]
+[connection signal="pressed" from="Margin/VBox/Top_Btns2/SelectSection/Btn_Random" to="." method="_on_select_random_pressed"]
+[connection signal="focus_entered" from="Margin/VBox/Top_Btns2/SelectSection/Input_Number" to="." method="_on_number_focus_entered"]
+[connection signal="focus_exited" from="Margin/VBox/Top_Btns2/SelectSection/Input_Number" to="." method="_on_number_focus_exited"]
+
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_DrawToPile" to="." method="_on_draw_to_pile_pressed"]
+
+[connection signal="pressed" from="Margin/VBox/BottomBar/Btn_ClassifyToPiles" to="." method="_on_classify_to_piles_pressed"]

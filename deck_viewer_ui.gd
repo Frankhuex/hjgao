@@ -2,7 +2,45 @@ class_name DeckViewerUI
 extends CanvasLayer
 
 signal draw_confirmed(updated_card_ID_stack: Array[int], drawn_cards: Array[int])
+signal classify_to_new_piles_confirmed(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int)
+signal draw_to_new_pile_confirmed(remaining_ids: Array[int], extracted_ids: Array[int], submission_id: int)
+static var _next_submission_id: int = 0
+var _submission_id: int = 0
+var _submission_pending := false
+@onready var btn_classify_to_piles: Button = $Margin/VBox/BottomBar/Btn_ClassifyToPiles
+@onready var btn_draw_to_pile: Button = $Margin/VBox/BottomBar/Btn_DrawToPile
+@onready var submission_status: Label = $Margin/VBox/SubmissionStatus
+@onready var submission_blocker: Control = $SubmissionBlocker
+
 signal cancel_confirmed
+signal delete_confirmed
+@onready var name_row: NameEditorUI = $Margin/VBox/NameRow
+var _pile: Pile
+@onready var btn_delete: Button = $Margin/VBox/BottomBar/Btn_Delete
+@onready var delete_confirmation: ConfirmationDialog = $DeleteConfirmation
+
+func open_for(pile: Pile) -> void:
+	_pile = pile
+	name_row.open_for(pile.get_node("NameEditor") as NameEditor)
+	_pile.stack_changed.connect(_refresh_delete_button)
+	_refresh_delete_button()
+
+func _refresh_delete_button() -> void:
+	if is_queued_for_deletion() or not is_instance_valid(btn_delete):
+		return
+	btn_delete.visible = is_instance_valid(_pile) and _pile.card_ID_stack.is_empty()
+	if not btn_delete.visible and is_instance_valid(delete_confirmation):
+		delete_confirmation.hide()
+
+func _on_delete_pressed() -> void:
+	_refresh_delete_button()
+	if btn_delete.visible and _pile.accessor.i_am_viewing():
+		delete_confirmation.popup_centered()
+
+func _on_delete_confirmed() -> void:
+	_refresh_delete_button()
+	if btn_delete.visible and _pile.accessor.i_am_viewing():
+		delete_confirmed.emit()
 signal viewer_closed
 signal orientation_operation_requested(operation: Const.PileOrientationOperation, card_IDs: Array[int])
 
@@ -13,17 +51,22 @@ signal orientation_operation_requested(operation: Const.PileOrientationOperation
 @onready var separator: HSeparator          = $Margin/VBox/HSeparator
 @onready var scroll_bottom: ScrollContainer = $Margin/VBox/Scroll_Bottom
 @onready var list_bottom: HBoxContainer     = $Margin/VBox/Scroll_Bottom/List_Bottom
-@onready var btn_sort_ascend: Button  = $Margin/VBox/Top_Btns/Btn_SortAscend
-@onready var btn_sort_descend: Button = $Margin/VBox/Top_Btns/Btn_SortDescend
-@onready var btn_shuffle: Button      = $Margin/VBox/Top_Btns/Btn_Shuffle
-@onready var btn_all_front: Button    = $Margin/VBox/Top_Btns/Btn_AllFront
-@onready var btn_all_back: Button     = $Margin/VBox/Top_Btns/Btn_AllBack
-@onready var btn_all_flip: Button     = $Margin/VBox/Top_Btns/Btn_AllFlip
-@onready var btn_all_upright: Button  = $Margin/VBox/Top_Btns/Btn_AllUpright
-@onready var btn_all_inverted: Button = $Margin/VBox/Top_Btns/Btn_AllInverted
-@onready var btn_all_invert: Button   = $Margin/VBox/Top_Btns/Btn_AllInvert
-@onready var btn_random_face: Button  = $Margin/VBox/Top_Btns/Btn_RandomFace
-@onready var btn_random_upright: Button = $Margin/VBox/Top_Btns/Btn_RandomUpright
+@onready var btn_sort_ascend: Button  = $Margin/VBox/Top_Btns2/SortSection/Btn_SortAscend
+@onready var btn_sort_descend: Button = $Margin/VBox/Top_Btns2/SortSection/Btn_SortDescend
+@onready var btn_shuffle: Button      = $Margin/VBox/Top_Btns2/SortSection/Btn_Shuffle
+@onready var btn_all_front: Button    = $Margin/VBox/Top_Btns/FlipSection/Btn_AllFront
+@onready var btn_all_back: Button     = $Margin/VBox/Top_Btns/FlipSection/Btn_AllBack
+@onready var btn_all_flip: Button     = $Margin/VBox/Top_Btns/FlipSection/Btn_AllFlip
+@onready var btn_all_upright: Button  = $Margin/VBox/Top_Btns/DirectionSection/Btn_AllUpright
+@onready var btn_all_inverted: Button = $Margin/VBox/Top_Btns/DirectionSection/Btn_AllInverted
+@onready var btn_all_invert: Button   = $Margin/VBox/Top_Btns/DirectionSection/Btn_AllInvert
+@onready var btn_random_face: Button  = $Margin/VBox/Top_Btns/FlipSection/Btn_RandomFace
+@onready var btn_random_upright: Button = $Margin/VBox/Top_Btns/DirectionSection/Btn_RandomUpright
+@onready var btn_reverse: Button = $Margin/VBox/Top_Btns2/SortSection/Btn_Reverse
+@onready var btn_select_front: Button = $Margin/VBox/Top_Btns2/SelectSection/Btn_Front
+@onready var btn_select_bottom: Button = $Margin/VBox/Top_Btns2/SelectSection/Btn_Bottom
+@onready var btn_select_random: Button = $Margin/VBox/Top_Btns2/SelectSection/Btn_Random
+@onready var input_number: LineEdit = $Margin/VBox/Top_Btns2/SelectSection/Input_Number
 @onready var btn_cancel: Button       = $Margin/VBox/BottomBar/Btn_Cancel
 @onready var btn_draw: Button         = $Margin/VBox/BottomBar/Btn_Draw
 
@@ -44,9 +87,10 @@ var target_list: Control
 var target_index: int
 
 func _ready() -> void:
+	_refresh_draw_button()
 	# R6 排除：六大理牌按钮有自己的成功音，按下不响确认音（悬停音保留）；
 	# node_added 连接确认音回调早于本 _ready 执行，因此回调内点击时检查组而非连接时检查
-	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle,
+	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle, btn_reverse,
 			btn_all_front, btn_all_back, btn_all_flip,
 			btn_random_face, btn_random_upright]:
 		btn.add_to_group(SfxManager.GROUP_NO_CONFIRM)
@@ -62,6 +106,15 @@ func _ready() -> void:
 	insert_cursor.hide()
 	insert_cursor.top_level = true # 设置为顶级节点，不受任何容器排版影响，随便飞
 	add_child(insert_cursor)
+
+func _refresh_draw_button() -> void:
+	if is_queued_for_deletion() or not is_instance_valid(btn_draw) or not is_instance_valid(list_bottom):
+		return
+	btn_draw.visible = list_bottom.get_child_count() > 0
+	if is_instance_valid(btn_draw_to_pile):
+		btn_draw_to_pile.visible = btn_draw.visible
+	if is_instance_valid(btn_classify_to_piles):
+		btn_classify_to_piles.visible = btn_draw.visible
 
 func load_deck(deck_list: Array[int]) -> void:
 	# 1. 先正常加载已有的牌堆
@@ -110,6 +163,64 @@ func _on_shuffle_pressed():
 		list_top.move_child(children[i], i)
 	SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)
 
+func _on_reverse_pressed() -> void:
+	if dragging_card != null or list_top.get_child_count() < 2:
+		return
+	var children: Array[Node] = list_top.get_children()
+	children.reverse()
+	for index in range(children.size()):
+		list_top.move_child(children[index], index)
+	SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)
+
+func _on_select_front_pressed() -> void:
+	_select_cards(Const.CardSource.TOP)
+
+func _on_select_bottom_pressed() -> void:
+	_select_cards(Const.CardSource.BOTTOM)
+
+func _on_select_random_pressed() -> void:
+	_select_cards(Const.CardSource.RANDOM)
+
+func _select_cards(source: Const.CardSource) -> void:
+	if dragging_card != null:
+		return
+	var text: String = input_number.text.strip_edges()
+	if not text.is_valid_int() or text.to_int() <= 0:
+		return
+	var children: Array[Node] = list_top.get_children()
+	var count: int = mini(text.to_int(), children.size())
+	if count == 0:
+		return
+	var indices: Array[int] = []
+	for index in range(children.size()):
+		indices.append(index)
+	if source == Const.CardSource.BOTTOM:
+		indices = indices.slice(children.size() - count)
+	elif source == Const.CardSource.RANDOM:
+		indices.shuffle()
+		indices.resize(count)
+		indices.sort() # 随机选子序列，仍按原牌列顺序追加。
+	else:
+		indices.resize(count)
+	for index: int in indices:
+		children[index].reparent(list_bottom, false)
+	_refresh_draw_button()
+
+func _on_number_focus_entered() -> void:
+	Util.clear_pending_move_input()
+	var game: GameSession = get_node_or_null("/root/Game") as GameSession
+	if game != null and is_instance_valid(game.local_player):
+		game.local_player.set_input_enabled(false)
+
+func _on_number_focus_exited() -> void:
+	Util.clear_pending_move_input()
+	var game: GameSession = get_node_or_null("/root/Game") as GameSession
+	if game != null and game.session_active and not game.pause_overlay.visible and not Util.board_locked(self) and is_instance_valid(game.local_player):
+		game.local_player.set_input_enabled(true)
+
+func _exit_tree() -> void:
+	_on_number_focus_exited()
+
 func _on_all_front_pressed():
 	_arm_shuffle_sound()
 	for child in list_top.get_children():
@@ -149,6 +260,8 @@ func _on_random_upright_pressed():
 	_emit_orientation_operation(Const.PileOrientationOperation.RANDOM_UPRIGHT)
 
 func _on_card_orientation_requested(card_id: int) -> void:
+	if _submission_pending:
+		return
 	var card_IDs: Array[int] = [card_id]
 	orientation_operation_requested.emit(Const.PileOrientationOperation.SINGLE_TOGGLE, card_IDs)
 
@@ -174,6 +287,8 @@ func _check_flip_sound():
 		SfxManager.I.play(SfxManager.Snd.SHUFFLE_OK)   # R2：翻面类操作的落地广播到达，仅本端响一次
 
 func _on_card_drag_started(card: UICard) -> void:
+	if _submission_pending:
+		return
 	dragging_card = card
 	drag_offset = drag_preview.get_global_mouse_position() - card.global_position
 	
@@ -191,10 +306,14 @@ func _on_card_drag_started(card: UICard) -> void:
 	SfxManager.I.play(SfxManager.Snd.PICKUP_CARD)   # 2D 理牌拖起，仅本端
 
 func _on_cancel_pressed():
+	if _submission_pending:
+		return
 	cancel_confirmed.emit()
 	queue_free()
 
 func _on_confirm_pressed():
+	if _submission_pending:
+		return
 	var drawn_card_IDs: Array[int] = []
 	for child in list_bottom.get_children() as Array[UICard]:
 		drawn_card_IDs.append(child.card_ID())
@@ -206,6 +325,16 @@ func _on_confirm_pressed():
 	draw_confirmed.emit(deck_card_IDs, drawn_card_IDs)
 
 func _input(event: InputEvent) -> void:
+	if _submission_pending:
+		return
+	if input_number.has_focus() and event is InputEventKey:
+		var key: InputEventKey = event
+		if key.pressed and key.keycode == KEY_ESCAPE:
+			var game: GameSession = get_node_or_null("/root/Game") as GameSession
+			if game != null:
+				game._open_pause_menu()
+			get_viewport().set_input_as_handled()
+		return
 	if Util.is_left_mouse_up(event):
 		if dragging_card:
 			_drop_card()
@@ -333,3 +462,46 @@ func _drop_card() -> void:
 	#visual_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	#visual_copy.size = c_size
 	#drag_preview.show()
+
+func is_editing_text() -> bool:
+	return name_row.is_editing_text() or input_number.has_focus()
+
+func _on_draw_to_pile_pressed() -> void:
+	_submit_to_new_piles(false)
+
+func _on_classify_to_piles_pressed() -> void:
+	_submit_to_new_piles(true)
+
+func _submit_to_new_piles(classify: bool) -> void:
+	if _submission_pending or dragging_card != null or not is_instance_valid(_pile):
+		return
+	if Util.board_locked(self) or not _pile.accessor.i_am_viewing():
+		return
+	var remaining_ids: Array[int] = []
+	var extracted_ids: Array[int] = []
+	for card: UICard in list_top.get_children():
+		remaining_ids.append(card.card_ID())
+	for card: UICard in list_bottom.get_children():
+		extracted_ids.append(card.card_ID())
+	if extracted_ids.is_empty():
+		return
+	_next_submission_id += 1
+	_submission_id = _next_submission_id
+	_submission_pending = true
+	get_viewport().gui_release_focus()
+	submission_blocker.show()
+	submission_status.text = "正在分类到新牌堆…" if classify else "正在取出到新牌堆…"
+	submission_status.show()
+	Util.clear_pending_move_input()
+	if classify:
+		classify_to_new_piles_confirmed.emit(remaining_ids, extracted_ids, _submission_id)
+	else:
+		draw_to_new_pile_confirmed.emit(remaining_ids, extracted_ids, _submission_id)
+
+func extract_to_pile_failed(submission_id: int, reason: String) -> void:
+	if is_queued_for_deletion() or not _submission_pending or submission_id != _submission_id:
+		return
+	_submission_pending = false
+	submission_blocker.hide()
+	submission_status.text = reason
+	submission_status.show()

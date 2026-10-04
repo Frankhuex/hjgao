@@ -40,7 +40,7 @@ func _on_close():
 
 func _on_delete():
 	if not _parent.owner_mux.i_am_owner(): return
-	_parent.request_delete()
+	_parent.request_delete_counter()
 
 func i_am_viewing() -> bool:
 	return _parent.owner_mux.i_am_owner() and _parent.owner_mux.purpose == Const.Purpose.COUNTER_VIEW
