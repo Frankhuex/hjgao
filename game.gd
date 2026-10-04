@@ -154,7 +154,7 @@ func _on_host_button_pressed() -> void:
 	start_server(int(host_port_str), false)
 
 func _on_card_editor_button_pressed() -> void:
-	var error := OS.shell_open("https://frankhuex.github.io/HJGAOCardEditor/index.html")
+	var error := OS.shell_open("https://frankhuex.github.io/HJGAOCardStudio/index.html")
 	if error != OK:
 		push_error("无法打开卡组编辑器：%s" % error_string(error))
 
