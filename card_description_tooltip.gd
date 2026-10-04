@@ -7,13 +7,16 @@ const MAX_CHARACTERS_PER_LINE := 18
 const LINE_START_PUNCTUATION := "，。！？；：、,.!?;:)]}》」』"
 
 @onready var _panel: PanelContainer = $Panel
-@onready var _label: Label = $Panel/Margin/Description
+@onready var _label: Label = $Panel/Margin/Content/MainText
+@onready var _top_label: Label = $Panel/Margin/Content/Top
 @onready var _card_db: CardDatabase = get_node("/root/Game/CardDatabase")
 
 var _source_instance_id := 0
 var _card_id := -1
-var _content: Callable
-var _last_text := ""
+var _main_text: Callable
+var _top: Callable
+var _last_main_text := ""
+var _last_top := ""
 var _tooltip_enabled := true
 
 func _ready() -> void:
@@ -32,16 +35,20 @@ func show_for(source: Object, card_id: int) -> void:
 	if not is_instance_valid(source):
 		return
 	_card_id = card_id
-	show_content_for(source, _card_text.bind(card_id))
+	show_content_for(source, _card_main_text.bind(card_id), _card_top.bind(card_id))
 
-func _card_text(card_id: int) -> String:
+func _card_main_text(card_id: int) -> String:
 	return _card_db.get_card_tooltip_text(card_id) if _card_db.is_front(card_id) else ""
 
-func show_content_for(source: Object, content: Callable) -> void:
+func _card_top(card_id: int) -> String:
+	return _card_db.get_card_type(card_id) if _card_db.is_front(card_id) else ""
+
+func show_content_for(source: Object, main_text: Callable, top: Callable = Callable()) -> void:
 	if not is_instance_valid(source):
 		return
 	_source_instance_id = source.get_instance_id()
-	_content = content
+	_main_text = main_text
+	_top = top
 	_refresh_current_source()
 
 func _can_show(source: Object) -> bool:
@@ -75,8 +82,10 @@ func hide_for(source: Object) -> void:
 func hide_all() -> void:
 	_source_instance_id = 0
 	_card_id = -1
-	_content = Callable()
-	_last_text = ""
+	_main_text = Callable()
+	_top = Callable()
+	_last_main_text = ""
+	_last_top = ""
 	_panel.hide()
 
 func set_tooltip_enabled(enabled: bool) -> void:
@@ -93,30 +102,42 @@ func is_tooltip_enabled() -> bool:
 	return _tooltip_enabled
 
 func _refresh_current_source() -> void:
-	if _source_instance_id == 0 or not is_instance_id_valid(_source_instance_id) or not _content.is_valid():
+	if _source_instance_id == 0 or not is_instance_id_valid(_source_instance_id) or not _main_text.is_valid():
 		return
 	var source: Object = instance_from_id(_source_instance_id)
 	if not _can_show(source):
 		_panel.hide()
 		return
-	var text_value: Variant = _content.call()
-	if not text_value is String:
+	var main_value: Variant = _main_text.call()
+	if not main_value is String:
 		_panel.hide()
 		return
-	var tooltip_text: String = text_value
-	if tooltip_text.is_empty():
+	var main_text: String = main_value
+	var top_text := ""
+	if _top.is_valid():
+		var top_value: Variant = _top.call()
+		if not top_value is String:
+			_panel.hide()
+			return
+		top_text = top_value
+	if main_text.is_empty() and top_text.is_empty():
 		_panel.hide()
 		return
-	if tooltip_text != _last_text:
-		_last_text = tooltip_text
-		_set_text_and_size(tooltip_text)
+	if main_text != _last_main_text or top_text != _last_top:
+		_last_main_text = main_text
+		_last_top = top_text
+		_set_text_and_size(main_text, top_text)
 	_panel.show()
 	_update_position()
 
-func _set_text_and_size(text: String) -> void:
+func _set_text_and_size(main_text: String, top_text: String) -> void:
+	_top_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_top_label.custom_minimum_size = Vector2.ZERO
+	_top_label.text = _wrap_text(top_text)
+	_top_label.visible = not top_text.is_empty()
 	_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_label.custom_minimum_size = Vector2.ZERO
-	_label.text = _wrap_text(text)
+	_label.text = _wrap_text(main_text)
 	_panel.reset_size()
 
 func _wrap_text(text: String) -> String:

@@ -3,12 +3,14 @@ extends Node
 
 var _source: Node
 var _content: Callable
+var _top_content: Callable = Callable()
 var _tooltip: CardDescriptionTooltip
 var _hovered: Dictionary = {}
 
-func configure(source: Node, content: Callable, targets: Array[Node]) -> void:
+func configure(source: Node, content: Callable, targets: Array[Node], top_content: Callable = Callable()) -> void:
 	_source = source
 	_content = content
+	_top_content = top_content
 	_tooltip = get_node("/root/Game/CardDescriptionTooltip") as CardDescriptionTooltip
 	for target: Node in targets:
 		target.connect("mouse_entered", _enter.bind(target.get_instance_id()))
@@ -28,7 +30,7 @@ func _hide_if_empty() -> void:
 
 func refresh() -> void:
 	if not _hovered.is_empty() and is_instance_valid(_tooltip):
-		_tooltip.show_content_for(_source, _content)
+		_tooltip.show_content_for(_source, _content, _top_content)
 
 func _exit_tree() -> void:
 	if is_instance_valid(_tooltip) and is_instance_valid(_source):

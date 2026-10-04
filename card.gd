@@ -33,7 +33,7 @@ func _ready():
 	_dragger.config(_owner_mux, UP_DOWN_DURATION, DRAGGING_Y, func(): return _card_sorter.get_drop_y(), "card")
 	_owner_mux.on_owner_change.connect(_server_card_sorter_action)
 	_card_db.on_flip.connect(check_and_flip)
-	detail_viewer.configure(self, _detail_text, [self])
+	detail_viewer.configure(self, _detail_text, [self], _detail_top)
 	SfxManager.I.play(SfxManager.Snd.SPAWN)   # R8：Card.tscn 全项目仅 spawner 实例化，_ready 即"从牌堆取出"，全端播放
 
 func _exit_tree() -> void:
@@ -48,6 +48,11 @@ func _detail_text() -> String:
 	if not _card_db.is_front(card_ID()) or _dragger.is_being_dragged():
 		return ""
 	return _card_db.get_card_tooltip_text(card_ID())
+
+func _detail_top() -> String:
+	if not _card_db.is_front(card_ID()) or _dragger.is_being_dragged():
+		return ""
+	return _card_db.get_card_type(card_ID())
 
 func _refresh_description_tooltip() -> void:
 	detail_viewer.refresh()

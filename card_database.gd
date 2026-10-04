@@ -44,6 +44,9 @@ func get_card_tooltip_text(id: int) -> String:
 		return card_name
 	return card_name + ": " + description
 
+func get_card_type(id: int) -> String:
+	return get_card_template(id).type.strip_edges()
+
 func is_front(id: int) -> bool:
 	return deck_instance.card_ID_to_is_front[id]
 
