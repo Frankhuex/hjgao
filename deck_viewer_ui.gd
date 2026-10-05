@@ -110,11 +110,13 @@ func _ready() -> void:
 func _refresh_draw_button() -> void:
 	if is_queued_for_deletion() or not is_instance_valid(btn_draw) or not is_instance_valid(list_bottom):
 		return
-	btn_draw.visible = list_bottom.get_child_count() > 0
+	var has_pending_cards := list_bottom.get_child_count() > 0
+	btn_draw.show()
+	btn_draw.text = "保存顺序并取出" if has_pending_cards else "保存顺序"
 	if is_instance_valid(btn_draw_to_pile):
-		btn_draw_to_pile.visible = btn_draw.visible
+		btn_draw_to_pile.visible = has_pending_cards
 	if is_instance_valid(btn_classify_to_piles):
-		btn_classify_to_piles.visible = btn_draw.visible
+		btn_classify_to_piles.visible = has_pending_cards
 
 func load_deck(deck_list: Array[int]) -> void:
 	# 1. 先正常加载已有的牌堆

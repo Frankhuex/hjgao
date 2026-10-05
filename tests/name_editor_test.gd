@@ -287,7 +287,7 @@ func _test_pile_selection(pile: Pile, viewer: DeckViewerUI) -> void:
 	pending.append_array(expected)
 	viewer.btn_select_front.pressed.emit()
 	_check(viewer.list_top.get_child_count() == 0 and _ids(viewer.list_bottom) == pending, "oversized count takes all remaining")
-	_check(viewer.btn_draw.visible, "selection shows draw button")
+	_check(viewer.btn_draw.visible and viewer.btn_draw.text == "保存顺序并取出", "pending cards show save-and-draw button")
 	viewer.btn_select_random.pressed.emit()
 	viewer.btn_reverse.pressed.emit()
 	_check(_ids(viewer.list_bottom) == pending, "empty source safe")
@@ -303,4 +303,4 @@ func _test_pile_selection(pile: Pile, viewer: DeckViewerUI) -> void:
 	viewer.load_deck(original)
 	viewer.input_number.text = "1"
 	await process_frame
-	_check(not viewer.btn_draw.visible, "pending empty hides draw button")
+	_check(viewer.btn_draw.visible and viewer.btn_draw.text == "保存顺序", "empty pending keeps save-order button visible")
