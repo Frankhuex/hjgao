@@ -113,6 +113,7 @@ func _run_host() -> void:
 	# R4 拖动牌堆（client 拖起/放下 → 两端）
 	while not pile.owner_mux.is_owned():
 		await process_frame
+	_check(_count("CONFIRM") == 2, "host hears both counter steps once")
 	_check(_count("PICKUP_OBJECT") == 1, "host hears pile pickup")
 	_check(_count("PICKUP_CARD") == 0, "pile pickup uses object sound")
 	_clear()
@@ -218,6 +219,18 @@ func _run_client() -> void:
 	counter._update_button_hover(Counter.SHAPE_MINUS)
 	_check(_count("HOVER") == 2, "re-enter after base reset replays")
 
+	# 3D 加减成功后各播放一次普通确认音。
+	_clear()
+	for direction: int in [1, -1]:
+		var expected_value := counter.value + direction * counter.step
+		_check(counter.request_apply_step(direction), "counter step requested")
+		_check(_count("CONFIRM") == 0, "counter waits for server success")
+		while counter.value != expected_value or counter.owner_mux.is_owned():
+			await process_frame
+		_check(_count("CONFIRM") == 1, "counter step confirms once")
+		_check(is_equal_approx(_pitch_of("CONFIRM"), 1.0), "counter confirm pitch fixed")
+		_clear()
+
 	# R4 拖动牌堆（全端）
 	_clear()
 	_check(pile.dragger.request_drag(), "pile drag accepted")
@@ -259,11 +272,32 @@ func _run_client() -> void:
 	_check(_count("FLIP") == 1, "2D flip plays only locally")
 	_clear()
 
+	var shift_right_click := _right_click()
+	shift_right_click.shift_pressed = true
+	var base_upright := game.card_db.is_upright(ui_list_card.card_ID())
+	ui_list_card._gui_input(shift_right_click)
+	_check(_count("FLIP") == 0, "2D orientation waits for server success")
+	while game.card_db.is_upright(ui_list_card.card_ID()) == base_upright:
+		await process_frame
+	_check(_count("FLIP") == 1, "2D Shift-right-click plays one local flip sound")
+	_check(_count("SHUFFLE_OK") == 0, "single orientation has no sort sound")
+	ui_list_card.update_orientation()
+	_check(_count("FLIP") == 1, "orientation refresh does not repeat sound")
+	_clear()
+
 	viewer.btn_all_front.pressed.emit()   # R2：武装 → 第一次落地广播响一声
 	await create_timer(0.5).timeout
 	_check(_count("SHUFFLE_OK") == 1, "all-front plays one sort sound")
 	_check(_count("CONFIRM") == 0, "flip buttons excluded from confirm sound")
 	_clear()
+
+	for button: Button in [viewer.btn_all_inverted, viewer.btn_all_upright, viewer.btn_all_invert]:
+		button.pressed.emit()
+		await create_timer(0.5).timeout
+		_check(_count("SHUFFLE_OK") == 1, "orientation button plays one sort sound: " + button.name)
+		_check(_count("CONFIRM") == 0, "orientation button excludes confirm sound: " + button.name)
+		_check(_count("FLIP") == 0, "batch orientation has no single-card flip sound")
+		_clear()
 
 	# 批量抽 3 张 → 两端一声（同帧合并）；Btn_Draw 不排除确认音
 	for i in range(3):

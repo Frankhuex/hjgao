@@ -65,11 +65,14 @@ func server_sync_counter_state():
 
 @rpc("any_peer", "call_local", "reliable")
 func sync_counter_state(new_value: float, new_step: float, new_decimals: int):
+	var step_succeeded := new_value != value and owner_mux.purpose in [Const.Purpose.COUNTER_ADD, Const.Purpose.COUNTER_SUBTRACT]
 	value = new_value
 	step = new_step
 	decimals = new_decimals
 	_update_visuals()
 	state_changed.emit()
+	if step_succeeded and not Util.board_locked(self):
+		SfxManager.I.play(SfxManager.Snd.CONFIRM)
 
 ###################################
 # 格式化与工具
@@ -210,8 +213,8 @@ func _server_apply_step(sender: int, direction: int):
 	if not viewer_edit:
 		var purpose := Const.Purpose.COUNTER_ADD if direction > 0 else Const.Purpose.COUNTER_SUBTRACT
 		owner_mux.server_set_owner(purpose, sender)
-	value = round_to_decimals(value + direction * step, decimals)
-	sync_counter_state.rpc(value, step, decimals)
+	var new_value := round_to_decimals(value + direction * step, decimals)
+	sync_counter_state.rpc(new_value, step, decimals)
 	if not viewer_edit:
 		owner_mux.server_reset_owner()
 

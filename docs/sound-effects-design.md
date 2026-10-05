@@ -99,10 +99,11 @@ func is_being_dragged() -> bool:   # "有任何人正在拖动"（全端语义�
 - **2D（仅翻动者本端）**：[ui_card.gd](../ui_card.gd) `update_ui()` 用 `_last_is_front` 与新状态比较，
   且只有"本牌自己右键申请"的那次（武装标志，见 5.4）才播放——查看器是本端私有界面，天然只在本端发声。
 
-### 2.5 查看器六大理牌功能（R2，[deck_viewer_ui.gd](../deck_viewer_ui.gd)）
+### 2.5 查看器理牌功能（R2，[deck_viewer_ui.gd](../deck_viewer_ui.gd)）
 
 | 按钮 | 成功时机 | 播放方式 |
 | --- | --- | --- |
+| 全部正位 / 全部逆位 / 全部颠倒 / 随机正逆位 / 随机正反面 | 请求前武装，收到方向或翻面更新广播后播放 | 本端仅播放一次 `SHUFFLE_OK`（洗牌.wav），按钮加入 `sfx_no_confirm` 排除通用确认音 |
 | 升序 / 降序 / 洗牌 | 纯本地子节点重排，不可能失败，回调结束即成功 | 按下回调内直接播放 |
 | 全部翻正面 / 全部翻背面 / 逐一翻面 | 走 `request_flip_to` / `request_flip` RPC，服务器可能拒绝（锁/无变化） | 先"武装"，等 `on_flip` 到达再播放 |
 
@@ -110,7 +111,7 @@ func is_being_dragged() -> bool:   # "有任何人正在拖动"（全端语义�
   因此 `on_flip` 触发期间几乎只有本查看器的翻面请求能改变状态，武装判定可靠。
 - `server_flip_to` 对"状态无变化"的牌直接跳过不发广播：全部翻正面时若所有牌已是正面 →
   无 `on_flip` → 不响（正确：操作未产生任何效果）。
-- 六个按钮**排除在 R6 确认音之外**（它们有自己的成功音），否则按下会连响两声。
+- 上述按钮及逆转顺序按钮**排除在 R6 确认音之外**（它们有自己的成功音），否则按下会连响两声。
 
 ### 2.6 悬停音与按下音的覆盖面（R1/R6）
 
@@ -118,7 +119,7 @@ func is_being_dragged() -> bool:   # "有任何人正在拖动"（全端语义�
 | --- | --- | --- |
 | 原生 UI 按钮（主菜单/暂停菜单/聊天发送/两个查看器按钮/ConfirmationDialog 内部按钮/CheckBox） | Autoload 监听 `SceneTree.node_added`，对所有 `BaseButton` 自动连接 `mouse_entered` | 同一钩子自动连接 `pressed`；**六个理牌按钮除外**（加入 `sfx_no_confirm` 组，见 5.5） |
 | UICard（牌堆 2D 查看器内的牌） | [ui_card.gd](../ui_card.gd) 已连接 `mouse_entered`（tooltip 用），回调中追加播放 | —（UICard 不是按钮，无按下音） |
-| 计数器 3D 加/减按钮 | 3D 按钮是 `StaticBody3D` 上的 CollisionShape3D，**没有**逐形状的 mouse_entered；利用物理拾取会向 `_input_event` 投递 `InputEventMouseMotion` 的特性，按 `shape_idx` 跟踪悬停形状（详见 5.6） | —（非原生 UI 按钮） |
+| 计数器 3D 加/减按钮 | 3D 按钮是 `StaticBody3D` 上的 CollisionShape3D，**没有**逐形状的 mouse_entered；利用物理拾取会向 `_input_event` 投递 `InputEventMouseMotion` 的特性，按 `shape_idx` 跟踪悬停形状（详见 5.6） | 数值成功更新后播放一次 `CONFIRM`（确认.wav），固定音高，全端播放 |
 
 ## 3. 总体架构
 
@@ -338,6 +339,7 @@ func update_ui():
     ...
 ```
 
+- 2D 单牌 Shift+右键颠倒同样使用 `SfxManager.Snd.FLIP`：输入时独立记录颠倒请求时间，收到方向更新且本牌正逆位确实改变后播放一次，沿用 2 秒过期。初始显示、重复刷新和未发起单牌请求的批量方向操作不触发此音效。
 - 悬停/翻牌音都只在本端播放：查看器与 UICard 是本端私有节点，无同步路径，天然满足"仅翻动者端"。
 - 状态比对保证只有本牌变化才响；武装 + 2 秒过期避免被拒绝的申请留下"陈旧武装"误触发后续翻面。
 - 六大翻面按钮触发的翻面**不会**进入此分支（未武装），不会与 R2 的洗牌音重复。
@@ -410,7 +412,7 @@ func _update_button_hover(shape_idx: int) -> void:
 - 底座（`SHAPE_BASE`）不响；按钮间互切（减→加）各自响一次。
 - `mouse_exited` 复位悬停状态；悬停音同样受 50ms 最小间隔去抖。
 - 复用 `_local_can_interact()`：仅打牌模式、会话中发声（与计数器点击 gating 一致）。
-- 计数器 +/- 的 3D 点击不属于"原生 UI 按钮"，**不响**确认音（R6 范围外）。
+- 计数器 3D +/- 在 `sync_counter_state` 数值发生变化且占用用途为 `COUNTER_ADD` / `COUNTER_SUBTRACT` 时，全端播放一次 `SfxManager.Snd.CONFIRM`，固定音高。复用既有状态广播；拒绝操作、普通状态补齐和查看器编辑不触发此成功音，2D 查看器保留原生按钮确认音。
 
 ## 6. 需求 → 挂点对照总表
 

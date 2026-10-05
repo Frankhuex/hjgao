@@ -11,6 +11,8 @@ signal drag_started(card: UICard)
 signal orientation_requested(card_id: int)
 var _is_mouse_hovering := false
 var _last_is_front := false
+var _last_is_upright := true
+var _orientation_sound_armed_at := -1  # 等待 Shift+右键颠倒落地，2 秒过期
 var _flip_sound_armed_at := -1  # msec，>0 表示等待自己的翻面广播（2 秒过期）
 
 func preready(id: int):
@@ -23,6 +25,7 @@ func _ready():
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 	_last_is_front = _card_db.is_front(card_ID())
+	_last_is_upright = _card_db.is_upright(card_ID())
 	update_ui()
 	update_orientation()
 	_card_db.on_flip.connect(update_ui)
@@ -57,6 +60,7 @@ func _gui_input(event: InputEvent):
 	elif Util.is_right_mouse_down(event):
 		var right_click := event as InputEventMouseButton
 		if right_click.shift_pressed:
+			_orientation_sound_armed_at = Time.get_ticks_msec()
 			orientation_requested.emit(card_ID())
 		else:
 			_flip_sound_armed_at = Time.get_ticks_msec()   # 武装：等自己右键申请的翻面落地
@@ -79,8 +83,14 @@ func update_ui():
 	_refresh_description_tooltip()
 
 func update_orientation(_updates: Dictionary = {}) -> void:
+	var is_upright := _card_db.is_upright(card_ID())
+	if is_upright != _last_is_upright:
+		if _orientation_sound_armed_at > 0 and Time.get_ticks_msec() - _orientation_sound_armed_at <= 2000:
+			_orientation_sound_armed_at = -1
+			SfxManager.I.play(SfxManager.Snd.FLIP)
+		_last_is_upright = is_upright
 	_visual.pivot_offset = custom_minimum_size * 0.5
-	_visual.rotation_degrees = 180.0 if not _card_db.is_upright(card_ID()) else 0.0
+	_visual.rotation_degrees = 180.0 if not is_upright else 0.0
 
 # Flipping
 func request_flip():

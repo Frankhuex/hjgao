@@ -88,10 +88,11 @@ var target_index: int
 
 func _ready() -> void:
 	_refresh_draw_button()
-	# R6 排除：六大理牌按钮有自己的成功音，按下不响确认音（悬停音保留）；
+	# R6 排除：理牌按钮有自己的成功音，按下不响确认音（悬停音保留）；
 	# node_added 连接确认音回调早于本 _ready 执行，因此回调内点击时检查组而非连接时检查
 	for btn: Button in [btn_sort_ascend, btn_sort_descend, btn_shuffle, btn_reverse,
 			btn_all_front, btn_all_back, btn_all_flip,
+			btn_all_upright, btn_all_inverted, btn_all_invert,
 			btn_random_face, btn_random_upright]:
 		btn.add_to_group(SfxManager.GROUP_NO_CONFIRM)
 
